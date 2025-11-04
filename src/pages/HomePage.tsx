@@ -7,6 +7,7 @@ import { fetchVideoList, type Video } from "@/api/api-file";
 // --- Main Component ---
 import { useState, useEffect } from 'react';
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
+import { formatBytes, formatLastModified } from "@/utils/utils";
 
 const FileListTable = ({ files }: { files: Video[] }) => (
     <Table>
@@ -41,8 +42,8 @@ const FileListTable = ({ files }: { files: Video[] }) => (
                         <File className="h-5 w-5 text-gray-400" />
                         <span>{file.file_name}</span>
                     </TableCell>
-                    <TableCell className="text-right">{file.size}</TableCell>
-                    <TableCell className="text-right">{file.modified_time}</TableCell>
+                    <TableCell className="text-right">{formatBytes(file.size)}</TableCell>
+                    <TableCell className="text-right">{formatLastModified(file.modified_time)}</TableCell>
                 </TableRow>
             ))}
         </TableBody>
@@ -100,11 +101,11 @@ export default function HomePage() {
 
                     {/* 3. Main Content Area */}
                     <main className="flex-1 p-6 overflow-auto h-full">
-                        <h2 className="text-xl font-semibold mb-4 text-gray-700">My Drive</h2>
+                        {/* <h2 className="text-xl font-semibold mb-4 text-gray-700">My Drive</h2> */}
                         {isLoading && isLoading ?
                             <FileListTableSkeleton />
                             : <>{/* 4. Pass the dynamically loaded files to the table */}
-                                <div className="overflow-auto max-h-[calc(100vh-10rem)]">
+                                <div className="overflow-auto max-h-[calc(100vh-7rem)]">
                                     <FileListTable files={files} />
                                 </div>
                                 {/* Optional: Message if no files are found */}

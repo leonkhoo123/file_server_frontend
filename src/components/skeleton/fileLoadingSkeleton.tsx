@@ -10,7 +10,7 @@ export const FileListTableSkeleton: React.FC = () => {
   const skeletonItems = Array.from({ length: SKELETON_ROWS });
 
   return (
-    <div className="overflow-hidden border-none rounded-lg bg-white shadow-none">
+    <div className="overflow-hidden border-none rounded-lg shadow-none">
       <Table>
         {/* === Table Body (Skeleton Rows) === */}
         <TableBody>

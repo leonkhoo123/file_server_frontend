@@ -1,9 +1,9 @@
-import { File, Folder, ChevronDown } from "lucide-react";
+import { File, Folder, ChevronDown, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ModeToggle } from "@/components/mode-toggle";
 import DefaultLayout from "@/layouts/DefaultLayout";
-import { fetchDirList, type ItemsResponse, type FileInterface } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, postDisqualified, renameFileMoveToDone } from "@/api/api-file";
 // --- Main Component ---
 import { useState, useEffect } from 'react';
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
@@ -43,7 +43,6 @@ export default function HomePage() {
       try {
         const currentPath = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
         const itemsrs = await fetchDirList(currentPath);
-        console.log("itemsrs:", itemsrs);
         setItems(itemsrs);
         setCurrentPath(itemsrs.path);
       } catch (err) {
@@ -66,6 +65,23 @@ export default function HomePage() {
     );
   }
 
+  const handlePlayerClose = async (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string) => {
+    setSelectedVideo(null);
+    try {
+      if (isDisqualified) {
+        await postDisqualified(oriPath)
+        const itemsrs = await fetchDirList(currentPath);
+        setItems(itemsrs);
+      } else if (isNewName) {
+        await renameFileMoveToDone(oriPath, newName)
+        const itemsrs = await fetchDirList(currentPath);
+        setItems(itemsrs);
+      }
+    } catch (error) {
+      console.error("Failed to move or rename file:", error);
+    }
+
+  }
   // --- Main Layout Render ---
   return (
     <DefaultLayout>
@@ -83,37 +99,54 @@ export default function HomePage() {
 
           {/* 3. Main Content Area */}
           <main className="flex-col p-6 overflow-auto h-full">
-            {/* navigation */}
-            <div className="w-full flex justify-start items-center bg-gray-200 px-2 rounded-md mb-2">
-
-              {/* Home button */}
+            <div className="flex not-last:flex-row w-full">
+              {/*refresh button */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={async () => {
-                  navigate("/home")
+                  setIsLoading(true);
+                  setError(false);
+                  const itemsrs = await fetchDirList(currentPath);
+                  setItems(itemsrs);
+                  setIsLoading(false);
                 }}
-                className="p-1 bg-transparent hover:bg-transparent hover:underline"
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300"
               >
-                Home
+                <RefreshCcw />
               </Button>
-              <div className="text-sm text-gray-600">
-                {currentPath.split("/").filter(Boolean).map((part, idx, arr) => (
-                  <span key={idx}>
-                    {" / "}
-                    <button
-                      onClick={async () => {
-                        const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                        navigate("/home" + targetPath)
-                      }}
-                      className="hover:underline"
-                    >
-                      {part}
-                    </button>
-                  </span>
-                ))}
+              {/* navigation */}
+              <div className="w-full flex justify-start items-center bg-gray-200 px-2 rounded-md mb-2">
+                {/* Home button */}
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={async () => {
+                    navigate("/home")
+                  }}
+                  className="p-1 bg-transparent hover:bg-transparent hover:underline dark:text-black dark:hover:bg-transparent"
+                >
+                  Home
+                </Button>
+                <div className="text-sm text-gray-600">
+                  {currentPath.split("/").filter(Boolean).map((part, idx, arr) => (
+                    <span key={idx}>
+                      {" / "}
+                      <button
+                        onClick={async () => {
+                          const targetPath = "/" + arr.slice(0, idx + 1).join("/");
+                          navigate("/home" + targetPath)
+                        }}
+                        className="hover:underline"
+                      >
+                        {part}
+                      </button>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
+
 
             {/* Table Wrapper */}
             <div className="w-full">
@@ -121,22 +154,21 @@ export default function HomePage() {
               <Table className="w-full border-collapse">
                 <TableHeader className="sticky top-0 z-10">
                   <TableRow>
-                    <TableHead className="lg:w-[600px]">
+                    <TableHead className="w-full lg:w-3/5">
                       <Button variant="ghost" className="p-0 h-auto font-semibold">
-                        Name <ChevronDown className="ml-1 h-3 w-3" />
+                        Name
                       </Button>
                     </TableHead>
-                    <TableHead className="hidden lg:flex text-right">
-                      <Button variant="ghost" className="p-0 h-auto font-semibold">
+                    <TableHead className="hidden lg:table-cell lg:w-1/5 text-right">
+                      <Button variant="ghost" className="p-0 pr-3 h-auto font-semibold">
                         Size
                       </Button>
                     </TableHead>
-                    <TableHead className="hidden lg:flex text-right">
+                    <TableHead className="hidden lg:table-cell lg:w-1/5 text-right">
                       <Button variant="ghost" className="p-0 h-auto font-semibold">
                         Last Modified
                       </Button>
                     </TableHead>
-                    <TableHead className="w-[50px]"></TableHead>
                   </TableRow>
                 </TableHeader>
               </Table>
@@ -168,22 +200,32 @@ export default function HomePage() {
                               ) : (
                                 <File className="h-5 w-5 text-gray-400 shrink-0" />
                               )}
-                              <span className="text-left font-normal truncate block w-full">
+                              <span className="hidden lg:block text-left font-normal truncate w-full">
                                 {file.name}
                               </span>
+
+                              {file.type === "dir" ? (
+                                <div className="lg:hidden flex-col text-left font-normal truncate w-full">
+                                  <div className="py-2 font-normal">{file.name}</div>
+                                </div>
+                              ) : (
+                                <div className="lg:hidden flex-col text-left font-normal truncate w-full">
+                                  <div className="font-normal">{file.name}</div>
+                                  <div className="text-sm font-normal text-gray-400">{formatBytes(file.size)}</div>
+                                </div>
+                              )}
                             </div>
                           </TableCell>
                           {file.type === "dir" ? (
-                            <TableCell className="text-right"></TableCell>
+                            <TableCell className="hidden lg:table-cell lg:w-1/5 text-right"></TableCell>
                           ) : (
-                            <TableCell className="hidden lg:flex text-right">
+                            <TableCell className="hidden lg:table-cell lg:w-1/5 text-right">
                               {formatBytes(file.size)}
                             </TableCell>
                           )}
-                          <TableCell className="hidden lg:flex text-right">
+                          <TableCell className="hidden lg:table-cell lg:w-1/5 text-right">
                             {formatLastModified(file.modified)}
                           </TableCell>
-                          <TableCell className="w-[50px]"></TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -196,10 +238,9 @@ export default function HomePage() {
       </div>
       {selectedVideo && (
         <VideoPlayerModal
-          fileId={selectedVideo.name}
-          url={selectedVideo.url}
+          file={selectedVideo}
           isOpen={!!selectedVideo}
-          onClose={() => setSelectedVideo(null)} // Close modal by clearing state
+          onClose={handlePlayerClose} // Close modal by clearing state
         />
       )}
     </DefaultLayout>

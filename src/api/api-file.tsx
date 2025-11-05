@@ -1,26 +1,18 @@
 import axiosPublic from './axiosPublic';   // axios instance WITHOUT token
 
-export interface Video {
-    file_name: string;
-    path: string;
-    thumbnail: string;
-    url: string;
-    size: number;
-    modified_time: string;
-}
-
 export interface ItemsResponse {
-    items: FileInterface[];
-    path: string;
+  items: FileInterface[];
+  path: string;
 }
 
 export interface FileInterface {
-    modified: string;
-    name: string;
-    size: number;
-    type: 'file' | 'dir';
-    url: string;
-    isVideo: boolean;
+  modified: string;
+  name: string;
+  size: number;
+  type: 'file' | 'dir';
+  url: string;
+  isVideo: boolean;
+  path: string;
 }
 
 // Get user data (depreciated)
@@ -47,5 +39,30 @@ export const fetchDirList = async (path: string = "/"): Promise<ItemsResponse> =
     console.error("Failed to fetch file list:", error);
     throw error;
   }
+};
+
+export const postDisqualified = async (filePath: string) => {
+  const rs = await axiosPublic.post(
+    "/files/disqualified",
+    { path: filePath }, // request body
+    {
+      headers: { "Content-Type": "application/json" },
+    }
+  );
+
+  return rs.data;
+};
+
+export const renameFileMoveToDone = async (filePath: string, name: string) => {
+
+  const rs = await axiosPublic.post(
+    "/files/rename-done",
+    {
+      path: filePath,
+      newName: name
+    },
+    { headers: { "Content-Type": "application/json" } }
+  );
+  return rs.data;
 };
 

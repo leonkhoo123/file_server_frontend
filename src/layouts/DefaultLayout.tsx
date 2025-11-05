@@ -8,7 +8,7 @@ export default function DefaultLayout({
 }) {
   return (
     <div className="flex flex-col min-h-screen p-0">
-      <main className="mobile-view sm:shadow-2xl grow">
+      <main className="sm:shadow-2xl grow">
         {children}
       </main>
     </div>

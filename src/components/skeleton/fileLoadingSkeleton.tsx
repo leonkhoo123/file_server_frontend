@@ -12,25 +12,13 @@ export const FileListTableSkeleton: React.FC = () => {
   return (
     <div className="overflow-hidden border-none rounded-lg bg-white shadow-none">
       <Table>
-        
-        {/* === Table Header (Static) === */}
-        {/* The header is usually rendered fully even during loading */}
-        <TableHeader className="bg-white z-10 border-b">
-          <TableRow>
-            <TableHead className="w-[45%] lg:w-[400px] pl-4">Name</TableHead>
-            <TableHead className="text-right w-[15%]">Size</TableHead>
-            <TableHead className="text-right w-[20%]">Last Modified</TableHead>
-            <TableHead className="w-[5%]"></TableHead>
-          </TableRow>
-        </TableHeader>
-
         {/* === Table Body (Skeleton Rows) === */}
         <TableBody>
           {skeletonItems.map((_, index) => (
             <TableRow key={index} className="animate-pulse">
               
               {/* Name Column */}
-              <TableCell className="py-3">
+              <TableCell className="py-3 w-[600px]">
                 <div className="flex items-center space-x-3">
                   {/* Icon Placeholder */}
                   <Skeleton className="h-5 w-5 rounded-sm" /> 

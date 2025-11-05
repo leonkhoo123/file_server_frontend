@@ -1,6 +1,6 @@
 import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 
 // Define how many rows the skeleton should display
 const SKELETON_ROWS = 10;

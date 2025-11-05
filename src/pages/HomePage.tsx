@@ -1,4 +1,4 @@
-import { File, Folder, ChevronDown, RefreshCcw } from "lucide-react";
+import { File, Folder, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -9,7 +9,7 @@ import { useState, useEffect } from 'react';
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
 import { formatBytes, formatLastModified } from "@/utils/utils";
 import VideoPlayerModal from "@/components/custom/videoPlayerModal";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 
 

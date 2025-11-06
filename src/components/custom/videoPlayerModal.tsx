@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import {
   Play,
   Pause,
-  Maximize,
   Zap,
   SkipBack,
   SkipForward,
@@ -35,7 +34,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [disqualified, setDisqualified] = useState<boolean>(false);
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [tempName, setTempName] = useState<string>("");
-
+  const [bufferedProgress, setBufferedProgress] = useState(0); // Percentage
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -67,16 +66,31 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       setProgress((video.currentTime / video.duration) * 100);
     };
 
+    // --- New Handler for Buffered Progress ---
+    const handleProgress = () => {
+      if (!video.duration || video.buffered.length === 0) return;
+
+      // The 'buffered' property is a TimeRanges object.
+      // We want the end time of the *last* buffered range.
+      const lastBufferedTime = video.buffered.end(video.buffered.length - 1);
+      const bufferedPercent = (lastBufferedTime / video.duration) * 100;
+      setBufferedProgress(bufferedPercent);
+    };
+    // ----------------------------------------
+
     video.addEventListener("play", handlePlay);
     video.addEventListener("pause", handlePause);
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
     video.addEventListener("timeupdate", handleTimeUpdate);
+    video.addEventListener("buffered", handleTimeUpdate);
+    video.addEventListener("progress", handleProgress);
 
     return () => {
       video.removeEventListener("play", handlePlay);
       video.removeEventListener("pause", handlePause);
       video.removeEventListener("loadedmetadata", handleLoadedMetadata);
       video.removeEventListener("timeupdate", handleTimeUpdate);
+      video.removeEventListener("progress", handleProgress);
     };
   }, []);
 
@@ -118,13 +132,6 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     setDisqualified(!disqualified);
   };
 
-  const handleFullscreen = useCallback(() => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (document.fullscreenElement) document.exitFullscreen();
-    else video.requestFullscreen().catch(console.warn);
-  }, []);
-
   // --- Rename Modal Logic ---
   const openRenameModal = () => {
     setTempName(newName);
@@ -164,46 +171,14 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   return (
     <div className="fixed inset-0 z-10 bg-black">
       <div className="flex items-center justify-center bg-black h-full">
+
+        {/*video element */}
         <video
+          preload="auto"
           ref={videoRef}
           controls={false}
           autoPlay
           className="max-h-[calc(100vh)] max-w-full object-contain"
-          onMouseDown={() => {
-            const video = videoRef.current;
-            if (video) {
-              video.playbackRate = 2.0;
-              setPlaybackRate(2.0);
-            }
-          }}
-          onMouseUp={() => {
-            const video = videoRef.current;
-            if (video) {
-              video.playbackRate = 1.0;
-              setPlaybackRate(1.0);
-            }
-          }}
-          onMouseLeave={() => {
-            const video = videoRef.current;
-            if (video) {
-              video.playbackRate = 1.0;
-              setPlaybackRate(1.0);
-            }
-          }}
-          onTouchStart={() => {
-            const video = videoRef.current;
-            if (video) {
-              video.playbackRate = 2.0;
-              setPlaybackRate(2.0);
-            }
-          }}
-          onTouchEnd={() => {
-            const video = videoRef.current;
-            if (video) {
-              video.playbackRate = 1.0;
-              setPlaybackRate(1.0);
-            }
-          }}
         />
       </div>
 
@@ -228,19 +203,28 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         )}
       </div>
 
-      {/* --- Progress Bar --- */}
+      {/* --- Progress Bar ---*/}
       <div
         className="absolute bottom-0 w-full h-2 bg-gray-700 cursor-pointer"
         onClick={handleSeek}
       >
+        {/* 💡 1. Buffered Progress (White) */}
         <div
-          className="h-2 bg-blue-500 transition-all"
+          className="h-2 bg-white/20 absolute top-0 left-0 transition-all"
+          // You will need a state variable, e.g., 'bufferedProgress', to set this width
+          style={{ width: `${bufferedProgress}%` }}
+        />
+
+        {/* ✅ 2. Main Current Time Progress (Blue) */}
+        <div
+          className="h-2 bg-blue-500 transition-all absolute top-0 left-0"
           style={{ width: `${progress}%` }}
         />
       </div>
 
       {/* --- Control Bar --- */}
       <div className="absolute bottom-1/8 right-0 p-2 bg-transparent rounded-md flex flex-col items-center justify-center sm:w-[100px] w-[70px] space-y-2">
+        {/* back 1 sec */}
         <Button
           variant="ghost"
           onClick={() => skip(-1)}
@@ -249,6 +233,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <SkipBack className="h-4 w-4 mr-1" /> 1s
         </Button>
 
+        {/* forward 3 sec */}
         <Button
           variant="ghost"
           onClick={() => skip(3)}
@@ -257,6 +242,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           3s <SkipForward className="h-4 w-4 ml-1" />
         </Button>
 
+        {/* forward 1 sec */}
         <Button
           variant="ghost"
           onClick={() => skip(1)}
@@ -265,6 +251,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           1s <SkipForward className="h-4 w-4 ml-1" />
         </Button>
 
+        {/* speed x2  */}
         <Button
           variant="ghost"
           onClick={() => changeSpeed(playbackRate !== 1.0 ? 1.0 : 2.0)}
@@ -274,6 +261,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           {playbackRate !== 1.0 ? "x1" : "x2"}
         </Button>
 
+        {/* speed x3 */}
         <Button
           variant="ghost"
           onClick={() => changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0)}
@@ -283,6 +271,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           {playbackRate !== 1.0 ? "x1" : "x3"}
         </Button>
 
+        {/* play/pause */}
         <div className="text-sm text-white">{playbackRate.toFixed(1)}x</div>
         <Button
           variant="ghost"
@@ -307,6 +296,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <TextCursorInput className="h-5 w-5" />
         </Button>
 
+        {/* --- disqualified Button --- */}
         <Button
           variant="ghost"
           size="icon"
@@ -316,6 +306,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <ListX className="h-5 w-5" />
         </Button>
 
+        {/* --- close --- */}
         <Button
           variant="ghost"
           size="icon"
@@ -325,46 +316,47 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <LogOut className="h-5 w-5" />
         </Button>
 
-        <Button
+        {/* --- close --- */}
+        {/* <Button
           variant="ghost"
           size="icon"
           onClick={handleFullscreen}
           className="hover:bg-white/80 w-full bg-white/30 mt-10"
         >
           <Maximize className="h-5 w-5" />
-        </Button>
+        </Button> */}
       </div>
 
       {/* --- Rename Modal --- */}
       {showRenameModal && (
         <div className="absolute inset-0 bg-black/70 flex items-center justify-center">
-          <div className="bg-white rounded-lg p-4 w-full max-w-5xl shadow-lg text-black">
+          <div className="bg-white/70 rounded-md p-4 w-full max-w-5xl shadow-lg text-black mx-2">
             <h3 className="font-semibold mb-2">Rename File</h3>
             <input
               type="text"
               value={tempName}
               onChange={(e) => setTempName(e.target.value)}
-              className="w-full border p-2 rounded mb-4"
+              className="w-full border-2 border-white/30 p-2 rounded mb-4"
               placeholder="New Video Name"
               autoFocus
             />
             <div className="flex justify-between">
               <Button
                 onClick={handleRenameDefault}
-                className="bg-gray-200 hover:bg-gray-300 text-black"
+                className="bg-gray-200/80 hover:bg-gray-300 text-black"
               >
                 Default
               </Button>
               <div className="space-x-2">
                 <Button
                   onClick={handleRenameCancel}
-                  className="bg-gray-300 hover:bg-gray-400 text-black"
+                  className="bg-gray-300/80 hover:bg-gray-400 text-black"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleRenameSave}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  className="bg-blue-500/80 hover:bg-blue-600 text-white"
                 >
                   Save
                 </Button>

@@ -11,6 +11,7 @@ import { formatBytes, formatLastModified } from "@/utils/utils";
 import VideoPlayerModal from "@/components/custom/videoPlayerModal";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { toast } from "sonner";
 
 
 // --- Main Component ---
@@ -45,16 +46,21 @@ export default function HomePage() {
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
         setCurrentPath(itemsrs.path);
-      } catch (err) {
+      } catch (err:any) {
+        console.error("MyErr: ",err);
+        console.error("err.message: ",err.message);
+        console.error(" err.response.status: ", err.response.status);
+        if (err && err.response && err.response.status === 401) {
+          navigate("/login");
+        }
         setError(true);
-        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
 
     loadFiles();
-  }, [location]);
+  }, [location,navigate]);
 
 
   if (error) {
@@ -72,10 +78,12 @@ export default function HomePage() {
         await postDisqualified(oriPath)
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
+        toast.success("Video Disqualified");
       } else if (isNewName) {
         await renameFileMoveToDone(oriPath, newName)
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
+        toast.success("Video Rename Done");
       }
     } catch (error) {
       console.error("Failed to move or rename file:", error);

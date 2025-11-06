@@ -3,6 +3,9 @@ import { ThemeProvider } from './components/theme-provider'
 import HomePage from './pages/HomePage'
 import { Route, Routes } from "react-router-dom";
 import IndexPage from './pages/IndexPage';
+import NotFoundPage from './pages/PageNotFound';
+import LoginPage from './pages/LoginPage';
+import { SonnerToastCustom } from './components/custom/soonerToast';
 
 function App() {
 
@@ -10,10 +13,16 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <Routes>
         <Route element={<IndexPage />} path="/" />
-        <Route element={<HomePage />} path="/home"/>
-        <Route element={<HomePage />} path="/home/*"/>
+        <Route element={<HomePage />} path="/home" />
+        <Route element={<HomePage />} path="/home/*" />
+        <Route element={<LoginPage />} path="/login" />
 
+
+
+
+        <Route element={<NotFoundPage />} path="*" />
       </Routes>
+      <SonnerToastCustom />
     </ThemeProvider>
   )
 }

@@ -1,4 +1,4 @@
-import axiosPublic from './axiosPublic';   // axios instance WITHOUT token
+import axiosLayer from './axiosLayer';   // axios instance WITHOUT token
 
 export interface ItemsResponse {
   items: FileInterface[];
@@ -15,47 +15,33 @@ export interface FileInterface {
   path: string;
 }
 
-// Get user data (depreciated)
-// export const fetchVideoList = async (): Promise<Video[]> => {
-//     const rs = await axiosPublic.get('/video/video-list', {
-//         headers: { 'Accept': 'application/json' },
-//     });
-//     return rs.data.video || []
-// };
-
 
 export const fetchDirList = async (path: string = "/"): Promise<ItemsResponse> => {
-  try {
     // Clean up path formatting (avoid duplicate slashes)
     const cleanPath = path.trim() === "" ? "/" : path;
 
-    const rs = await axiosPublic.get("/files/file-list", {
+    const rs = await axiosLayer.get("/files/file-list", {
       params: { path: cleanPath },
       headers: { "Accept": "application/json" },
     });
 
     return rs.data;
-  } catch (error) {
-    console.error("Failed to fetch file list:", error);
-    throw error;
-  }
 };
 
 export const postDisqualified = async (filePath: string) => {
-  const rs = await axiosPublic.post(
+  const rs = await axiosLayer.post(
     "/files/disqualified",
     { path: filePath }, // request body
     {
       headers: { "Content-Type": "application/json" },
     }
   );
-
   return rs.data;
 };
 
 export const renameFileMoveToDone = async (filePath: string, name: string) => {
 
-  const rs = await axiosPublic.post(
+  const rs = await axiosLayer.post(
     "/files/rename-done",
     {
       path: filePath,

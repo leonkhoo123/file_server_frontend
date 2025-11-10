@@ -13,7 +13,9 @@ try {
   console.warn('⚠️ Git hash not found — using "dev" version tag')
 }
 // const buildDate = new Date().toISOString().split('T')[0]
-const buildTime = new Date().toISOString()
+const now = new Date()
+const gmt8Time = new Date(now.getTime() + 8 * 60 * 60 * 1000) // add 8 hours
+const buildTime = gmt8Time.toISOString().replace('T', ' ').split('.')[0] // "YYYY-MM-DD HH:MM:SS"
 
 const appVersion = `${buildTime}-${commitHash}`
 

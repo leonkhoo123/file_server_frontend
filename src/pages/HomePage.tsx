@@ -1,7 +1,6 @@
 import { File, Folder, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ModeToggle } from "@/components/mode-toggle";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import { fetchDirList, type ItemsResponse, type FileInterface, postDisqualified, renameFileMoveToDone } from "@/api/api-file";
 // --- Main Component ---
@@ -98,13 +97,7 @@ export default function HomePage() {
         {/* Assuming Sidebar is now part of DefaultLayout or excluded for simplicity */}
 
         <div className="flex flex-col flex-1">
-          {/* 2. Header (Navbar) */}
-          <header className="flex h-16 items-center justify-between border-b px-4 lg:px-6 shrink-0">
-            <div className="flex items-center space-x-4">
-              <h1 className="text-xl font-bold">Cloud Drive</h1>
-            </div>
-            <ModeToggle></ModeToggle>
-          </header>
+
 
           {/* 3. Main Content Area */}
           <main className="flex-col p-6 overflow-auto h-full">
@@ -202,7 +195,7 @@ export default function HomePage() {
                           onClick={() => handleFileClick(file)}
                           className="group hover:bg-gray-50 dark:hover:bg-gray-500 cursor-pointer"
                         >
-                          <TableCell className="font-medium py-3 lg:w-[600px] lg:max-w-[600px] overflow-hidden">
+                          <TableCell className="font-medium py-3 lg:w-3/5 overflow-hidden">
                             <div className="flex items-center space-x-3">
                               {file.type === "dir" ? (
                                 <Folder className="h-5 w-5 text-blue-500 shrink-0" />

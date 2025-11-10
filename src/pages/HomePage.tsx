@@ -47,9 +47,9 @@ export default function HomePage() {
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
         setCurrentPath(itemsrs.path);
-      } catch (err:any) {
-        console.error("MyErr: ",err);
-        console.error("err.message: ",err.message);
+      } catch (err: any) {
+        console.error("MyErr: ", err);
+        console.error("err.message: ", err.message);
         console.error(" err.response.status: ", err.response.status);
         if (err && err.response && err.response.status === 401) {
           navigate("/login");
@@ -61,7 +61,7 @@ export default function HomePage() {
     };
 
     loadFiles();
-  }, [location,navigate]);
+  }, [location, navigate]);
 
 
   if (error) {
@@ -100,8 +100,9 @@ export default function HomePage() {
         <div className="flex flex-col flex-1">
           {/* 3. Main Content Area */}
           <main className="flex-col p-6 overflow-auto h-full">
-            <div className="flex not-last:flex-row w-full">
-              {/*refresh button */}
+            {/* Toolbar */}
+            <div className="flex flex-row w-full mb-2">
+              {/* Refresh button */}
               <Button
                 variant="ghost"
                 size="sm"
@@ -116,27 +117,25 @@ export default function HomePage() {
               >
                 <RefreshCcw />
               </Button>
-              {/* navigation */}
-              <div className="w-full flex justify-start items-center bg-gray-200 px-2 rounded-md mb-2">
-                {/* Home button */}
+
+              {/* Navigation path */}
+              <div className="w-full flex justify-start items-center bg-gray-200 px-2 rounded-md">
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={async () => {
-                    navigate("/home")
-                  }}
+                  onClick={() => navigate("/home")}
                   className="p-1 bg-transparent hover:bg-transparent hover:underline dark:text-black dark:hover:bg-transparent"
                 >
                   Home
                 </Button>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600 truncate">
                   {currentPath.split("/").filter(Boolean).map((part, idx, arr) => (
                     <span key={idx}>
                       {" / "}
                       <button
-                        onClick={async () => {
+                        onClick={() => {
                           const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                          navigate("/home" + targetPath)
+                          navigate("/home" + targetPath);
                         }}
                         className="hover:underline"
                       >
@@ -148,94 +147,72 @@ export default function HomePage() {
               </div>
             </div>
 
-
-            {/* Table Wrapper */}
-            <div className="w-full">
-              {/* Header Table */}
-              <Table className="w-full border-collapse">
-                <TableHeader className="sticky top-0 z-10">
-                  <TableRow>
-                    <TableHead className="w-full lg:w-3/5">
-                      <Button variant="ghost" className="p-0 h-auto font-semibold">
-                        Name
-                      </Button>
-                    </TableHead>
-                    <TableHead className="hidden lg:table-cell lg:w-1/5 text-right">
-                      <Button variant="ghost" className="p-0 pr-3 h-auto font-semibold">
-                        Size
-                      </Button>
-                    </TableHead>
-                    <TableHead className="hidden lg:table-cell lg:w-1/5 text-right">
-                      <Button variant="ghost" className="p-0 h-auto font-semibold">
-                        Last Modified
-                      </Button>
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-              </Table>
+            {/* Header */}
+            <div className="grid grid-cols-12 border-b font-semibold py-2 px-2 text-sm sticky top-0 z-10">
+              <div className="col-span-12 lg:col-span-6 text-left">Name</div>
+              <div className="col-span-3 hidden lg:block text-right pr-3">Size</div>
+              <div className="col-span-3 hidden lg:block text-right pr-4">Last Modified</div>
             </div>
+
+            {/* Content */}
             {isLoading ? (
               <FileListTableSkeleton />
             ) : error ? (
               <p className="text-center text-red-500 mt-10">Failed to load directory.</p>
             ) : !items || !items.items || items.items.length === 0 ? (
-              <p className="text-center text-gray-500 mt-10">
-                This folder is empty.
-              </p>
+              <p className="text-center text-gray-500 mt-10">This folder is empty.</p>
             ) : (
-              <>
-                {/* Scrollable Body */}
-                <div className="max-h-[calc(100vh-200px)] lg:max-h-[calc(100vh-250px)] overflow-y-auto">
-                  <Table className="w-full border-collapse">
-                    <TableBody>
-                      {items.items.map((file, index) => (
-                        <TableRow
-                          key={index}
-                          onClick={() => handleFileClick(file)}
-                          className="group hover:bg-gray-50 dark:hover:bg-gray-500 cursor-pointer"
-                        >
-                          <TableCell className="font-medium py-3 lg:w-3/5 overflow-hidden">
-                            <div className="flex items-center space-x-3">
-                              {file.type === "dir" ? (
-                                <Folder className="h-5 w-5 text-blue-500 shrink-0" />
-                              ) : (
-                                <File className="h-5 w-5 text-gray-400 shrink-0" />
-                              )}
-                              <span className="hidden lg:block text-left font-normal truncate w-full">
-                                {file.name}
-                              </span>
-
-                              {file.type === "dir" ? (
-                                <div className="lg:hidden flex-col text-left font-normal truncate w-full">
-                                  <div className="py-2 font-normal">{file.name}</div>
-                                </div>
-                              ) : (
-                                <div className="lg:hidden flex-col text-left font-normal truncate w-full">
-                                  <div className="font-normal">{file.name}</div>
-                                  <div className="text-sm font-normal text-gray-400">{formatBytes(file.size)}</div>
-                                </div>
-                              )}
+              <div className="max-h-[calc(100vh-200px)] scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/30 dark:scrollbar-thumb-white/30 scrollbar-track-white/0 overflow-y-scroll">
+                {items.items.map((file, index) => (
+                  <>
+                    <div
+                      key={index}
+                      onClick={() => handleFileClick(file)}
+                      className="group grid grid-cols-12 items-center px-2 py-3 hover:bg-gray-500/20 cursor-pointer rounded-md"
+                    >
+                      {/* NAME */}
+                      <div className="col-span-12 lg:col-span-6 flex items-center space-x-3 min-w-0">
+                        {file.type === "dir" ? (
+                          <div className="flex flex-row space-x-3 py-2 lg:py-0">
+                            <Folder className="h-5 w-5 text-blue-500 shrink-0" />
+                            <div className="flex flex-col min-w-0 w-full text-left">
+                              <span className="truncate">{file.name}</span>
                             </div>
-                          </TableCell>
-                          {file.type === "dir" ? (
-                            <TableCell className="hidden lg:table-cell lg:w-1/5 text-right"></TableCell>
-                          ) : (
-                            <TableCell className="hidden lg:table-cell lg:w-1/5 text-right">
-                              {formatBytes(file.size)}
-                            </TableCell>
-                          )}
-                          <TableCell className="hidden lg:table-cell lg:w-1/5 text-right">
-                            {formatLastModified(file.modified)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              </>
+                          </div>
+                        ) : (
+                          <>
+                            <File className="h-5 w-5 text-gray-400 shrink-0" />
+                            <div className="flex flex-col min-w-0 w-full text-left">
+                              <span className="truncate">{file.name}</span>
+
+                              <span className="text-sm text-gray-400 lg:hidden truncate">
+                                {formatBytes(file.size)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+
+                      </div>
+
+                      {/* SIZE (desktop only) */}
+                      <div className="hidden lg:block lg:col-span-3 text-right text-sm ">
+                        {file.type === "dir" ? "" : formatBytes(file.size)}
+                      </div>
+
+                      {/* LAST MODIFIED (desktop only) */}
+                      <div className="hidden lg:block lg:col-span-3 text-right text-sm">
+                        {formatLastModified(file.modified)}
+                      </div>
+
+                    </div>
+                    <div className="w-full border-b border-gray-300 dark:border-white/20" />
+                  </>
+                ))}
+              </div>
             )}
           </main>
         </div>
+
       </div>
       {selectedVideo && (
         <VideoPlayerModal

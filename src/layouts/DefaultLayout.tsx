@@ -34,6 +34,7 @@ export default function DefaultLayout({
             ><RefreshCcw className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all" /></Button>
             <ModeToggle></ModeToggle>
           </div>
+
         </header>
         {children}
       </main>

@@ -97,8 +97,6 @@ export default function HomePage() {
         {/* Assuming Sidebar is now part of DefaultLayout or excluded for simplicity */}
 
         <div className="flex flex-col flex-1">
-
-
           {/* 3. Main Content Area */}
           <main className="flex-col p-6 overflow-auto h-full">
             <div className="flex not-last:flex-row w-full">

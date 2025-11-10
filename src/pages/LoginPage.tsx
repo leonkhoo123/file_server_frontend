@@ -35,7 +35,7 @@ const LoginPage: React.FC = () => {
 
   return (
     <DefaultLayout>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex justify-center items-center p-4">
+      <div className="flex justify-center items-center p-4 min-h-[calc(100vh-4rem)]">
 
         {/* The max-w-md and w-full make the card responsive:
         - On mobile/small screens, it takes the full width (w-full).

@@ -8,6 +8,7 @@ import { registerSW } from 'virtual:pwa-register'
 
 const updateSW = registerSW({
   onNeedRefresh() {
+    console.log("New version avaliable")
     toast.message('New version available', {
       description: 'Click to reload the app.',
       action: {

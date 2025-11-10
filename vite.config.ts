@@ -1,10 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import path from "path"
-import tailwindcss from "@tailwindcss/vite"
+import path from 'path'
+import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'child_process'
 
+// Generate version info from Git + build date
+let commitHash = 'dev'
+try {
+  commitHash = execSync('git rev-parse --short HEAD').toString().trim()
+} catch {
+  console.warn('⚠️ Git hash not found — using "dev" version tag')
+}
+// const buildDate = new Date().toISOString().split('T')[0]
+const buildTime = new Date().toISOString()
+
+const appVersion = `${buildTime}-${commitHash}`
+
+// Vite configuration
 export default defineConfig({
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion), // available globally in app
+  },
   plugins: [
     react({
       babel: {
@@ -13,7 +30,7 @@ export default defineConfig({
     }),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate', // detects new version automatically
+      registerType: 'autoUpdate',
       devOptions: {
         enabled: true,
       },
@@ -27,22 +44,22 @@ export default defineConfig({
         theme_color: '#ffffff',
         icons: [
           {
-            src: "/images/logo-removebg-preview.png",
-            sizes: "192x192",
-            type: "image/png"
+            src: '/images/logo-removebg-preview.png',
+            sizes: '192x192',
+            type: 'image/png',
           },
           {
-            src: "/images/logo-removebg-preview.png",
-            sizes: "512x512",
-            type: "image/png"
-          }
+            src: '/images/logo-removebg-preview.png',
+            sizes: '512x512',
+            type: 'image/png',
+          },
         ],
       },
     }),
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      '@': path.resolve(__dirname, './src'),
     },
   },
 })

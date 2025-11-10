@@ -12,6 +12,7 @@ import VideoPlayerModal from "@/components/custom/videoPlayerModal";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
+import VersionTag from "@/components/custom/versionTag";
 
 
 // --- Main Component ---
@@ -251,6 +252,7 @@ export default function HomePage() {
           onClose={handlePlayerClose} // Close modal by clearing state
         />
       )}
+      <VersionTag />
     </DefaultLayout>
 
   );

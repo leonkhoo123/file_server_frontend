@@ -11,6 +11,7 @@ import {
 import { login } from '@/api/api-auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import VersionTag from '@/components/custom/versionTag';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -84,8 +85,9 @@ const LoginPage: React.FC = () => {
 
           </form>
         </CardContent>
-
+        <VersionTag/>
       </Card>
+
     </div>
   );
 };

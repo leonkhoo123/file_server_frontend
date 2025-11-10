@@ -203,7 +203,7 @@ export default function HomePage() {
                       </div>
 
                     </div>
-                    <div className="w-full border-b border-gray-300 dark:border-white/20" />
+                    <div className="w-full border-b" />
                   </>
                 ))}
               </div>

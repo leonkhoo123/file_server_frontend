@@ -199,7 +199,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {isNewName ? (
           <span className="ml-3 text-green-500 font-bold">{newName}</span>
         ) : (
-          ""
+          <span className="ml-3 text-white/40 font-bold">{file.name}</span>
         )}
       </div>
 

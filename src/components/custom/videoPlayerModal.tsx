@@ -51,19 +51,19 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       const video = videoRef.current;
       if (video) {
         video.src = file.url;
-        video.play().catch(() => setIsPlaying(false));
+        video.play().catch(() => { setIsPlaying(false); });
       }
     }, 100);
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, [isOpen, file.url]);
 
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleLoadedMetadata = () => setDuration(video.duration || 0);
+    const handlePlay = () => { setIsPlaying(true); };
+    const handlePause = () => { setIsPlaying(false); };
+    const handleLoadedMetadata = () => { setDuration(video.duration || 0); };
     const handleTimeUpdate = () => {
       if (!video.duration) return;
       setCurrentTime(video.currentTime);
@@ -102,7 +102,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) video.pause();
-    else video.play();
+    else void video.play();
   }, [isPlaying]);
 
   const skip = useCallback((seconds: number) => {
@@ -155,7 +155,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     setShowRenameModal(true);
   };
 
-  const handleRenameCancel = () => setShowRenameModal(false);
+  const handleRenameCancel = () => { setShowRenameModal(false); };
 
   const handleRenameSave = () => {
     let finalName = tempName.trim();
@@ -184,6 +184,93 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   };
 
   if (!isOpen) return null;
+
+
+  {/* keyboard listener */ }
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const handleKeyPress = useCallback((event: KeyboardEvent) => {
+
+    // The key property returns the character pressed
+    const key: string = event.key;
+    // shiftKey property is a boolean indicating if Shift was held
+    const isShift: boolean = event.shiftKey;
+
+    let actionDescription = '';
+
+    switch (key) {
+      case 'ArrowLeft':
+        if (showRenameModal) {
+          return; //dont do anything in rename
+        }
+        if (isShift) {
+          actionDescription = 'skip(-3)';
+          skip(-3)
+        } else {
+          actionDescription = 'skip(-1)';
+          skip(-1)
+        }
+        break;
+
+      case 'ArrowRight':
+        if (showRenameModal) {
+          return; //dont do anything in rename
+        }
+        if (isShift) {
+          actionDescription = 'skip(3)';
+          skip(3)
+        } else {
+          actionDescription = 'skip(1)';
+          skip(1)
+        }
+        break;
+
+      case ' ': // Spacebar
+        if (showRenameModal) {
+          return; //dont do anything in rename
+        }
+        actionDescription = 'togglePlay';
+        togglePlay()
+        break;
+
+      case 'Enter':
+        if (showRenameModal) {
+          actionDescription = 'handleRenameSave';
+          handleRenameSave()
+        }
+        break;
+
+      case 'Escape':
+        if (showRenameModal) {
+          actionDescription = 'handleRenameCancel';
+          handleRenameCancel()
+        } else {
+          actionDescription = 'onClose(false, file.path, false, newName, 0)';
+          //discard changes
+          onClose(false, file.path, false, newName, 0)
+        }
+        break;
+      default:
+        // Ignore other keys
+        return;
+    }
+
+    // Prevent default browser actions for navigation/scrolling keys when not editing name
+    if (!showRenameModal && (key === 'ArrowLeft' || key === 'ArrowRight' || key === ' ')) {
+      event.preventDefault();
+    }
+    console.log(`Key Pressed: ${actionDescription}`);
+
+  }, [showRenameModal, skip, togglePlay, handleRenameSave, handleRenameCancel, onClose]); 
+  // The dependency array is empty, ensuring the function is stable
+
+  useEffect(() => {
+    // Add the keydown listener to the document
+    document.addEventListener('keydown', handleKeyPress as (e: Event) => void);
+    // Cleanup: Remove the event listener when the component unmounts
+    return () => {
+      document.removeEventListener('keydown', handleKeyPress as (e: Event) => void);
+    };
+  }, [handleKeyPress]);
 
   return (
     <div className="fixed inset-0 z-10 bg-black">
@@ -253,7 +340,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {/* back 1 sec */}
         <Button
           variant="ghost"
-          onClick={() => skip(-1)}
+          onClick={() => { skip(-1); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <SkipBack className="h-4 w-4 mr-1" /> 1s
@@ -262,7 +349,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {/* forward 3 sec */}
         <Button
           variant="ghost"
-          onClick={() => skip(3)}
+          onClick={() => { skip(3); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           3s <SkipForward className="h-4 w-4 ml-1" />
@@ -271,7 +358,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {/* forward 1 sec */}
         <Button
           variant="ghost"
-          onClick={() => skip(1)}
+          onClick={() => { skip(1); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           1s <SkipForward className="h-4 w-4 ml-1" />
@@ -280,7 +367,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {/* speed x2  */}
         <Button
           variant="ghost"
-          onClick={() => changeSpeed(playbackRate !== 1.0 ? 1.0 : 2.0)}
+          onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 2.0); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
@@ -290,7 +377,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {/* speed x3 */}
         <Button
           variant="ghost"
-          onClick={() => changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0)}
+          onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
@@ -346,7 +433,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onClose(disqualified, file.path, isNewName, newName, rotation)}
+          onClick={() => { onClose(disqualified, file.path, isNewName, newName, rotation); }}
           className="hover:bg-white/80 w-full bg-white/30 mt-5"
         >
           <LogOut className="h-5 w-5" />
@@ -371,7 +458,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
             <input
               type="text"
               value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
+              onChange={(e) => { setTempName(e.target.value); }}
               className="w-full border-2 border-white/30 p-2 rounded mb-4"
               placeholder="New Video Name"
               autoFocus

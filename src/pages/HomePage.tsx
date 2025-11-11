@@ -25,16 +25,17 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   // Function to handle a row click
-  const handleFileClick = async (fileInfo: FileInterface) => {
+  const handleFileClick = (fileInfo: FileInterface) => {
     if (fileInfo.isVideo) {
       setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
-      navigate("/home" + newPath)
+      void navigate("/home" + newPath)
     }
   };
 
   useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     if (!location) return;
 
     const loadFiles = async () => {
@@ -48,10 +49,13 @@ export default function HomePage() {
         setCurrentPath(itemsrs.path);
       } catch (err: any) {
         console.error("MyErr: ", err);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         console.error("err.message: ", err.message);
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         console.error(" err.response.status: ", err.response.status);
-        if (err && err.response && err.response.status === 401) {
-          navigate("/login");
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+        if (err?.response?.status === 401) {
+          void navigate("/login");
         }
         setError(true);
       } finally {
@@ -59,10 +63,10 @@ export default function HomePage() {
       }
     };
 
-    loadFiles();
+    void loadFiles();
   }, [location, navigate]);
 
-  const handlePlayerClose = async (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string, rotation: number) => {
+  const handlePlayerClose = async (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string, rotation: number): Promise<void> => {
     setSelectedVideo(null);
     try {
       if (isDisqualified) {
@@ -94,8 +98,27 @@ export default function HomePage() {
     } catch (error: any) {
       setError(true);
       toast.error("Failed to Clean Up");
-      console.log("Failed to remove rotate_temp",error);
-    } finally{
+      console.log("Failed to remove rotate_temp", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const handleRefresh = async () => {
+    setIsLoading(true);
+    setError(false);
+    try {
+      const itemsrs = await fetchDirList(currentPath);
+      setItems(itemsrs);
+    } catch (err: any) {
+      console.error("MyErr: ", err);
+      console.error("err.message: ", err.message);
+      console.error(" err.response.status: ", err.response.status);
+      if (err?.response?.status === 401) {
+        navigate("/login");
+      }
+      setError(true);
+    } finally {
       setIsLoading(false);
     }
   }
@@ -113,31 +136,15 @@ export default function HomePage() {
               {/* Clearning button */}
               <Button
                 variant="ghost" size="sm"
-                onClick={removeRotateTemp}
+                onClick={()=> void removeRotateTemp}
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
               ><BrushCleaning /></Button>
               {/* Refresh button */}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={async () => {
-                  setIsLoading(true);
-                  setError(false);
-                  try {
-                    const itemsrs = await fetchDirList(currentPath);
-                    setItems(itemsrs);
-                  } catch (err: any) {
-                    console.error("MyErr: ", err);
-                    console.error("err.message: ", err.message);
-                    console.error(" err.response.status: ", err.response.status);
-                    if (err && err.response && err.response.status === 401) {
-                      navigate("/login");
-                    }
-                    setError(true);
-                  } finally {
-                    setIsLoading(false);
-                  }
-                }}
+                onClick={()=> void handleRefresh()}
+
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
               >
                 <RefreshCcw />
@@ -150,7 +157,7 @@ export default function HomePage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => navigate("/home")}
+                  onClick={() => void navigate("/home")}
                   className="p-1 bg-transparent hover:bg-transparent hover:underline dark:text-black dark:hover:bg-transparent"
                 >
                   Home
@@ -162,7 +169,7 @@ export default function HomePage() {
                       <button
                         onClick={() => {
                           const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                          navigate("/home" + targetPath);
+                          void navigate("/home" + targetPath);
                         }}
                         className="hover:underline"
                       >
@@ -186,15 +193,14 @@ export default function HomePage() {
               <FileListTableSkeleton />
             ) : error ? (
               <p className="text-center text-red-500 mt-10">Failed to load directory.</p>
-            ) : !items || !items.items || items.items.length === 0 ? (
+            ) : !items?.items || items.items.length === 0 ? (
               <p className="text-center text-gray-500 mt-10">This folder is empty.</p>
             ) : (
               <div className="max-h-[calc(100vh-200px)] scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/30 dark:scrollbar-thumb-white/30 scrollbar-track-white/0 overflow-y-scroll">
                 {items.items.map((file, index) => (
-                  <>
+                  <div key={index}>
                     <div
-                      key={index}
-                      onClick={() => handleFileClick(file)}
+                      onClick={() => { handleFileClick(file); }}
                       className="group grid grid-cols-12 items-center px-2 py-3 hover:bg-gray-500/20 cursor-pointer rounded-md"
                     >
                       {/* NAME */}
@@ -233,18 +239,19 @@ export default function HomePage() {
 
                     </div>
                     <div className="w-full border-b" />
-                  </>
+                  </div>
                 ))}
               </div>
             )}
           </main>
         </div>
 
-      </div>
+      </div >
       {selectedVideo && (
         <VideoPlayerModal
           file={selectedVideo}
           isOpen={!!selectedVideo}
+          // eslint-disable-next-line @typescript-eslint/no-misused-promises
           onClose={handlePlayerClose} // Close modal by clearing state
         />
         // <VideoPlayerCompressModal
@@ -252,9 +259,10 @@ export default function HomePage() {
         //   isOpen={!!selectedVideo}
         //   onClose={handlePlayerClose} // Close modal by clearing state
         // />
-      )}
+      )
+      }
       <VersionTag />
-    </DefaultLayout>
+    </DefaultLayout >
 
   );
 }

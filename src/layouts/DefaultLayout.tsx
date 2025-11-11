@@ -17,7 +17,7 @@ export default function DefaultLayout({
   const handleReload = () => {
     console.log("Force reloaded");
     toast.success("App Reloaded");
-    updateSW(true) // force service worker update + reload
+    void updateSW(true) // force service worker update + reload
   }
   return (
     <div className="flex flex-col min-h-screen p-0 .main-view">

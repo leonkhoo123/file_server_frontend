@@ -1,7 +1,7 @@
-import { File, Folder, RefreshCcw } from "lucide-react";
+import { BrushCleaning, File, Folder, RefreshCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import DefaultLayout from "@/layouts/DefaultLayout";
-import { fetchDirList, type ItemsResponse, type FileInterface, postDisqualified, renameFileMoveToDone } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate } from "@/api/api-file";
 // --- Main Component ---
 import { useState, useEffect } from 'react';
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
@@ -11,6 +11,7 @@ import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import VersionTag from "@/components/custom/versionTag";
+import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 
 
 // --- Main Component ---
@@ -61,16 +62,7 @@ export default function HomePage() {
     loadFiles();
   }, [location, navigate]);
 
-
-  if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen text-xl text-red-600">
-        Error: {error}
-      </div>
-    );
-  }
-
-  const handlePlayerClose = async (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string) => {
+  const handlePlayerClose = async (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string, rotation: number) => {
     setSelectedVideo(null);
     try {
       if (isDisqualified) {
@@ -79,7 +71,9 @@ export default function HomePage() {
         setItems(itemsrs);
         toast.success("Video Disqualified");
       } else if (isNewName) {
-        await renameFileMoveToDone(oriPath, newName)
+        setIsLoading(true)
+        await renameFileMoveToDone(oriPath, newName, rotation)
+        setIsLoading(false)
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
         toast.success("Video Rename Done");
@@ -87,7 +81,23 @@ export default function HomePage() {
     } catch (error) {
       console.error("Failed to move or rename file:", error);
     }
+  }
 
+  const removeRotateTemp = async () => {
+    console.log("Removing temp_rotate")
+    try {
+      setIsLoading(true);
+      await deleteTempRotate(currentPath)
+      const itemsrs = await fetchDirList(currentPath);
+      setItems(itemsrs);
+      toast.success("Successfully Clean Up");
+    } catch (error: any) {
+      setError(true);
+      toast.error("Failed to Clean Up");
+      console.log("Failed to remove rotate_temp",error);
+    } finally{
+      setIsLoading(false);
+    }
   }
   // --- Main Layout Render ---
   return (
@@ -100,6 +110,12 @@ export default function HomePage() {
           <main className="flex-col p-6 overflow-auto h-full">
             {/* Toolbar */}
             <div className="flex flex-row w-full mb-2">
+              {/* Clearning button */}
+              <Button
+                variant="ghost" size="sm"
+                onClick={removeRotateTemp}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300"
+              ><BrushCleaning /></Button>
               {/* Refresh button */}
               <Button
                 variant="ghost"
@@ -107,14 +123,27 @@ export default function HomePage() {
                 onClick={async () => {
                   setIsLoading(true);
                   setError(false);
-                  const itemsrs = await fetchDirList(currentPath);
-                  setItems(itemsrs);
-                  setIsLoading(false);
+                  try {
+                    const itemsrs = await fetchDirList(currentPath);
+                    setItems(itemsrs);
+                  } catch (err: any) {
+                    console.error("MyErr: ", err);
+                    console.error("err.message: ", err.message);
+                    console.error(" err.response.status: ", err.response.status);
+                    if (err && err.response && err.response.status === 401) {
+                      navigate("/login");
+                    }
+                    setError(true);
+                  } finally {
+                    setIsLoading(false);
+                  }
                 }}
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
               >
                 <RefreshCcw />
               </Button>
+
+
 
               {/* Navigation path */}
               <div className="w-full flex justify-start items-center bg-gray-200 px-2 rounded-md">

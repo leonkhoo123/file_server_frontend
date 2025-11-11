@@ -9,13 +9,14 @@ import {
   LogOut,
   TextCursorInput,
   ListX,
+  RotateCw,
 } from "lucide-react";
 import type { FileInterface } from "@/api/api-file";
 
 interface VideoPlayerModalProps {
   file: FileInterface;
   isOpen: boolean;
-  onClose: (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string) => void;
+  onClose: (isDisqualified: boolean, oriPath: string, isNewName: boolean, newName: string, rotation: number) => void;
 }
 
 const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
@@ -35,6 +36,9 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [showRenameModal, setShowRenameModal] = useState(false);
   const [tempName, setTempName] = useState<string>("");
   const [bufferedProgress, setBufferedProgress] = useState(0); // Percentage
+  const [rotation, setRotation] = useState(0); //degree 
+  const [isRotation, setisRotation] = useState<boolean>(false); //degree 
+
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
     const seconds = Math.floor(time % 60);
@@ -132,6 +136,19 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     setDisqualified(!disqualified);
   };
 
+  const handleRotation = () => {
+    const currRotation = (rotation + 90) % 360
+    setRotation(currRotation);
+    setisRotation(true);
+    if (currRotation === 0) {
+      setisRotation(false);
+    }
+  };
+
+  // Helper function to determine if video is rotated sideways
+  const isSideways = rotation === 90 || rotation === 270;
+
+
   // --- Rename Modal Logic ---
   const openRenameModal = () => {
     setTempName(newName);
@@ -171,16 +188,20 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   return (
     <div className="fixed inset-0 z-10 bg-black">
       <div className="flex items-center justify-center bg-black h-full">
-
-        {/*video element */}
         <video
           preload="auto"
           ref={videoRef}
           controls={false}
           autoPlay
-          className="max-h-[calc(100vh)] max-w-full object-contain"
+          className={`
+        ${isSideways ? 'max-h-[100vw] max-w-[100vh]' : 'max-h-[100vh] max-w-full'}
+        object-contain
+        transition-transform duration-300
+      `}
+          style={{ transform: `rotate(${rotation}deg)` }}
         />
       </div>
+
 
       {/* --- Time Display --- */}
       <div className="absolute bottom-2 left-1 w-full text-left text-white text-sm select-none">
@@ -200,6 +221,11 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <span className="ml-3 text-green-500 font-bold">{newName}</span>
         ) : (
           <span className="ml-3 text-white/40 font-bold">{file.name}</span>
+        )}
+        {isRotation ? (
+          <span className="ml-3 text-green-500 font-bold">({rotation}°)</span>
+        ) : (
+          ""
         )}
       </div>
 
@@ -306,11 +332,21 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           <ListX className="h-5 w-5" />
         </Button>
 
+        {/* --- Rotation Button --- */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleRotation}
+          className="hover:bg-white/80 w-full bg-white/30"
+        >
+          <RotateCw className="h-5 w-5" />
+        </Button>
+
         {/* --- close --- */}
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onClose(disqualified, file.path, isNewName, newName)}
+          onClick={() => onClose(disqualified, file.path, isNewName, newName, rotation)}
           className="hover:bg-white/80 w-full bg-white/30 mt-5"
         >
           <LogOut className="h-5 w-5" />

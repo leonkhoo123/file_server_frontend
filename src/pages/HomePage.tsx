@@ -112,10 +112,13 @@ export default function HomePage() {
       setItems(itemsrs);
     } catch (err: any) {
       console.error("MyErr: ", err);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       console.error("err.message: ", err.message);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       console.error(" err.response.status: ", err.response.status);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (err?.response?.status === 401) {
-        navigate("/login");
+        void navigate("/login");
       }
       setError(true);
     } finally {

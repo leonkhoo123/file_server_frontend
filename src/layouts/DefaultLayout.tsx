@@ -14,10 +14,10 @@ export default function DefaultLayout({
 }) {
   const updateSW = registerSW()
 
-  const handleReload = () => {
+  const handleReload = async () => {
     console.log("Force reloaded");
     toast.success("App Reloaded");
-    void updateSW(true) // force service worker update + reload
+    await updateSW(true) // force service worker update + reload
   }
   return (
     <div className="flex flex-col min-h-screen p-0 .main-view">
@@ -30,7 +30,7 @@ export default function DefaultLayout({
           <div className="space-x-2">
             <Button
               variant="outline" size="icon"
-              onClick={handleReload}
+              onClick={()=>handleReload}
             ><RefreshCcw className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all" /></Button>
             <ModeToggle></ModeToggle>
           </div>

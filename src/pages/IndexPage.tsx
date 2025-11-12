@@ -8,8 +8,8 @@ export default function HomePage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    navigate("/home");
-  }, []);
+    void navigate("/home");
+  }, [navigate]);
 
   // --- Main Layout Render ---
   return (

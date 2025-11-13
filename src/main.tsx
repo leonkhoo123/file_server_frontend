@@ -23,8 +23,9 @@ const updateSW = registerSW({
   },
 })
 
-// @ts-expect-error
-import('eruda').then(eruda => eruda.init());
+// @ts-ignore
+import('eruda').then(({ default: eruda }) => eruda.init());
+
 
 
 

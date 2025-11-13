@@ -24,16 +24,17 @@ const updateSW = registerSW({
 })
 
 // @ts-ignore
-import('eruda').then(({ default: eruda }) => eruda.init());
-
+if (import.meta.env.VITE_PROFILE === "dev") {
+  import('eruda').then(({ default: eruda }) => eruda.init());
+}
 
 
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 createRoot(document.getElementById('root')!).render(
-<React.StrictMode>
+  <React.StrictMode>
     {/* Wrap the App component with BrowserRouter */}
-    <BrowserRouter> 
+    <BrowserRouter>
       <App />
     </BrowserRouter>
   </React.StrictMode>,

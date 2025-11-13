@@ -24,7 +24,7 @@ const LoginPage: React.FC = () => {
     try {
       await login(username, password);
       toast.success("Welcome");
-      void navigate("/home")
+      navigate("/home");
     } catch (err) {
       // 💡 Add your actual login logic here
       toast.error("Something Went Wrong");

@@ -30,7 +30,7 @@ export default function HomePage() {
       setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
-      void navigate("/home" + newPath)
+      navigate("/home" + newPath)
     }
   };
 
@@ -55,7 +55,7 @@ export default function HomePage() {
         console.error(" err.response.status: ", err.response.status);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (err?.response?.status === 401) {
-          void navigate("/login");
+          navigate("/login");
         }
         setError(true);
       } finally {
@@ -118,7 +118,7 @@ export default function HomePage() {
       console.error(" err.response.status: ", err.response.status);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (err?.response?.status === 401) {
-        void navigate("/login");
+        navigate("/login");
       }
       setError(true);
     } finally {
@@ -160,7 +160,7 @@ export default function HomePage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => void navigate("/home")}
+                  onClick={() => navigate("/home")}
                   className="p-1 bg-transparent hover:bg-transparent hover:underline dark:text-black dark:hover:bg-transparent"
                 >
                   Home
@@ -172,7 +172,7 @@ export default function HomePage() {
                       <button
                         onClick={() => {
                           const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                          void navigate("/home" + targetPath);
+                          navigate("/home" + targetPath);
                         }}
                         className="hover:underline"
                       >

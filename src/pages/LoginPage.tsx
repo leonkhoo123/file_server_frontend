@@ -12,7 +12,6 @@ import { login } from '@/api/api-auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import VersionTag from '@/components/custom/versionTag';
-import DefaultLayout from '@/layouts/DefaultLayout';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -34,7 +33,6 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <DefaultLayout>
       <div className="flex justify-center items-center p-4 min-h-[calc(100vh-4rem)]">
 
         {/* The max-w-md and w-full make the card responsive:
@@ -89,8 +87,6 @@ const LoginPage: React.FC = () => {
         </Card>
 
       </div>
-    </DefaultLayout>
-
   );
 };
 

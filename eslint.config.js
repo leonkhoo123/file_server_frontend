@@ -43,6 +43,9 @@ export default tseslint.config(
       'react-hooks/exhaustive-deps': 'warn',
       '@typescript-eslint/no-explicit-any': 'warn',
       'react-refresh/only-export-components': 'warn',
+      '@typescript-eslint/no-misused-promises' : 'warn',
+      "@typescript-eslint/restrict-template-expressions": "warn"
+       
     },
   },
 

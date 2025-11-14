@@ -23,9 +23,11 @@ const updateSW = registerSW({
   },
 })
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-if (import.meta.env.VITE_PROFILE === "dev") {
-  import('eruda').then(({ default: eruda }) => eruda.init());
+if (import.meta.env.VITE_PROFILE !== "prod") {
+  // eslint-disable-next-line @typescript-eslint/no-floating-promises
+  import('eruda').then(({ default: eruda }) => { eruda.init(); });
 }
 
 

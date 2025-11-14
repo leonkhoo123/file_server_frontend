@@ -30,7 +30,7 @@ export default function HomePage() {
       setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
-      navigate("/home" + newPath)
+      void navigate("/home" + newPath)
     }
   };
 
@@ -55,7 +55,7 @@ export default function HomePage() {
         console.error(" err.response.status: ", err.response.status);
         // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
         if (err?.response?.status === 401) {
-          navigate("/login");
+          void navigate("/login");
         }
         setError(true);
       } finally {
@@ -118,7 +118,7 @@ export default function HomePage() {
       console.error(" err.response.status: ", err.response.status);
       // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (err?.response?.status === 401) {
-        navigate("/login");
+        void navigate("/login");
       }
       setError(true);
     } finally {
@@ -139,14 +139,14 @@ export default function HomePage() {
               {/* Clearning button */}
               <Button
                 variant="ghost" size="sm"
-                onClick={()=> void removeRotateTemp}
+                onClick={removeRotateTemp}
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
               ><BrushCleaning /></Button>
               {/* Refresh button */}
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={()=> void handleRefresh()}
+                onClick={handleRefresh}
 
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
               >
@@ -172,7 +172,7 @@ export default function HomePage() {
                       <button
                         onClick={() => {
                           const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                          navigate("/home" + targetPath);
+                          void navigate("/home" + targetPath);
                         }}
                         className="hover:underline"
                       >

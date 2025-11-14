@@ -60,6 +60,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
         const compressedUrl = `http://localhost:3333/api/video/play/compress/file${file.path}`;
         console.log("compressurl",compressedUrl);
         video.src = compressedUrl;
+        // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable
         video.play().catch((err) => {
           setIsPlaying(false);
           console.error("Playback start error:", err);
@@ -71,7 +72,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
       }
     }, 100);
 
-    return () => clearTimeout(timer);
+    return () => { clearTimeout(timer); };
   }, [isOpen, file.path]);
 
   // Attach video event listeners
@@ -79,9 +80,9 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
     const video = videoRef.current;
     if (!video) return;
 
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
-    const handleLoadedMetadata = () => setDuration(video.duration || 0);
+    const handlePlay = () => { setIsPlaying(true); };
+    const handlePause = () => { setIsPlaying(false); };
+    const handleLoadedMetadata = () => { setDuration(video.duration || 0); };
     const handleTimeUpdate = () => {
       if (!video.duration) return;
       setCurrentTime(video.currentTime);
@@ -114,7 +115,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
     const video = videoRef.current;
     if (!video) return;
     if (isPlaying) video.pause();
-    else video.play();
+    else void video.play();
   }, [isPlaying]);
 
   const skip = useCallback((seconds: number) => {
@@ -154,7 +155,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
     setShowRenameModal(true);
   };
 
-  const handleRenameCancel = () => setShowRenameModal(false);
+  const handleRenameCancel = () => { setShowRenameModal(false); };
 
   const handleRenameSave = () => {
     let finalName = tempName.trim();
@@ -244,7 +245,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
       <div className="absolute bottom-1/8 right-0 p-2 bg-transparent rounded-md flex flex-col items-center justify-center sm:w-[100px] w-[70px] space-y-2">
         <Button
           variant="ghost"
-          onClick={() => skip(-1)}
+          onClick={() => { skip(-1); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <SkipBack className="h-4 w-4 mr-1" /> 1s
@@ -252,7 +253,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
 
         <Button
           variant="ghost"
-          onClick={() => skip(3)}
+          onClick={() => { skip(3); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           3s <SkipForward className="h-4 w-4 ml-1" />
@@ -260,7 +261,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
 
         <Button
           variant="ghost"
-          onClick={() => skip(1)}
+          onClick={() => { skip(1); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           1s <SkipForward className="h-4 w-4 ml-1" />
@@ -268,7 +269,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
 
         <Button
           variant="ghost"
-          onClick={() => changeSpeed(playbackRate !== 1.0 ? 1.0 : 2.0)}
+          onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 2.0); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
@@ -277,7 +278,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
 
         <Button
           variant="ghost"
-          onClick={() => changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0)}
+          onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
@@ -320,7 +321,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => onClose(disqualified, file.path, isNewName, newName)}
+          onClick={() => { onClose(disqualified, file.path, isNewName, newName); }}
           className="hover:bg-white/80 w-full bg-white/30 mt-5"
         >
           <LogOut className="h-5 w-5" />
@@ -335,7 +336,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
             <input
               type="text"
               value={tempName}
-              onChange={(e) => setTempName(e.target.value)}
+              onChange={(e) => { setTempName(e.target.value); }}
               className="w-full border-2 border-white/30 p-2 rounded mb-4"
               placeholder="New Video Name"
               autoFocus

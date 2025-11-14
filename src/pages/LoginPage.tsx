@@ -24,7 +24,7 @@ const LoginPage: React.FC = () => {
     try {
       await login(username, password);
       toast.success("Welcome");
-      navigate("/home");
+      void navigate("/home")
     } catch (err) {
       // 💡 Add your actual login logic here
       toast.error("Something Went Wrong");
@@ -50,7 +50,7 @@ const LoginPage: React.FC = () => {
           </CardHeader>
 
           <CardContent>
-            <form onSubmit={()=>handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
 
               {/* --- Username Input --- */}
               <div className="space-y-2">

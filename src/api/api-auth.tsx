@@ -9,3 +9,9 @@ export const login = async (username: string, password: string) => {
       }
     );
 };
+
+export const logout = async () => {
+  await axiosLayer.post("/logout", null, {
+    withCredentials: true,
+  });
+};

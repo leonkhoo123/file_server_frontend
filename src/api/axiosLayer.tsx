@@ -1,7 +1,15 @@
 // src/api/axiosInstance.ts
 import axios from 'axios';
 
-const baseURL = import.meta.env.VITE_BUILD_PROFILE === "local"? "http://localhost:3333/api" : "http://192.168.1.10:30333/api"
+// window.location.hostname returns 'localhost' or '192.168.1.10', etc.
+const hostname = window.location.hostname;
+
+// Define your ports based on your setup
+const PORT = "30333"; 
+
+// Construct the baseURL dynamically
+const baseURL = import.meta.env.VITE_BUILD_PROFILE === "local"? "http://localhost:3333/api" : `http://${hostname}:${PORT}/api`
+
 const instance = axios.create({
   baseURL: baseURL,
   withCredentials: true,

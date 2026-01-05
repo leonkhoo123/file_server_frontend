@@ -8,7 +8,7 @@ const hostname = window.location.hostname;
 const PORT = "30333"; 
 
 // Construct the baseURL dynamically
-const baseURL = import.meta.env.VITE_BUILD_PROFILE === "local"? "http://localhost:3333/api" : `http://${hostname}:${PORT}/api`
+const baseURL = import.meta.env.VITE_BUILD_PROFILE === "local"? "http://localhost:3333/api" : `${window.location.protocol}://${hostname}:${PORT}/api`
 
 const instance = axios.create({
   baseURL: baseURL,

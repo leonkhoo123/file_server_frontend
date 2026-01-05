@@ -52,7 +52,9 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     const timer = setTimeout(() => {
       const video = videoRef.current;
       if (video) {
-        video.src = file.url;
+        // temporary hard code
+        const vidUrl = `${window.location.protocol}//${window.location.hostname}:30333/${file.url}`;
+        video.src = vidUrl;
         video.play().catch(() => { setIsPlaying(false); });
       }
     }, 100);

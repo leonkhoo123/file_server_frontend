@@ -6,12 +6,12 @@ import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate 
 import { useState, useEffect } from 'react';
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
 import { formatBytes, formatLastModified } from "@/utils/utils";
-import VideoPlayerModal from "@/components/custom/videoPlayerModal";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
 import { toast } from "sonner";
 import VersionTag from "@/components/custom/versionTag";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
+import VideoPlayerModalV2 from "@/components/custom/videoPlayerModalV2";
 
 
 // --- Main Component ---
@@ -27,7 +27,7 @@ export default function HomePage() {
   // Function to handle a row click
   const handleFileClick = (fileInfo: FileInterface) => {
     if (fileInfo.isVideo) {
-      setSelectedVideo(fileInfo);
+    setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
       void navigate("/home" + newPath)
@@ -251,7 +251,7 @@ export default function HomePage() {
 
       </div >
       {selectedVideo && (
-        <VideoPlayerModal
+        <VideoPlayerModalV2
           file={selectedVideo}
           isOpen={!!selectedVideo}
           // eslint-disable-next-line @typescript-eslint/no-misused-promises

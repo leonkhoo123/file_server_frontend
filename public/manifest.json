@@ -2,7 +2,7 @@
   "name": "Watcher",
   "short_name": "Watcher",
   "description": "My Watcher",
-  "start_url": "/",
+  "start_url": "/home",
   "display": "standalone",
   "theme_color": "#ffffff",
   "background_color": "#ffffff",

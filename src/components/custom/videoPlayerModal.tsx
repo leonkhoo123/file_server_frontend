@@ -65,8 +65,10 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   }, [showControls]);
 
   const handleInteractionEnd = useCallback(() => {
-    startHideTimer();
-  }, [startHideTimer]);
+    if (showControls) {
+      startHideTimer();
+    }
+  }, [showControls, startHideTimer]);
 
   useEffect(() => {
     startHideTimer();

@@ -40,7 +40,7 @@ export default defineConfig({
       manifest: {
         name: 'Watcher',
         short_name: 'Watcher',
-        start_url: '/home',
+        start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
         theme_color: '#ffffff',

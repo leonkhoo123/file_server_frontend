@@ -39,6 +39,39 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [bufferedProgress, setBufferedProgress] = useState(0); // Percentage
   const [rotation, setRotation] = useState(0); //degree 
   const [isRotation, setisRotation] = useState<boolean>(false); //degree 
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const controlTimeout = 2500;
+
+  const startHideTimer = useCallback(() => {
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = setTimeout(() => {
+      setShowControls(false);
+    }, controlTimeout);
+  }, []);
+
+  const handleInteractionStart = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+  }, []);
+
+  const handleInteractionEnd = useCallback(() => {
+    startHideTimer();
+  }, [startHideTimer]);
+
+  useEffect(() => {
+    startHideTimer();
+    return () => {
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    };
+  }, [startHideTimer]);
 
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
@@ -53,7 +86,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       const video = videoRef.current;
       if (video) {
         // temporary hard code
-        const vidUrl = `http://${window.location.hostname}:30333/${file.url}`;
+        const vidUrl = `http://${window.location.hostname}:3333/${file.url}`;
         video.src = vidUrl;
         video.play().catch(() => { setIsPlaying(false); });
       }
@@ -179,7 +212,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
 
     setShowRenameModal(false);
-  },[tempName, file.name]);
+  }, [tempName, file.name]);
 
   const handleRenameDefault = () => {
     setNewname("");
@@ -189,9 +222,17 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   if (!isOpen) return null;
 
-
   {/* keyboard listener */ }
-   
+  const handleDismiss = useCallback((): void => {
+    if (showRenameModal) {
+      // Logic for canceling rename
+      handleRenameCancel();
+    } else {
+      // Logic for closing the file/modal
+      onClose(false, file.path, false, newName, 0);
+    }
+  }, [showRenameModal, file.path, newName, handleRenameCancel, onClose]);
+
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
 
     // The key property returns the character pressed
@@ -244,14 +285,9 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         break;
 
       case 'Escape':
-        if (showRenameModal) {
-          actionDescription = 'handleRenameCancel';
-          handleRenameCancel()
-        } else {
-          actionDescription = 'onClose(false, file.path, false, newName, 0)';
-          //discard changes
-          onClose(false, file.path, false, newName, 0)
-        }
+        actionDescription = 'handleDismiss';
+        // handleDismiss();
+        window.history.back();
         break;
       default:
         // Ignore other keys
@@ -264,8 +300,29 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
     console.log(`Key Pressed: ${actionDescription}`);
 
-  }, [showRenameModal, togglePlay, skip, handleRenameSave, onClose, file.path, newName]); 
+  }, [showRenameModal, togglePlay, handleDismiss, skip, handleRenameSave]);
+
   // The dependency array is empty, ensuring the function is stable
+  useEffect(() => {
+    // Push a dummy state to the history stack
+    window.history.pushState({ modalOpen: true }, '');
+
+    const handlePopState = (): void => {
+      // This triggers when the Android Back button is pressed
+      handleDismiss();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+
+      // Clean up: If the component closes normally, remove the dummy history entry
+      // if (window.history.state?.modalOpen) {
+      //   window.history.back();
+      // }
+    };
+  }, [handleDismiss]);
 
   useEffect(() => {
     // Add the keydown listener to the document
@@ -277,7 +334,12 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   }, [handleKeyPress]);
 
   return (
-    <div className="fixed inset-0 z-10 bg-black">
+    <div className="fixed inset-0 z-10 bg-black select-none"
+      onMouseDown={handleInteractionStart}
+      onMouseUp={handleInteractionEnd}
+      onTouchStart={handleInteractionStart}
+      onTouchEnd={handleInteractionEnd}>
+
       <div className="flex items-center justify-center bg-black h-full">
         <video
           preload="auto"
@@ -344,7 +406,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       </div>
 
       {/* --- Control Bar --- */}
-      <div className="absolute bottom-1/8 right-0 p-2 bg-transparent rounded-md flex flex-col items-center justify-center sm:w-[100px] w-[70px] space-y-2">
+      <div className={`absolute bottom-1/8 right-0 p-2 bg-transparent rounded-md flex flex-col items-center justify-center sm:w-[100px] w-[70px] space-y-2 transition-opacity duration-500 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         {/* back 1 sec */}
         <Button
           variant="ghost"

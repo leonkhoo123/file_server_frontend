@@ -54,11 +54,15 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   }, []);
 
   const handleInteractionStart = useCallback(() => {
-    setShowControls(true);
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
+    if (showControls) {
+      setShowControls(false);
+    } else {
+      setShowControls(true);
+      if (controlsTimeoutRef.current) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
     }
-  }, []);
+  }, [showControls]);
 
   const handleInteractionEnd = useCallback(() => {
     startHideTimer();
@@ -86,7 +90,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       const video = videoRef.current;
       if (video) {
         // temporary hard code
-        const vidUrl = `http://${window.location.hostname}:30333/${file.url}`;
+        const vidUrl = `http://${window.location.hostname}:3333/${file.url}`;
         video.src = vidUrl;
         video.play().catch(() => { setIsPlaying(false); });
       }
@@ -300,7 +304,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
     console.log(`Key Pressed: ${actionDescription}`);
 
-  }, [showRenameModal, togglePlay, handleDismiss, skip, handleRenameSave]);
+  }, [showRenameModal, togglePlay, skip, handleRenameSave]);
 
   // The dependency array is empty, ensuring the function is stable
   useEffect(() => {
@@ -348,7 +352,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           autoPlay
           playsInline
           className={`
-        ${isSideways ? 'max-h-[100vw] max-w-[100vh]' : 'max-h-[100vh] max-w-full'}
+        ${isSideways ? 'max-h-[100vw] max-w-[100vh]' : 'max-h-screen max-w-full'}
         object-contain
         transition-transform duration-300
       `}
@@ -410,7 +414,11 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         {/* back 1 sec */}
         <Button
           variant="ghost"
-          onClick={() => { skip(-1); }}
+          onClick={()=>{skip(-1); }}
+          // If your parent uses onMouseDown/onTouchStart, 
+          // you must stop those specifically too:
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <SkipBack className="h-4 w-4 mr-1" /> 1s
@@ -420,6 +428,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         <Button
           variant="ghost"
           onClick={() => { skip(3); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           3s <SkipForward className="h-4 w-4 ml-1" />
@@ -429,6 +439,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         <Button
           variant="ghost"
           onClick={() => { skip(1); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           1s <SkipForward className="h-4 w-4 ml-1" />
@@ -438,6 +450,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         <Button
           variant="ghost"
           onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 2.0); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
@@ -448,6 +462,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
         <Button
           variant="ghost"
           onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
@@ -460,6 +476,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={togglePlay}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30 py-10"
         >
           {isPlaying ? (
@@ -474,6 +492,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={openRenameModal}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-green-300/80 w-full bg-green-300/30 mt-5"
         >
           <TextCursorInput className="h-5 w-5" />
@@ -484,6 +504,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={handleDisqualified}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-red-300/80 w-full bg-red-300/30 mt-5"
         >
           <ListX className="h-5 w-5" />
@@ -494,6 +516,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={handleRotation}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <RotateCw className="h-5 w-5" />
@@ -504,6 +528,8 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={() => { onClose(disqualified, file.path, isNewName, newName, rotation); }}
+          onMouseDown={(e) => { e.stopPropagation(); }}
+          onTouchStart={(e) => { e.stopPropagation(); }}
           className="hover:bg-white/80 w-full bg-white/30 mt-5"
         >
           <LogOut className="h-5 w-5" />

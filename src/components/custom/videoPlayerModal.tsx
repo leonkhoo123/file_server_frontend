@@ -39,38 +39,6 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   const [bufferedProgress, setBufferedProgress] = useState(0); // Percentage
   const [rotation, setRotation] = useState(0); //degree 
   const [isRotation, setisRotation] = useState<boolean>(false); //degree 
-  const [showControls, setShowControls] = useState(true);
-  const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const startHideTimer = useCallback(() => {
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-    controlsTimeoutRef.current = setTimeout(() => {
-      setShowControls(false);
-    }, 5000);
-  }, []);
-
-  const handleInteractionStart = useCallback(() => {
-    setShowControls(true);
-    if (controlsTimeoutRef.current) {
-      clearTimeout(controlsTimeoutRef.current);
-    }
-  }, []);
-
-  const handleInteractionEnd = useCallback(() => {
-    startHideTimer();
-  }, [startHideTimer]);
-
-  useEffect(() => {
-    startHideTimer();
-    return () => {
-      if (controlsTimeoutRef.current) {
-        clearTimeout(controlsTimeoutRef.current);
-      }
-    };
-  }, [startHideTimer]);
-
 
   const formatTime = (time: number): string => {
     const minutes = Math.floor(time / 60);
@@ -211,7 +179,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
 
     setShowRenameModal(false);
-  }, [tempName, file.name]);
+  },[tempName, file.name]);
 
   const handleRenameDefault = () => {
     setNewname("");
@@ -223,7 +191,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
 
   {/* keyboard listener */ }
-
+   
   const handleKeyPress = useCallback((event: KeyboardEvent) => {
 
     // The key property returns the character pressed
@@ -296,7 +264,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
     }
     console.log(`Key Pressed: ${actionDescription}`);
 
-  }, [showRenameModal, togglePlay, skip, handleRenameSave, onClose, file.path, newName]);
+  }, [showRenameModal, togglePlay, skip, handleRenameSave, onClose, file.path, newName]); 
   // The dependency array is empty, ensuring the function is stable
 
   useEffect(() => {
@@ -310,13 +278,6 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-10 bg-black">
-      <div
-        className="fixed inset-0 z-10 bg-black"
-        onMouseDown={handleInteractionStart}
-        onMouseUp={handleInteractionEnd}
-        onTouchStart={handleInteractionStart}
-        onTouchEnd={handleInteractionEnd}
-      ></div>
       <div className="flex items-center justify-center bg-black h-full">
         <video
           preload="auto"
@@ -383,7 +344,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
       </div>
 
       {/* --- Control Bar --- */}
-      <div className={`absolute bottom-1/8 right-0 p-2 bg-transparent rounded-md flex flex-col items-center justify-center sm:w-[100px] w-[70px] space-y-2 transition-opacity duration-500 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
+      <div className="absolute bottom-1/8 right-0 p-2 bg-transparent rounded-md flex flex-col items-center justify-center sm:w-[100px] w-[70px] space-y-2">
         {/* back 1 sec */}
         <Button
           variant="ghost"

@@ -1,7 +1,8 @@
-import { BrushCleaning, File, Folder, RefreshCcw } from "lucide-react";
+import { BrushCleaning, File, Folder, RefreshCcw, ArrowLeft, Plus, Copy, Scissors, Clipboard, CheckSquare, Trash2, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import DefaultLayout from "@/layouts/DefaultLayout";
-import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, renameFile } from "@/api/api-file";
 // --- Main Component ---
 import { useState, useEffect } from 'react';
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
@@ -22,12 +23,148 @@ export default function HomePage() {
   const [error, setError] = useState<boolean>(false);
   const [selectedVideo, setSelectedVideo] = useState<FileInterface | null>(null);
   const [currentPath, setCurrentPath] = useState<string>("/");
+  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+  const [clipboardItems, setClipboardItems] = useState<{ items: string[], operation: 'cut' | 'copy' | null, sourceDir?: string }>({ items: [], operation: null });
   const navigate = useNavigate();
+
+  // Function to toggle item selection                                                                                  // Function to toggle item selection
+  const toggleItemSelection = (fileName: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent row click from firing
+    setSelectedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(fileName)) {
+        newSet.delete(fileName);
+      } else {
+        newSet.add(fileName);
+      }
+      return newSet;
+    });
+  };
+
+  // Select all items
+  const handleSelectAll = () => {
+    if (!items?.items) return;
+    const allNames = new Set(items.items.map(item => item.name));
+    setSelectedItems(allNames);
+  };
+
+  // Cut operation
+  const handleCut = () => {
+    if (selectedItems.size === 0) {
+      toast.error("No items selected");
+      return;
+    }
+    const sources = Array.from(selectedItems).map(name =>
+      currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
+    );
+    setClipboardItems({ items: sources, operation: 'cut', sourceDir: currentPath });
+    toast.success(`${selectedItems.size} item(s) cut`);
+  };
+
+  // Copy operation
+  const handleCopy = () => {
+    if (selectedItems.size === 0) {
+      toast.error("No items selected");
+      return;
+    }
+    const sources = Array.from(selectedItems).map(name =>
+      currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
+    );
+    setClipboardItems({ items: sources, operation: 'copy', sourceDir: currentPath });
+    toast.success(`${selectedItems.size} item(s) copied`);
+  };
+
+  // Paste operation
+  const handlePaste = async () => {
+    if (clipboardItems.items.length === 0 || !clipboardItems.operation) {
+      toast.error("Clipboard is empty");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      if (clipboardItems.operation === 'copy') {
+        await copyFiles(clipboardItems.items, currentPath);
+        toast.success(`Copied ${clipboardItems.items.length} item(s)`);
+      } else {
+        await moveFiles(clipboardItems.items, currentPath);
+        toast.success(`Moved ${clipboardItems.items.length} item(s)`);
+      }
+      setClipboardItems({ items: [], operation: null }); // Clear clipboard after successful paste
+      await handleRefresh();
+    } catch (error) {
+      console.error("Paste failed:", error);
+      toast.error("Paste operation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Delete operation
+  const handleDelete = async () => {
+    if (selectedItems.size === 0) return;
+
+    if (!confirm(`Are you sure you want to delete ${selectedItems.size} item(s)?`)) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const sources = Array.from(selectedItems).map(name =>
+        currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
+      );
+      await deleteFiles(sources);
+      toast.success(`Moved ${selectedItems.size} item(s) to recycle bin`);
+      setSelectedItems(new Set());
+      await handleRefresh();
+    } catch (error) {
+      console.error("Delete failed:", error);
+      toast.error("Delete operation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Rename operation
+  const handleRename = async () => {
+    if (selectedItems.size !== 1) {
+      toast.error("Please select exactly one item to rename");
+      return;
+    }
+
+    const oldName = Array.from(selectedItems)[0];
+    const newName = prompt("Enter new name:", oldName);
+
+    if (!newName || newName === oldName) return;
+
+    try {
+      setIsLoading(true);
+      const source = currentPath === "/" ? `/${oldName}` : `${currentPath}/${oldName}`;
+      await renameFile(source, newName);
+      toast.success("Item renamed successfully");
+      setSelectedItems(new Set());
+      await handleRefresh();
+    } catch (error) {
+      console.error("Rename failed:", error);
+      toast.error("Rename operation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Back navigation
+  const handleBack = () => {
+    if (currentPath === "/") return;
+    const pathParts = currentPath.split("/").filter(Boolean);
+    pathParts.pop();
+    const parentPath = pathParts.length > 0 ? "/" + pathParts.join("/") : "/";
+    void navigate("/home" + parentPath);
+  };
 
   // Function to handle a row click
   const handleFileClick = (fileInfo: FileInterface) => {
     if (fileInfo.isVideo) {
-    setSelectedVideo(fileInfo);
+      setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
       void navigate("/home" + newPath)
@@ -41,6 +178,7 @@ export default function HomePage() {
     const loadFiles = async () => {
       setIsLoading(true);
       setError(false);
+      setSelectedItems(new Set()); // Clear selections when changing directories
 
       try {
         const currentPath = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
@@ -136,19 +274,120 @@ export default function HomePage() {
           <main className="flex-col p-6 overflow-auto h-full">
             {/* Toolbar */}
             <div className="flex flex-row w-full mb-2">
+              {/* Back button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                disabled={currentPath === "/"}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300 disabled:opacity-50"
+                title="Back"
+              >
+                <ArrowLeft />
+              </Button>
+
+              {/* Select All button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleSelectAll}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300"
+                title="Select All"
+              >
+                <CheckSquare />
+              </Button>
+
+              {/* Cut button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCut}
+                disabled={selectedItems.size === 0}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300 disabled:opacity-50"
+                title="Cut"
+              >
+                <Scissors />
+              </Button>
+
+              {/* Copy button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleCopy}
+                disabled={selectedItems.size === 0}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300 disabled:opacity-50"
+                title="Copy"
+              >
+                <Copy />
+              </Button>
+
+              {/* Paste button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePaste}
+                disabled={
+                  clipboardItems.items.length === 0 ||
+                  (clipboardItems.operation === 'cut' && clipboardItems.sourceDir === currentPath)
+                }
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300 disabled:opacity-50"
+                title="Paste"
+              >
+                <Clipboard />
+              </Button>
+
+              {/* Rename button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRename}
+                disabled={selectedItems.size !== 1}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300 disabled:opacity-50"
+                title="Rename"
+              >
+                <Pencil className="h-5 w-5" />
+              </Button>
+
+              {/* Delete button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                disabled={selectedItems.size === 0}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300 disabled:opacity-50 text-red-500 hover:text-red-700"
+                title="Delete"
+              >
+                <Trash2 className="h-5 w-5" />
+              </Button>
+
+              {/* Add/Upload button */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => toast.info("Add/Upload functionality - to be implemented")}
+                className="p-1 mr-2 bg-transparent hover:bg-gray-300"
+                title="Add/Upload"
+              >
+                <Plus />
+              </Button>
+
+              {/* Divider */}
+              <div className="border-l border-gray-400 mx-2" />
+
               {/* Clearning button */}
               <Button
                 variant="ghost" size="sm"
                 onClick={removeRotateTemp}
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
+                title="Clean Up"
               ><BrushCleaning /></Button>
               {/* Refresh button */}
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={handleRefresh}
-
                 className="p-1 mr-2 bg-transparent hover:bg-gray-300"
+                title="Refresh"
               >
                 <RefreshCcw />
               </Button>
@@ -200,50 +439,71 @@ export default function HomePage() {
               <p className="text-center text-gray-500 mt-10">This folder is empty.</p>
             ) : (
               <div className="max-h-[calc(100vh-200px)] scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/30 dark:scrollbar-thumb-white/30 scrollbar-track-white/0 overflow-y-scroll">
-                {items.items.map((file, index) => (
-                  <div key={index}>
-                    <div
-                      onClick={() => { handleFileClick(file); }}
-                      className="group grid grid-cols-12 items-center px-2 py-3 hover:bg-gray-500/20 cursor-pointer rounded-md"
-                    >
-                      {/* NAME */}
-                      <div className="col-span-12 lg:col-span-6 flex items-center space-x-3 min-w-0">
-                        {file.type === "dir" ? (
-                          <div className="flex flex-row space-x-3 py-2 lg:py-0">
-                            <Folder className="h-5 w-5 text-blue-500 shrink-0" />
-                            <div className="flex flex-col min-w-0 w-full text-left">
-                              <span className="truncate">{file.name}</span>
-                            </div>
+                {items.items.map((file, index) => {
+                  const isSelected = selectedItems.has(file.name);
+                  return (
+                    <div key={index}>
+                      <div
+                        onClick={() => { handleFileClick(file); }}
+                        className={`group grid grid-cols-12 items-center px-2 py-3 cursor-pointer rounded-md transition-colors ${isSelected
+                          ? 'bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/40'
+                          : 'hover:bg-gray-500/20'
+                          }`}
+                      >
+                        {/* CHECKBOX */}
+                        <div className="col-span-1 flex items-center justify-center">
+                          <div
+                            onClick={(e) => toggleItemSelection(file.name, e)}
+                            className={`transition-opacity ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+                              }`}
+                          >
+                            <Checkbox
+                              checked={isSelected}
+                              className="h-5 w-5"
+                            />
                           </div>
-                        ) : (
-                          <>
-                            <File className="h-5 w-5 text-gray-400 shrink-0" />
-                            <div className="flex flex-col min-w-0 w-full text-left">
-                              <span className="truncate">{file.name}</span>
+                        </div>
 
-                              <span className="text-sm text-gray-400 lg:hidden truncate">
-                                {formatBytes(file.size)}
-                              </span>
+                        {/* NAME */}
+                        <div className="col-span-11 lg:col-span-5 flex items-center space-x-3 min-w-0">
+                          {file.type === "dir" ? (
+                            <div className="flex flex-row space-x-3 py-2 lg:py-0">
+                              <Folder className="h-5 w-5 text-blue-500 shrink-0" />
+                              <div className="flex flex-col min-w-0 w-full text-left">
+                                <span className="truncate">{file.name}</span>
+                              </div>
                             </div>
-                          </>
-                        )}
+                          ) : (
+                            <>
+                              <File className="h-5 w-5 text-gray-400 shrink-0" />
+                              <div className="flex flex-col min-w-0 w-full text-left">
+                                <span className="truncate">{file.name}</span>
+
+                                <span className="text-sm text-gray-400 lg:hidden truncate">
+                                  {formatBytes(file.size)}
+                                </span>
+                              </div>
+                            </>
+                          )}
+
+                        </div>
+
+                        {/* SIZE (desktop only) */}
+                        <div className="hidden lg:block lg:col-span-3 text-right text-sm ">
+                          {file.type === "dir" ? "" : formatBytes(file.size)}
+                        </div>
+
+                        {/* LAST MODIFIED (desktop only) */}
+                        <div className="hidden lg:block lg:col-span-3 text-right text-sm">
+                          {formatLastModified(file.modified)}
+                        </div>
 
                       </div>
-
-                      {/* SIZE (desktop only) */}
-                      <div className="hidden lg:block lg:col-span-3 text-right text-sm ">
-                        {file.type === "dir" ? "" : formatBytes(file.size)}
-                      </div>
-
-                      {/* LAST MODIFIED (desktop only) */}
-                      <div className="hidden lg:block lg:col-span-3 text-right text-sm">
-                        {formatLastModified(file.modified)}
-                      </div>
-
+                      <div className="w-full border-b" />
                     </div>
-                    <div className="w-full border-b" />
-                  </div>
-                ))}
+                  )
+                })}
+
               </div>
             )}
           </main>

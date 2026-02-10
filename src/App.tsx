@@ -6,8 +6,13 @@ import IndexPage from './pages/IndexPage';
 import NotFoundPage from './pages/PageNotFound';
 import LoginPage from './pages/LoginPage';
 import { SonnerToastCustom } from './components/custom/soonerToast';
+import { useEffect } from 'react';
+import { wsClient } from './api/wsClient';
 
 function App() {
+  useEffect(() => {
+    wsClient.connect();
+  }, []);
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">

@@ -8,6 +8,8 @@ import LoginPage from './pages/LoginPage';
 import { SonnerToastCustom } from './components/custom/soonerToast';
 import { useEffect } from 'react';
 import { wsClient } from './api/wsClient';
+import { OperationProgressProvider } from './context/OperationProgressContext';
+import { OperationQueueProgress } from './components/custom/operationQueueProgress';
 
 function App() {
   useEffect(() => {
@@ -16,18 +18,21 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-      <Routes>
-        <Route element={<IndexPage />} path="/" />
-        <Route element={<HomePage />} path="/home" />
-        <Route element={<HomePage />} path="/home/*" />
-        <Route element={<LoginPage />} path="/login" />
+      <OperationProgressProvider>
+        <Routes>
+          <Route element={<IndexPage />} path="/" />
+          <Route element={<HomePage />} path="/home" />
+          <Route element={<HomePage />} path="/home/*" />
+          <Route element={<LoginPage />} path="/login" />
 
 
 
 
-        <Route element={<NotFoundPage />} path="*" />
-      </Routes>
-      <SonnerToastCustom />
+          <Route element={<NotFoundPage />} path="*" />
+        </Routes>
+        <SonnerToastCustom />
+        <OperationQueueProgress />
+      </OperationProgressProvider>
     </ThemeProvider>
   )
 }

@@ -3,11 +3,13 @@
 export interface OperationMessage {
     opId: string;
     opType: string; // 'copy' | 'move' | 'delete' | 'rename'
+    opName?: string | null; // e.g. "Copying file name to destination"
     opStatus: string; // 'queued' | 'starting' | 'in-progress' | 'completed' | 'error'
     opPercentage?: number | null;
     opSpeed?: string | null;
     opFileCount?: string | null;
     error?: string | null;
+    destDir?: string | null;
 }
 
 type WsCallback = (data: OperationMessage) => void;

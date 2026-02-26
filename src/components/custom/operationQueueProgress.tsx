@@ -81,17 +81,23 @@ export function OperationQueueProgress() {
                     <div className="flex flex-col gap-2">
                         {opsList.map(op => (
                             <div key={op.opId} className="flex flex-col border rounded-md p-2 bg-background shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-1.5 bg-muted rounded-md text-foreground">
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                                        <div className="p-1.5 bg-muted rounded-md text-foreground shrink-0">
                                             {getIconForType(op.opType)}
                                         </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-sm font-semibold capitalize">{op.opType}</span>
-                                            <span className="text-xs text-muted-foreground capitalize">{op.opStatus}</span>
+                                        <div className="flex flex-col min-w-0">
+                                            {op.opName ? (
+                                                <span className="text-sm text-left break-words line-clamp-2" title={op.opName}>
+                                                    {op.opName}
+                                                </span>
+                                            ) : (
+                                                <span className="text-sm capitalize truncate text-left">{op.opType}</span>
+                                            )}
+                                            <span className="text-xs text-muted-foreground capitalize text-left">{op.opStatus}</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 shrink-0">
                                         {getStatusIcon(op.opStatus)}
                                         {(op.opStatus === 'completed' || op.opStatus === 'error') && (
                                             <Button

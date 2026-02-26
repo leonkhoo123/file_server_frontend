@@ -1,26 +1,57 @@
-import { Folder } from "lucide-react";
+import { Folder, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export default function HomeSidebar() {
+interface HomeSidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export default function HomeSidebar({ isOpen, onClose }: HomeSidebarProps) {
   return (
-    <aside className="w-64 border-r bg-muted/10 hidden md:flex flex-col flex-shrink-0">
-      <div className="px-4 py-3 border-b flex items-center h-14 shrink-0">
-        <h2 className="font-semibold text-sm text-foreground/80">Pinned Folders</h2>
-      </div>
-      <div className="p-3 flex-1 overflow-auto space-y-1">
-        {/* Placeholder Items */}
-        <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
-          <Folder className="h-4 w-4 text-blue-400/50" />
-          <span>Projects</span>
+    <>
+      {/* Mobile Backdrop */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-20 bg-background/80 backdrop-blur-sm md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Sidebar/Drawer */}
+      <aside 
+        className={`
+          fixed md:relative z-30 h-full
+          bg-muted/10 flex flex-col flex-shrink-0
+          transition-all duration-300 ease-in-out overflow-hidden
+          ${isOpen 
+            ? "translate-x-0 w-72 border-r" 
+            : "-translate-x-full w-72 md:w-0 md:translate-x-0 border-transparent md:border-r-0"}
+        `}
+      >
+        <div className="w-72 flex flex-col h-full overflow-hidden">
+          <div className="px-4 py-3 border-b flex items-center justify-between h-14 shrink-0">
+            <h2 className="font-semibold text-sm text-foreground/80">Pinned Folders</h2>
+            <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onClose}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="p-3 flex-1 overflow-auto space-y-1 pb-16">
+            {/* Placeholder Items */}
+            <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+              <Folder className="h-4 w-4 text-blue-400/50 shrink-0" />
+              <span className="truncate">Projects</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+              <Folder className="h-4 w-4 text-blue-400/50 shrink-0" />
+              <span className="truncate">Documents</span>
+            </div>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+              <Folder className="h-4 w-4 text-blue-400/50 shrink-0" />
+              <span className="truncate">Downloads</span>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
-          <Folder className="h-4 w-4 text-blue-400/50" />
-          <span>Documents</span>
-        </div>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
-          <Folder className="h-4 w-4 text-blue-400/50" />
-          <span>Downloads</span>
-        </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

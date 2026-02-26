@@ -1,24 +1,49 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useOperationProgress } from '../../context/OperationProgressContext';
 import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
-import { X, ChevronDown, ChevronUp, CheckCircle2, AlertCircle, Loader2, Files, Trash2, Edit, Move, Copy } from 'lucide-react';
+import { X, ChevronDown, CheckCircle2, AlertCircle, Loader2, Files, Trash2, Edit, Move, Copy } from 'lucide-react';
+import type { OperationMessage } from '@/api/wsClient';
 
 export function OperationQueueProgress() {
     const { operations, clearCompleted, dismissOperation } = useOperationProgress();
-    const [isMinimized, setIsMinimized] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
 
-    const opsList = Object.values(operations);
-    if (opsList.length === 0) {
-        return null;
-    }
+    const opsList = Object.values(operations).reverse();
 
     const activeOps = opsList.filter(op => op.opStatus === 'in-progress' || op.opStatus === 'starting' || op.opStatus === 'queued');
     const hasActiveOps = activeOps.length > 0;
+    const hasCompletedOps = opsList.some(op => op.opStatus === 'completed' || op.opStatus === 'error');
+
+    useEffect(() => {
+        let timeoutId: ReturnType<typeof setTimeout>;
+        if (!hasActiveOps && opsList.length > 0) {
+            timeoutId = setTimeout(() => {
+                clearCompleted();
+            }, 5000);
+        }
+        return () => {
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+        };
+    }, [hasActiveOps, opsList.length, clearCompleted]);
 
     const title = hasActiveOps 
-        ? `${activeOps.length} operation${activeOps.length > 1 ? 's' : ''} in progress` 
-        : `All operations completed`;
+        ? `${String(activeOps.length)} operation${activeOps.length > 1 ? 's' : ''} in progress` 
+        : (opsList.length > 0 ? `All operations completed` : `No operation`);
+
+    const getHeaderIcon = () => {
+        if (hasActiveOps) return <Loader2 className="w-4 h-4 animate-spin text-blue-500" />;
+        if (opsList.length > 0) return <CheckCircle2 className="w-4 h-4 text-green-500" />;
+        return <CheckCircle2 className="w-4 h-4 text-muted-foreground" />;
+    };
+
+    const getMobileIcon = () => {
+        if (hasActiveOps) return <Loader2 className="w-6 h-6 animate-spin text-blue-500" />;
+        if (opsList.length > 0) return <CheckCircle2 className="w-6 h-6 text-green-500" />;
+        return <CheckCircle2 className="w-6 h-6 text-muted-foreground" />;
+    };
 
     const getIconForType = (type: string) => {
         switch (type) {
@@ -41,100 +66,122 @@ export function OperationQueueProgress() {
         }
     };
 
-    return (
-        <div className="fixed bottom-4 right-4 z-50 w-80 md:w-96 shadow-lg bg-background rounded-lg border flex flex-col overflow-hidden transition-all duration-300">
-            <div 
-                className="bg-muted p-3 flex justify-between items-center cursor-pointer"
-                onClick={() => { setIsMinimized(!isMinimized); }}
-            >
-                <div className="flex items-center gap-2 font-medium text-sm">
-                    {hasActiveOps ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 text-green-500" />}
-                    <span>{title}</span>
+    const renderOpItem = (op: OperationMessage) => (
+        <div key={op.opId} className="flex flex-col border rounded-md p-2 bg-background shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+                <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <div className="p-1.5 bg-muted rounded-md text-foreground shrink-0">
+                        {getIconForType(op.opType)}
+                    </div>
+                    <div className="flex flex-col min-w-0">
+                        {op.opName ? (
+                            <span className="text-sm text-left break-words line-clamp-2" title={op.opName}>
+                                {op.opName}
+                            </span>
+                        ) : (
+                            <span className="text-sm capitalize truncate text-left">{op.opType}</span>
+                        )}
+                        <span className="text-xs text-muted-foreground capitalize text-left">{op.opStatus}</span>
+                    </div>
                 </div>
-                <div className="flex items-center gap-1">
-                    {!hasActiveOps && (
-                        <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 rounded-full" 
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                clearCompleted();
-                            }}
-                            title="Clear completed"
+                <div className="flex items-center gap-2 shrink-0">
+                    {getStatusIcon(op.opStatus)}
+                    {(op.opStatus === 'completed' || op.opStatus === 'error') && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={(e) => { e.stopPropagation(); dismissOperation(op.opId); }}
                         >
-                            <X className="w-4 h-4" />
+                            <X className="w-3 h-3" />
                         </Button>
                     )}
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-6 w-6 rounded-full" 
-                    >
-                        {isMinimized ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                    </Button>
                 </div>
             </div>
 
-            {!isMinimized && (
-                <div className="max-h-80 overflow-y-auto p-2 bg-card">
-                    <div className="flex flex-col gap-2">
-                        {opsList.map(op => (
-                            <div key={op.opId} className="flex flex-col border rounded-md p-2 bg-background shadow-sm">
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-2 min-w-0 pr-2">
-                                        <div className="p-1.5 bg-muted rounded-md text-foreground shrink-0">
-                                            {getIconForType(op.opType)}
-                                        </div>
-                                        <div className="flex flex-col min-w-0">
-                                            {op.opName ? (
-                                                <span className="text-sm text-left break-words line-clamp-2" title={op.opName}>
-                                                    {op.opName}
-                                                </span>
-                                            ) : (
-                                                <span className="text-sm capitalize truncate text-left">{op.opType}</span>
-                                            )}
-                                            <span className="text-xs text-muted-foreground capitalize text-left">{op.opStatus}</span>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        {getStatusIcon(op.opStatus)}
-                                        {(op.opStatus === 'completed' || op.opStatus === 'error') && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-5 w-5"
-                                                onClick={(e) => { e.stopPropagation(); dismissOperation(op.opId); }}
-                                            >
-                                                <X className="w-3 h-3" />
-                                            </Button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {op.opStatus === 'in-progress' && (
-                                    <div className="flex flex-col gap-1">
-                                        {op.opPercentage !== undefined && op.opPercentage !== null && (
-                                            <Progress value={op.opPercentage} className="h-1.5" />
-                                        )}
-                                        <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
-                                            <span>{op.opFileCount ? `Files: ${op.opFileCount}` : ''}</span>
-                                            <div className="flex gap-2">
-                                                <span>{op.opSpeed ?? ''}</span>
-                                                <span>{op.opPercentage !== undefined && op.opPercentage !== null ? `${Math.round(op.opPercentage)}%` : ''}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                                
-                                {op.error && (
-                                    <div className="text-xs text-red-500 mt-1 bg-red-50 p-1.5 rounded border border-red-100">
-                                        {op.error}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+            {op.opStatus === 'in-progress' && (
+                <div className="flex flex-col gap-1">
+                    {op.opPercentage !== undefined && op.opPercentage !== null && (
+                        <Progress value={op.opPercentage} className="h-1.5" />
+                    )}
+                    <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
+                        <span>{op.opFileCount ? `Files: ${op.opFileCount}` : ''}</span>
+                        <div className="flex gap-2">
+                            <span>{op.opSpeed ?? ''}</span>
+                            <span>{op.opPercentage !== undefined && op.opPercentage !== null ? `${String(Math.round(op.opPercentage))}%` : ''}</span>
+                        </div>
                     </div>
+                </div>
+            )}
+            
+            {op.error && (
+                <div className="text-xs text-red-500 mt-1 bg-red-50 p-1.5 rounded border border-red-100">
+                    {op.error}
+                </div>
+            )}
+        </div>
+    );
+
+    const renderOpsListContent = () => {
+        if (opsList.length === 0) {
+            return (
+                <div className="text-center text-sm text-muted-foreground py-4">
+                    No recent operations
+                </div>
+            );
+        }
+        return (
+            <div className="flex flex-col gap-2">
+                {opsList.map(renderOpItem)}
+            </div>
+        );
+    };
+
+    return (
+        <div className="absolute bottom-4 left-4 z-50 flex flex-col items-start justify-end">
+            {isExpanded && (
+                <div className="w-[85vw] md:w-80 max-w-sm shadow-xl bg-background rounded-lg border flex flex-col overflow-hidden transition-all duration-300 mb-2">
+                    <div 
+                        className="bg-muted p-3 flex justify-between items-center cursor-pointer border-b"
+                        onClick={() => { setIsExpanded(false); }}
+                    >
+                        <div className="flex items-center gap-2 font-medium text-sm">
+                            {getHeaderIcon()}
+                            <span>{title}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            {hasCompletedOps && (
+                                <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="h-6 px-2 text-xs rounded-full" 
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        clearCompleted();
+                                    }}
+                                    title="Clear completed tasks"
+                                >
+                                    Clear
+                                </Button>
+                            )}
+                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
+                                <ChevronDown className="w-4 h-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="max-h-[50vh] overflow-y-auto p-2 bg-card">
+                        {renderOpsListContent()}
+                    </div>
+                </div>
+            )}
+            
+            {!isExpanded && (
+                <div 
+                    className="w-12 h-12 bg-background shadow-lg rounded-full border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors"
+                    onClick={() => { setIsExpanded(true); }}
+                    title="Operation Queue"
+                >
+                    {getMobileIcon()}
                 </div>
             )}
         </div>

@@ -1,20 +1,32 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { Menu } from "lucide-react";
 
 interface HomeBreadcrumbProps {
   currentPath: string;
+  onToggleSidebar?: () => void;
 }
 
-export default function HomeBreadcrumb({ currentPath }: HomeBreadcrumbProps) {
+export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBreadcrumbProps) {
   const navigate = useNavigate();
 
   return (
-    <div className="h-14 border-b flex items-center px-4 md:px-6 bg-background shrink-0">
+    <div className="h-14 border-b flex items-center px-4 md:px-6 bg-background shrink-0 gap-2">
+      {onToggleSidebar && (
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onToggleSidebar}
+          className="mr-1 h-8 w-8 text-muted-foreground hover:text-foreground"
+        >
+          <Menu className="h-5 w-5" />
+        </Button>
+      )}
       <div className="flex items-center text-sm text-muted-foreground overflow-hidden whitespace-nowrap">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/home")}
+          onClick={() => { void navigate("/home"); }}
           className="p-1 h-auto bg-transparent hover:bg-transparent hover:underline text-foreground"
         >
           Home

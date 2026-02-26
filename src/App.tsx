@@ -9,7 +9,6 @@ import { SonnerToastCustom } from './components/custom/soonerToast';
 import { useEffect } from 'react';
 import { wsClient } from './api/wsClient';
 import { OperationProgressProvider } from './context/OperationProgressContext';
-import { OperationQueueProgress } from './components/custom/operationQueueProgress';
 
 function App() {
   useEffect(() => {
@@ -31,7 +30,6 @@ function App() {
           <Route element={<NotFoundPage />} path="*" />
         </Routes>
         <SonnerToastCustom />
-        <OperationQueueProgress />
       </OperationProgressProvider>
     </ThemeProvider>
   )

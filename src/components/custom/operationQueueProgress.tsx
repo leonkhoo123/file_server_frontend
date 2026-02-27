@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useOperationProgress } from '../../context/OperationProgressContext';
 import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
@@ -14,20 +14,6 @@ export function OperationQueueProgress() {
     const activeOps = opsList.filter(op => op.opStatus === 'in-progress' || op.opStatus === 'starting' || op.opStatus === 'queued');
     const hasActiveOps = activeOps.length > 0;
     const hasCompletedOps = opsList.some(op => op.opStatus === 'completed' || op.opStatus === 'error');
-
-    useEffect(() => {
-        let timeoutId: ReturnType<typeof setTimeout>;
-        if (!hasActiveOps && opsList.length > 0) {
-            timeoutId = setTimeout(() => {
-                clearCompleted();
-            }, 5000);
-        }
-        return () => {
-            if (timeoutId) {
-                clearTimeout(timeoutId);
-            }
-        };
-    }, [hasActiveOps, opsList.length, clearCompleted]);
 
     const title = hasActiveOps 
         ? `${String(activeOps.length)} operation${activeOps.length > 1 ? 's' : ''} in progress` 
@@ -50,6 +36,7 @@ export function OperationQueueProgress() {
             case 'copy': return <Copy className="w-4 h-4" />;
             case 'move': return <Move className="w-4 h-4" />;
             case 'delete': return <Trash2 className="w-4 h-4" />;
+            case 'delete_permanent': return <Trash2 className="w-4 h-4 text-red-500" />;
             case 'rename': return <Edit className="w-4 h-4" />;
             default: return <Files className="w-4 h-4" />;
         }
@@ -139,51 +126,58 @@ export function OperationQueueProgress() {
 
     return (
         <div className="absolute bottom-4 left-4 z-50 flex flex-col items-start justify-end">
-            {isExpanded && (
-                <div className="w-[85vw] md:w-80 max-w-sm shadow-xl bg-background rounded-lg border flex flex-col overflow-hidden transition-all duration-300 mb-2">
-                    <div 
-                        className="bg-muted p-3 flex justify-between items-center cursor-pointer border-b"
-                        onClick={() => { setIsExpanded(false); }}
-                    >
-                        <div className="flex items-center gap-2 font-medium text-sm">
-                            {getHeaderIcon()}
-                            <span>{title}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                            {hasCompletedOps && (
-                                <Button 
-                                    variant="ghost" 
-                                    size="sm" 
-                                    className="h-6 px-2 text-xs rounded-full" 
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        clearCompleted();
-                                    }}
-                                    title="Clear completed tasks"
-                                >
-                                    Clear
-                                </Button>
-                            )}
-                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
-                                <ChevronDown className="w-4 h-4" />
-                            </Button>
-                        </div>
-                    </div>
-                    <div className="max-h-[50vh] overflow-y-auto p-2 bg-card">
-                        {renderOpsListContent()}
-                    </div>
-                </div>
-            )}
-            
-            {!isExpanded && (
+            {/* Pop up panel with animation */}
+            <div 
+                className={`
+                    w-[90vw] md:w-96 max-w-md shadow-xl bg-background rounded-lg border flex flex-col overflow-hidden mb-2
+                    transition-all duration-300 ease-in-out origin-bottom-left
+                    ${isExpanded ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4 pointer-events-none absolute bottom-12'}
+                `}
+            >
                 <div 
-                    className="w-12 h-12 bg-background shadow-lg rounded-full border flex items-center justify-center cursor-pointer hover:bg-muted transition-colors"
-                    onClick={() => { setIsExpanded(true); }}
-                    title="Operation Queue"
+                    className="bg-muted p-3 flex justify-between items-center cursor-pointer border-b"
+                    onClick={() => { setIsExpanded(false); }}
                 >
-                    {getMobileIcon()}
+                    <div className="flex items-center gap-2 font-medium text-sm">
+                        {getHeaderIcon()}
+                        <span>{title}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        {hasCompletedOps && (
+                            <Button 
+                                variant="ghost" 
+                                size="sm" 
+                                className="h-6 px-2 text-xs rounded-full" 
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    clearCompleted();
+                                }}
+                                title="Clear completed tasks"
+                            >
+                                Clear
+                            </Button>
+                        )}
+                        <Button variant="ghost" size="icon" className="h-6 w-6 rounded-full">
+                            <ChevronDown className="w-4 h-4" />
+                        </Button>
+                    </div>
                 </div>
-            )}
+                <div className="max-h-[50vh] overflow-y-auto p-2 bg-card">
+                    {renderOpsListContent()}
+                </div>
+            </div>
+            
+            {/* Floating Action Button */}
+            <div 
+                className={`
+                    w-12 h-12 bg-background shadow-lg rounded-full border flex items-center justify-center cursor-pointer hover:bg-muted transition-all duration-300
+                    ${isExpanded ? 'bg-muted shadow-md' : ''}
+                `}
+                onClick={() => { setIsExpanded(!isExpanded); }}
+                title="Operation Queue"
+            >
+                {getMobileIcon()}
+            </div>
         </div>
     );
 }

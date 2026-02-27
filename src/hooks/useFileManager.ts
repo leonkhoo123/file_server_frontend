@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, renameFile } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile } from "@/api/api-file";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
 
@@ -149,20 +149,34 @@ export function useFileManager() {
     }
   };
 
-  const handleDelete = async () => {
+  const [itemsToDelete, setItemsToDelete] = useState<Set<string> | null>(null);
+  const isDeleteDialogOpen = itemsToDelete !== null;
+  const setIsDeleteDialogOpen = (open: boolean) => {
+    if (!open) setItemsToDelete(null);
+  };
+
+  const handleDelete = () => {
     if (selectedItems.size === 0) return;
+    setItemsToDelete(new Set(selectedItems));
+  };
 
-    if (!window.confirm(`Are you sure you want to delete ${selectedItems.size} item(s)?`)) {
-      return;
-    }
-
+  const confirmDelete = async () => {
+    if (!itemsToDelete || itemsToDelete.size === 0) return;
     try {
+      setItemsToDelete(null); // close modal immediately
       setIsLoading(true);
-      const sources = Array.from(selectedItems).map(name =>
+      const sources = Array.from(itemsToDelete).map(name =>
         currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
       );
-      await deleteFiles(sources);
-      toast.success(`Moved ${selectedItems.size} item(s) to recycle bin`);
+      
+      if (currentPath.startsWith("/.cloud_delete") || currentPath === "/.cloud_delete") {
+        await deletePermanentFiles(sources);
+        toast.success(`Permanently deleted ${itemsToDelete.size} item(s)`);
+      } else {
+        await deleteFiles(sources);
+        toast.success(`Moved ${itemsToDelete.size} item(s) to recycle bin`);
+      }
+
       setSelectedItems(new Set());
       await handleRefresh();
     } catch (error) {
@@ -301,6 +315,10 @@ export function useFileManager() {
     handleCopy,
     handlePaste,
     handleDelete,
+    confirmDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    itemsToDelete,
     handleRename,
     handleBack,
     handleFileClick,

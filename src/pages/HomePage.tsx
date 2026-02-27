@@ -8,6 +8,15 @@ import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
 import HomeToolbar from "@/components/home/HomeToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   const {
@@ -24,6 +33,10 @@ export default function HomePage() {
     handleCopy,
     handlePaste,
     handleDelete,
+    confirmDelete,
+    isDeleteDialogOpen,
+    setIsDeleteDialogOpen,
+    itemsToDelete,
     handleRename,
     handleBack,
     handleFileClick,
@@ -101,6 +114,27 @@ export default function HomePage() {
         />
       )}
       <VersionTag />
+
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete Items</DialogTitle>
+            <DialogDescription>
+              {currentPath.startsWith("/.cloud_delete") 
+                ? `Are you sure you want to permanently delete ${itemsToDelete?.size ?? 0} item(s)? This action cannot be undone.`
+                : `Are you sure you want to move ${itemsToDelete?.size ?? 0} item(s) to the recycle bin?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => { setIsDeleteDialogOpen(false); }}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => { void confirmDelete(); }} disabled={isLoading}>
+              {isLoading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </DefaultLayout>
   );
 }

@@ -74,6 +74,16 @@ export const deleteFiles = async (sources: string[], opId: string = generateOpId
   return rs.data;
 };
 
+export const deletePermanentFiles = async (sources: string[], opId: string = generateOpId()) => {
+  const rs = await axiosLayer.post("/files/delete-permanent", {
+    sources,
+    opId
+  }, {
+    headers: { "Accept": "application/json" },
+  });
+  return rs.data;
+};
+
 export const renameFile = async (source: string, newName: string, opId: string = generateOpId()) => {
   const rs = await axiosLayer.post("/files/rename", {
     source,

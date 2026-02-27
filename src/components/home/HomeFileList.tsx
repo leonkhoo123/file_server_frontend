@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
 import { formatBytes, formatLastModified } from "@/utils/utils";
 import type { ItemsResponse, FileInterface } from "@/api/api-file";
+import { usePreferences } from "@/context/PreferencesContext";
 
 interface HomeFileListProps {
   isLoading: boolean;
@@ -23,6 +24,12 @@ export default function HomeFileList({
   onFileClick,
   onFileDoubleClick,
 }: HomeFileListProps) {
+  const { showHiddenFiles } = usePreferences();
+
+  const filteredItems = items?.items.filter(
+    (file) => showHiddenFiles || !file.name.startsWith(".")
+  );
+
   return (
     <>
       {/* Table Header */}
@@ -41,15 +48,16 @@ export default function HomeFileList({
             <p className="text-red-500 mb-2">Failed to load directory.</p>
             <Button variant="outline" size="sm" onClick={onRefresh}>Try Again</Button>
           </div>
-        ) : !items?.items || items.items.length === 0 ? (
+        ) : !filteredItems || filteredItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground opacity-60">
             <Folder className="h-16 w-16 mb-4 opacity-20" />
             <p>This folder is empty.</p>
           </div>
         ) : (
           <div className="space-y-1">
-            {items.items.map((file, index) => {
+            {filteredItems.map((file, index) => {
               const isSelected = selectedItems.has(file.name);
+              const isHidden = file.name.startsWith(".");
               return (
                 <div key={index} className="group">
                   <div
@@ -59,7 +67,7 @@ export default function HomeFileList({
                       isSelected
                         ? 'bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60'
                         : 'hover:bg-muted/50'
-                    }`}
+                    } ${isHidden ? 'opacity-50' : ''}`}
                   >
                     {/* NAME */}
                     <div className="flex-1 flex items-center space-x-3 min-w-0 pr-2 md:pr-4">

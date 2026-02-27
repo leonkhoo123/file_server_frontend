@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile } from "@/api/api-file";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
+import { usePreferences } from "@/context/PreferencesContext";
 
 export function useFileManager() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showHiddenFiles } = usePreferences();
   
   const [items, setItems] = useState<ItemsResponse>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -96,7 +98,11 @@ export function useFileManager() {
 
   const handleSelectAll = () => {
     if (!items?.items) return;
-    const allNames = new Set(items.items.map(item => item.name));
+    const allNames = new Set(
+      items.items
+        .filter(item => showHiddenFiles || !item.name.startsWith("."))
+        .map(item => item.name)
+    );
     setSelectedItems(allNames);
   };
 
@@ -226,13 +232,15 @@ export function useFileManager() {
     setSelectedItems(prev => {
       let newSet = new Set(prev);
       
-      if (event.shiftKey && lastSelectedIndex !== null && items?.items) {
+      const displayedItems = items?.items.filter(item => showHiddenFiles || !item.name.startsWith(".")) ?? [];
+
+      if (event.shiftKey && lastSelectedIndex !== null && displayedItems.length > 0) {
         // Shift+Click: Select range and clear others
         newSet = new Set();
         const start = Math.min(lastSelectedIndex, index);
         const end = Math.max(lastSelectedIndex, index);
         for (let i = start; i <= end; i++) {
-          newSet.add(items.items[i].name);
+          newSet.add(displayedItems[i].name);
         }
       } else if (event.ctrlKey || event.metaKey) {
         // Ctrl+Click: Toggle selection

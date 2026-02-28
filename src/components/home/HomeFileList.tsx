@@ -1,4 +1,4 @@
-import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info } from "lucide-react";
+import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
 import { formatBytes, formatLastModified } from "@/utils/utils";
@@ -10,6 +10,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { useState, useCallback } from "react";
 
 interface HomeFileListProps {
   isLoading: boolean;
@@ -31,6 +32,7 @@ interface HomeFileListProps {
   clipboardOperation: 'cut' | 'copy' | null;
   clipboardSourceDir?: string;
   currentPath: string;
+  onUploadDrop: (files: File[], targetPath: string) => void;
 }
 
 export default function HomeFileList({
@@ -53,18 +55,118 @@ export default function HomeFileList({
   clipboardOperation,
   clipboardSourceDir,
   currentPath,
+  onUploadDrop,
 }: HomeFileListProps) {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  }, [isDragging]);
+
+  const traverseFileTree = async (item: any, path: string, files: File[]): Promise<void> => {
+    return new Promise((resolve) => {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      if (item.isFile) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        item.file((file: File) => {
+          // Attach custom path for folder structures on drop
+          if (path) {
+            Object.defineProperty(file, 'customPath', {
+              value: path + file.name,
+              writable: false,
+            });
+          }
+          files.push(file);
+          resolve();
+        });
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      } else if (item.isDirectory) {
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-assignment
+        const dirReader = item.createReader();
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call
+        dirReader.readEntries(async (entries: any[]) => {
+          for (const entry of entries) {
+            // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access, @typescript-eslint/restrict-plus-operands
+            await traverseFileTree(entry, path + item.name + "/", files);
+          }
+          resolve();
+        });
+      } else {
+        resolve();
+      }
+    });
+  };
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    const items = e.dataTransfer.items;
+    const files: File[] = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+    if (items) {
+      for (const item of Array.from(items)) {
+        const entry = item.webkitGetAsEntry();
+        if (entry) {
+          await traverseFileTree(entry, "", files);
+        }
+      }
+    } else {
+      // Fallback for older browsers
+      for (const file of Array.from(e.dataTransfer.files)) {
+        files.push(file);
+      }
+    }
+
+    if (files.length > 0) {
+      onUploadDrop(files, currentPath);
+    }
+  }, [currentPath, onUploadDrop]);
+
   return (
-    <>
+    <div 
+      className="flex flex-col h-full w-full relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Drag Overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 bg-blue-500/10 backdrop-blur-sm border-2 border-dashed border-blue-500 rounded-lg flex flex-col items-center justify-center pointer-events-none transition-all">
+          <UploadCloud className="w-16 h-16 text-blue-500 mb-4 animate-bounce" />
+          <h3 className="text-2xl font-bold text-blue-600 dark:text-blue-400">Drop files here to upload</h3>
+          <p className="text-blue-500/80 mt-2">Uploading to: {currentPath === "/" ? "Root" : currentPath}</p>
+        </div>
+      )}
+
       {/* Table Header */}
-      <div className="flex border-b font-semibold py-2 px-6 md:px-10 text-sm bg-muted/30 shrink-0">
+      <div className="flex border-b font-semibold py-2 px-6 md:px-10 text-sm bg-muted/30 shrink-0 overflow-y-scroll scrollbar scrollbar-thumb-transparent scrollbar-track-transparent">
         <div className="flex-1 text-left text-muted-foreground">Name</div>
         <div className="w-24 md:w-32 hidden lg:block text-right text-muted-foreground">Size</div>
         <div className="w-32 md:w-48 hidden lg:block text-right text-muted-foreground">Last Modified</div>
       </div>
 
       {/* File List Content */}
-      <div className="flex-1 overflow-y-auto p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent">
+      <div className="flex-1 overflow-y-scroll p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent">
         {isLoading && !items ? (
           <FileListTableSkeleton />
         ) : error ? (
@@ -179,6 +281,6 @@ export default function HomeFileList({
           </div>
         )}
       </div>
-    </>
+    </div>
   );
 }

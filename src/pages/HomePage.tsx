@@ -9,6 +9,7 @@ import HomeToolbar from "@/components/home/HomeToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
 import HomePropertiesModal from "@/components/home/HomePropertiesModal";
+import { UploadProgressWidget } from "@/components/custom/uploadProgressWidget";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +60,8 @@ export default function HomePage() {
     propertiesData,
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
+    uploads,
+    handleUploadFiles,
   } = useFileManager();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -205,6 +208,7 @@ export default function HomePage() {
             onCleanUp={removeRotateTemp}
             onRefresh={handleRefresh}
             onCreateFolder={handleCreateFolder}
+            onUploadFiles={(files) => { void handleUploadFiles(files, currentPath); }}
           />
 
           <HomeFileList
@@ -227,11 +231,14 @@ export default function HomePage() {
             clipboardOperation={clipboardItems.operation}
             clipboardSourceDir={clipboardItems.sourceDir}
             currentPath={currentPath}
+            onUploadDrop={(files, path) => { void handleUploadFiles(files, path); }}
           />
         </div>
 
         <OperationQueueProgress />
       </div>
+
+      <UploadProgressWidget uploads={uploads} />
 
       {selectedVideo && (
         <VideoPlayerModalV2

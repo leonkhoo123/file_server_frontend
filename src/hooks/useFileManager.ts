@@ -1,11 +1,20 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile, createFolder, getFileProperties, type PropertiesResponse } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile, createFolder, getFileProperties, type PropertiesResponse, uploadFile } from "@/api/api-file";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
 import { usePreferences } from "@/context/PreferencesContext";
 import { encodePathToUrl, decodeUrlToPath } from "@/utils/utils";
+
+export interface UploadProgress {
+  id: string;
+  name: string;
+  progress: number;
+  status: 'pending' | 'uploading' | 'completed' | 'error';
+  error?: string;
+  path: string;
+}
 
 export function useFileManager() {
   const location = useLocation();
@@ -22,6 +31,52 @@ export function useFileManager() {
 
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
   const [selectionAnchorIndex, setSelectionAnchorIndex] = useState<number | null>(null);
+
+  const [uploads, setUploads] = useState<UploadProgress[]>([]);
+
+  const handleUploadFiles = useCallback(async (files: File[], targetPath: string) => {
+    const newUploads = files.map(file => ({
+      id: Math.random().toString(36).substring(7),
+      name: file.name,
+      progress: 0,
+      status: 'pending' as const,
+      path: targetPath,
+    }));
+
+    setUploads(prev => [...prev, ...newUploads]);
+
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const upload = newUploads[i];
+
+      setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, status: 'uploading' } : u));
+
+      try {
+        await uploadFile(targetPath, file, (progressEvent) => {
+          if (progressEvent.total) {
+            const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, progress } : u));
+          }
+        });
+        
+        setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, status: 'completed', progress: 100 } : u));
+      } catch (error: any) {
+        console.error("Upload error:", error);
+        setUploads(prev => prev.map(u => u.id === upload.id ? { ...u, status: 'error', error: error.message || 'Upload failed' } : u));
+        toast.error(`Failed to upload ${file.name}`);
+      }
+    }
+    
+    // Refresh after all uploads finish
+    if (files.length > 0) {
+      void handleRefresh();
+      
+      // Clean up completed/error uploads after 5 seconds
+      setTimeout(() => {
+        setUploads(prev => prev.filter(u => u.status === 'uploading' || u.status === 'pending'));
+      }, 5000);
+    }
+  }, []);
 
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);
@@ -524,5 +579,7 @@ export function useFileManager() {
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
     isPropertiesLoading,
+    uploads,
+    handleUploadFiles,
   };
 }

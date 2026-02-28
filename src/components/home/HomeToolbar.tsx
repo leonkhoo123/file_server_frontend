@@ -1,6 +1,6 @@
-import { ArrowLeft, CheckSquare, Scissors, Copy, Clipboard, Pencil, Trash2, Plus, BrushCleaning, RefreshCcw, FolderPlus, Upload } from "lucide-react";
+import { ArrowLeft, CheckSquare, Scissors, Copy, Clipboard, Pencil, Trash2, Plus, BrushCleaning, RefreshCcw, FolderPlus, Upload, FolderUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { useRef } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,6 +24,7 @@ interface HomeToolbarProps {
   onCleanUp: () => void;
   onRefresh: () => void;
   onCreateFolder: () => void;
+  onUploadFiles?: (files: File[]) => void;
 }
 
 export default function HomeToolbar({
@@ -42,9 +43,37 @@ export default function HomeToolbar({
   onCleanUp,
   onRefresh,
   onCreateFolder,
+  onUploadFiles,
 }: HomeToolbarProps) {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0 && onUploadFiles) {
+      onUploadFiles(Array.from(e.target.files));
+    }
+    // reset input so the same files can be selected again if needed
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (folderInputRef.current) folderInputRef.current.value = "";
+  };
+
   return (
     <div className="flex items-center gap-1 p-2 px-4 border-b bg-muted/5 shrink-0 overflow-x-auto">
+      <input 
+        type="file" 
+        multiple 
+        className="hidden" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+      />
+      <input 
+        type="file" 
+        className="hidden" 
+        ref={folderInputRef} 
+        {...{ webkitdirectory: "", directory: "" } as any} 
+        onChange={handleFileChange} 
+      />
+
       <Button variant="ghost" size="sm" onClick={onBack} disabled={currentPath === "/"} className="h-8 px-2" title="Back">
         <ArrowLeft className="h-4 w-4 md:mr-1" />
         <span className="hidden md:inline">Back</span>
@@ -85,9 +114,13 @@ export default function HomeToolbar({
             <FolderPlus className="mr-2 h-4 w-4" />
             <span>Create Folder</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toast.info("Upload file functionality - to be implemented")}>
+          <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
             <Upload className="mr-2 h-4 w-4" />
             <span>Upload File</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => folderInputRef.current?.click()}>
+            <FolderUp className="mr-2 h-4 w-4" />
+            <span>Upload Folder</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

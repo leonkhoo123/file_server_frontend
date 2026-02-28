@@ -6,7 +6,7 @@
  * @param decimals The number of decimal places to use. Default is 1.
  * @returns A formatted string with the appropriate unit (B, KB, MB, GB, TB).
  */
-export function formatBytes(bytes: number, decimals: number = 1): string {
+export function formatBytes(bytes: number, decimals = 1): string {
     if (bytes === 0) return '0 Bytes';
 
     // 1024 is the standard base for binary units (KiB, MiB, GiB)
@@ -23,7 +23,7 @@ export function formatBytes(bytes: number, decimals: number = 1): string {
     const i = Math.floor(Math.log(bytes) / Math.log(k));
 
     // Calculate the final value and append the unit
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+    return String(parseFloat((bytes / Math.pow(k, i)).toFixed(dm))) + ' ' + sizes[i];
 }
 
 // Example usage:
@@ -62,3 +62,15 @@ export function formatLastModified(isoString: string): string {
 
 // Example Output for '2025-08-14T23:38:23.8941697+08:00' (in a typical US locale):
 // "Aug 14, 2025, 11:38 PM"
+
+export const encodePathToUrl = (path: string) => {
+    if (path === '/.cloud_delete') return '/recycle_bin';
+    if (path.startsWith('/.cloud_delete/')) return path.replace('/.cloud_delete/', '/recycle_bin/');
+    return path;
+};
+
+export const decodeUrlToPath = (urlPath: string) => {
+    if (urlPath === '/recycle_bin') return '/.cloud_delete';
+    if (urlPath.startsWith('/recycle_bin/')) return urlPath.replace('/recycle_bin/', '/.cloud_delete/');
+    return urlPath;
+};

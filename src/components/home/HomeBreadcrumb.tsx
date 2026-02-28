@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Menu } from "lucide-react";
+import { encodePathToUrl } from "@/utils/utils";
 
 interface HomeBreadcrumbProps {
   currentPath: string;
@@ -39,11 +40,11 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
               <button
                 onClick={() => {
                   const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                  void navigate("/home" + targetPath);
+                  void navigate("/home" + encodePathToUrl(targetPath));
                 }}
                 className={`hover:underline hover:text-foreground transition-colors ${isHidden ? 'opacity-60' : ''}`}
               >
-                {part}
+                {part === '.cloud_delete' ? 'Recycle Bin' : part}
               </button>
             </span>
           );

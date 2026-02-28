@@ -1,4 +1,4 @@
-import { File, Folder } from "lucide-react";
+import { File, Folder, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
 import { formatBytes, formatLastModified } from "@/utils/utils";
@@ -66,9 +66,13 @@ export default function HomeFileList({
                     <div className={`flex-1 flex items-center space-x-3 min-w-0 pr-2 md:pr-4 ${isHidden ? 'opacity-60' : ''}`}>
                       {file.type === "dir" ? (
                         <>
-                          <Folder className="h-5 w-5 shrink-0 text-blue-500 fill-blue-500/20" />
+                          {file.name === ".cloud_delete" ? (
+                            <Trash2 className="h-5 w-5 shrink-0 text-blue-500" />
+                          ) : (
+                            <Folder className="h-5 w-5 shrink-0 text-blue-500 fill-blue-500/20" />
+                          )}
                           <div className="flex flex-col min-w-0 w-full text-left">
-                            <span className="truncate font-medium text-foreground">{file.name}</span>
+                            <span className="truncate font-medium text-foreground">{file.name === ".cloud_delete" ? "Recycle Bin" : file.name}</span>
                           </div>
                         </>
                       ) : (

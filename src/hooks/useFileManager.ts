@@ -5,6 +5,7 @@ import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate,
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
 import { usePreferences } from "@/context/PreferencesContext";
+import { encodePathToUrl, decodeUrlToPath } from "@/utils/utils";
 
 export function useFileManager() {
   const location = useLocation();
@@ -55,7 +56,8 @@ export function useFileManager() {
       setLastSelectedIndex(null);
 
       try {
-        const path = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
+        const rawPath = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
+        const path = decodeUrlToPath(rawPath);
         const itemsrs = await fetchDirList(path, showHidden);
         setItems(itemsrs);
         setCurrentPath(itemsrs.path);
@@ -220,7 +222,7 @@ export function useFileManager() {
     const pathParts = currentPath.split("/").filter(Boolean);
     pathParts.pop();
     const parentPath = pathParts.length > 0 ? "/" + pathParts.join("/") : "/";
-    void navigate("/home" + parentPath);
+    void navigate("/home" + encodePathToUrl(parentPath));
   };
 
   const handleFileClick = (fileInfo: FileInterface, index: number, event: React.MouseEvent) => {
@@ -260,7 +262,7 @@ export function useFileManager() {
       setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
-      void navigate("/home" + newPath);
+      void navigate("/home" + encodePathToUrl(newPath));
     }
   };
 

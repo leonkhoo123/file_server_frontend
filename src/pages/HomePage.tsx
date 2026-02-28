@@ -98,7 +98,7 @@ export default function HomePage() {
 
   return (
     <DefaultLayout>
-      <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden relative">
+      <div className="flex flex-1 w-full overflow-hidden relative">
         <HomeSidebar isOpen={isSidebarOpen} onClose={() => { setIsSidebarOpen(false); }} />
 
         <div className="flex-1 flex flex-col min-w-0 bg-background" onClick={handleClearSelection}>

@@ -48,7 +48,7 @@ export default function HomeSidebar({ isOpen, onClose }: HomeSidebarProps) {
       >
         <div className="w-72 flex flex-col h-full overflow-hidden">
           <div className="px-4 py-3 border-b flex items-center justify-between h-14 shrink-0">
-            <h2 className="font-semibold text-sm text-foreground/80">Pinned Folders</h2>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">Cloud Drive</h1>
             <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onClose}>
               <X className="h-4 w-4" />
             </Button>

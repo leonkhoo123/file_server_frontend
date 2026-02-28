@@ -1,7 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu } from "lucide-react";
+import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff } from "lucide-react";
 import { encodePathToUrl } from "@/utils/utils";
+import { logout } from "@/api/api-auth";
+import { useTheme } from "@/components/theme-provider";
+import { toast } from "sonner";
+import { registerSW } from "virtual:pwa-register";
+import { usePreferences } from "@/context/PreferencesContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 interface HomeBreadcrumbProps {
   currentPath: string;
@@ -10,45 +22,117 @@ interface HomeBreadcrumbProps {
 
 export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBreadcrumbProps) {
   const navigate = useNavigate();
+  const updateSW = registerSW();
+  const { theme, setTheme } = useTheme();
+  const { showHidden, setShowHidden } = usePreferences();
+
+  const handleReload = async () => {
+    console.log("Force reloaded");
+    await updateSW(true); // force service worker update + reload
+    toast.success("App Reloaded");
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    toast.success("Logged Out");
+    console.log("Logged Out");
+    void navigate("/login");
+  };
+
+  const toggleTheme = () => {
+    if (theme === "light") {
+      setTheme("dark");
+    } else if (theme === "dark") {
+      setTheme("system");
+    } else {
+      setTheme("light");
+    }
+  };
 
   return (
-    <div className="h-14 border-b flex items-center px-4 md:px-6 bg-background shrink-0 gap-2">
-      {onToggleSidebar && (
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onToggleSidebar}
-          className="mr-1 h-8 w-8 text-muted-foreground hover:text-foreground"
-        >
-          <Menu className="h-5 w-5" />
-        </Button>
-      )}
-      <div className="flex items-center text-sm text-muted-foreground overflow-hidden whitespace-nowrap">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => { void navigate("/home"); }}
-          className="p-1 h-auto bg-transparent hover:bg-transparent hover:underline text-foreground"
-        >
-          Home
-        </Button>
-        {currentPath.split("/").filter(Boolean).map((part, idx, arr) => {
-          const isHidden = part.startsWith('.');
-          return (
-            <span key={idx} className="flex items-center">
-              <span className="mx-1 text-muted-foreground/50">/</span>
-              <button
-                onClick={() => {
-                  const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                  void navigate("/home" + encodePathToUrl(targetPath));
-                }}
-                className={`hover:underline hover:text-foreground transition-colors ${isHidden ? 'opacity-60' : ''}`}
-              >
-                {part === '.cloud_delete' ? 'Recycle Bin' : part}
-              </button>
-            </span>
-          );
-        })}
+    <div className="h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background shrink-0 gap-2">
+      <div className="flex items-center gap-2 overflow-hidden">
+        {onToggleSidebar && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onToggleSidebar}
+            className="mr-1 h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <Menu className="h-5 w-5" />
+          </Button>
+        )}
+        <div className="flex items-center text-sm text-muted-foreground overflow-hidden whitespace-nowrap">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => { void navigate("/home"); }}
+            className="p-1 h-auto bg-transparent hover:bg-transparent hover:underline text-foreground shrink-0"
+          >
+            Home
+          </Button>
+          {currentPath.split("/").filter(Boolean).map((part, idx, arr) => {
+            const isHidden = part.startsWith('.');
+            return (
+              <span key={idx} className="flex items-center shrink-0">
+                <span className="mx-1 text-muted-foreground/50">/</span>
+                <button
+                  onClick={() => {
+                    const targetPath = "/" + arr.slice(0, idx + 1).join("/");
+                    void navigate("/home" + encodePathToUrl(targetPath));
+                  }}
+                  className={`hover:underline hover:text-foreground transition-colors ${isHidden ? 'opacity-60' : ''}`}
+                >
+                  {part === '.cloud_delete' ? 'Recycle Bin' : part}
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 shrink-0">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon">
+              <Settings className="h-[1.2rem] w-[1.2rem] transition-all" />
+              <span className="sr-only">Settings</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            
+            <DropdownMenuItem onSelect={(e) => {
+              e.preventDefault();
+              toggleTheme();
+            }}>
+              {theme === "light" && <Sun className="mr-2 h-4 w-4" />}
+              {theme === "dark" && <Moon className="mr-2 h-4 w-4" />}
+              {theme === "system" && <Monitor className="mr-2 h-4 w-4" />}
+              <span>Theme: {theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={() => { setShowHidden(!showHidden); }}>
+              {showHidden ? (
+                <Eye className="mr-2 h-4 w-4" />
+              ) : (
+                <EyeOff className="mr-2 h-4 w-4" />
+              )}
+              <span>{showHidden ? "Hide Hidden Files" : "Show Hidden Files"}</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuSeparator />
+
+            <DropdownMenuItem onClick={handleReload}>
+              <RefreshCcw className="mr-2 h-4 w-4" />
+              <span>Reload App</span>
+            </DropdownMenuItem>
+
+            <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/30">
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Log Out</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );

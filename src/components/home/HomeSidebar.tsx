@@ -6,9 +6,11 @@ import { decodeUrlToPath } from "@/utils/utils";
 interface HomeSidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  isWsConnected: boolean;
+  isHealthConnected: boolean;
 }
 
-export default function HomeSidebar({ isOpen, onClose }: HomeSidebarProps) {
+export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthConnected }: HomeSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -47,11 +49,23 @@ export default function HomeSidebar({ isOpen, onClose }: HomeSidebarProps) {
         `}
       >
         <div className="w-72 flex flex-col h-full overflow-hidden">
-          <div className="px-4 py-3 border-b flex items-center justify-between h-14 shrink-0">
+          <div className="px-4 py-3 border-b flex items-center justify-between shrink-0 min-h-[3.5rem]">
             <h1 className="text-xl font-bold text-foreground tracking-tight">Cloud Drive</h1>
-            <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-1 items-end">
+                <div className="flex items-center gap-1.5" title={`API: ${isHealthConnected ? 'OK' : 'Error'}`}>
+                  <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wider leading-none">/health</span>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isHealthConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
+                </div>
+                <div className="flex items-center gap-1.5" title={`WS: ${isWsConnected ? 'Connected' : 'Disconnected'}`}>
+                  <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wider leading-none">WebSocket</span>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isWsConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
+                </div>
+              </div>
+              <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground shrink-0" onClick={onClose}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
           <div className="p-3 flex-1 overflow-auto space-y-1 pb-16">
             <div 

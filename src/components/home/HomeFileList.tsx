@@ -10,6 +10,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
+import { TruncatedText } from "@/components/custom/truncatedText";
 import { useState, useCallback } from "react";
 
 interface HomeFileListProps {
@@ -213,20 +214,16 @@ export default function HomeFileList({
                                 <Folder className="h-5 w-5 shrink-0 text-blue-500 fill-blue-500/20" />
                               )}
                               <div className="flex flex-col min-w-0 w-full text-left">
-                                <span className="truncate font-medium text-foreground">{file.name === ".cloud_delete" ? "Recycle Bin" : file.name}</span>
-                                <span className="text-xs truncate mt-0.5 lg:hidden text-muted-foreground">
-                                  {formatLastModified(file.modified)}
-                                </span>
+                                <TruncatedText className="font-medium text-foreground" text={file.name === ".cloud_delete" ? "Recycle Bin" : file.name} />
+                                <TruncatedText className="text-xs mt-0.5 lg:hidden text-muted-foreground" text={formatLastModified(file.modified)} />
                               </div>
                             </>
                           ) : (
                             <>
                               <File className="h-5 w-5 shrink-0 text-gray-400" />
                               <div className="flex flex-col min-w-0 w-full text-left">
-                                <span className="truncate text-foreground">{file.name}</span>
-                                <span className="text-xs truncate mt-0.5 lg:hidden text-muted-foreground">
-                                  {formatBytes(file.size)} • {formatLastModified(file.modified)}
-                                </span>
+                                <TruncatedText className="text-foreground" text={file.name} />
+                                <TruncatedText className="text-xs mt-0.5 lg:hidden text-muted-foreground" text={`${formatBytes(file.size)} • ${formatLastModified(file.modified)}`} />
                               </div>
                             </>
                           )}

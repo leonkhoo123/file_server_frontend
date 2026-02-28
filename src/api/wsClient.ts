@@ -19,6 +19,9 @@ class WebSocketClient {
     private url: string;
     private reconnectTimeout = 5000;
     private listeners: WsCallback[] = [];
+    private statusListeners: ((connected: boolean) => void)[] = [];
+    private isReconnecting = false;
+    private _isConnected = false;
 
     constructor() {
         const hostname = window.location.hostname;
@@ -31,6 +34,21 @@ class WebSocketClient {
         const wsHost = isLocal ? "localhost" : hostname;
 
         this.url = `${protocol}//${wsHost}:${wsPort}/ws`;
+    }
+
+    public subscribeStatus(callback: (connected: boolean) => void) {
+        this.statusListeners.push(callback);
+        callback(this._isConnected);
+        return () => {
+            this.statusListeners = this.statusListeners.filter(cb => cb !== callback);
+        };
+    }
+
+    private updateStatus(connected: boolean) {
+        if (this._isConnected !== connected) {
+            this._isConnected = connected;
+            this.statusListeners.forEach(cb => { cb(connected); });
+        }
     }
 
     public subscribe(callback: WsCallback) {
@@ -50,6 +68,13 @@ class WebSocketClient {
 
         this.socket.onopen = () => {
             console.log('[WebSocket] Connected');
+            this.updateStatus(true);
+            if (this.isReconnecting) {
+                // Trigger a custom event or let the status listener handle it.
+                // We'll dispatch a custom event on window for the successful reconnect.
+                window.dispatchEvent(new CustomEvent('ws-reconnected'));
+                this.isReconnecting = false;
+            }
         };
 
         this.socket.onmessage = (event) => {
@@ -64,6 +89,8 @@ class WebSocketClient {
 
         this.socket.onclose = () => {
             console.log(`[WebSocket] Disconnected. Reconnecting in ${this.reconnectTimeout / 1000}s...`);
+            this.updateStatus(false);
+            this.isReconnecting = true;
             setTimeout(() => { this.connect(); }, this.reconnectTimeout);
         };
 

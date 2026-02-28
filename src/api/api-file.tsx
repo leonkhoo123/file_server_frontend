@@ -17,6 +17,15 @@ export interface FileInterface {
 }
 
 
+export const checkHealth = async (): Promise<boolean> => {
+  try {
+    const rs = await axiosLayer.get("/health");
+    return rs.status === 200;
+  } catch {
+    return false;
+  }
+};
+
 export const fetchDirList = async (path = "/", showHidden = false): Promise<ItemsResponse> => {
   // Clean up path formatting (avoid duplicate slashes)
   const cleanPath = path.trim() === "" ? "/" : path;
@@ -29,7 +38,7 @@ export const fetchDirList = async (path = "/", showHidden = false): Promise<Item
   return rs.data as ItemsResponse;
 };
 
-export const deleteTempRotate = async (path: string = "/", opId: string = generateOpId()) => {
+export const deleteTempRotate = async (path = "/", opId: string = generateOpId()) => {
   const cleanPath = path.trim() === "" ? "/" : path;
 
   const rs = await axiosLayer.post("/files/delete-rotate-temp", {
@@ -133,11 +142,20 @@ export const getFileProperties = async (sources: string[]): Promise<PropertiesRe
 
 import * as CRC32 from 'crc-32';
 
+export interface UploadProgressEvent {
+  loaded: number;
+  total: number;
+  progress: number;
+  bytes: number;
+  rate?: number;
+  estimated?: number;
+  upload: boolean;
+}
+
 export const uploadFile = async (
   path: string,
   file: File,
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  onProgress?: (progressEvent: any) => void,
+  onProgress?: (progressEvent: UploadProgressEvent) => void,
   opId?: string
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {

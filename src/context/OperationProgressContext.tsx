@@ -5,6 +5,7 @@ interface OperationProgressContextType {
     operations: Record<string, OperationMessage>;
     clearCompleted: () => void;
     dismissOperation: (opId: string) => void;
+    addOrUpdateOperation: (msg: OperationMessage) => void;
 }
 
 const OperationProgressContext = createContext<OperationProgressContextType | undefined>(undefined);
@@ -49,8 +50,17 @@ export function OperationProgressProvider({ children }: { children: ReactNode })
         });
     };
 
+    const addOrUpdateOperation = (msg: OperationMessage) => {
+        if (msg.opId) {
+            setOperations(prev => ({
+                ...prev,
+                [msg.opId]: msg
+            }));
+        }
+    };
+
     return (
-        <OperationProgressContext.Provider value={{ operations, clearCompleted, dismissOperation }}>
+        <OperationProgressContext.Provider value={{ operations, clearCompleted, dismissOperation, addOrUpdateOperation }}>
             {children}
         </OperationProgressContext.Provider>
     );

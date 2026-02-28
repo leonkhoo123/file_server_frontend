@@ -2,13 +2,36 @@ import { useState, useEffect, useRef } from 'react';
 import { useOperationProgress } from '../../context/OperationProgressContext';
 import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
-import { X, ChevronDown, CheckCircle2, AlertCircle, Loader2, Files, Trash2, Edit, Move, Copy } from 'lucide-react';
+import { X, ChevronDown, CheckCircle2, AlertCircle, Loader2, Files, Trash2, Edit, Move, Copy, UploadCloud } from 'lucide-react';
 import type { OperationMessage } from '@/api/wsClient';
 
 export function OperationQueueProgress() {
     const { operations, clearCompleted, dismissOperation } = useOperationProgress();
     const [isExpanded, setIsExpanded] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
+    const prevOpIdsRef = useRef<Set<string>>(new Set(Object.keys(operations)));
+
+    useEffect(() => {
+        const currentIds = Object.keys(operations);
+        const prevIds = prevOpIdsRef.current;
+        
+        let hasNewTargetOp = false;
+        for (const id of currentIds) {
+            if (!prevIds.has(id)) {
+                const opType = operations[id].opType;
+                if (['copy', 'move', 'delete', 'delete_permanent', 'upload'].includes(opType)) {
+                    hasNewTargetOp = true;
+                    break;
+                }
+            }
+        }
+
+        if (hasNewTargetOp) {
+            setIsExpanded(true);
+        }
+        
+        prevOpIdsRef.current = new Set(currentIds);
+    }, [operations]);
 
     useEffect(() => {
         function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -57,6 +80,7 @@ export function OperationQueueProgress() {
             case 'delete': return <Trash2 className="w-4 h-4" />;
             case 'delete_permanent': return <Trash2 className="w-4 h-4 text-red-500" />;
             case 'rename': return <Edit className="w-4 h-4" />;
+            case 'upload': return <UploadCloud className="w-4 h-4" />;
             default: return <Files className="w-4 h-4" />;
         }
     };

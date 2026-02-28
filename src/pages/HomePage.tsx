@@ -9,7 +9,6 @@ import HomeToolbar from "@/components/home/HomeToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
 import HomePropertiesModal from "@/components/home/HomePropertiesModal";
-import { UploadProgressWidget } from "@/components/custom/uploadProgressWidget";
 import {
   Dialog,
   DialogContent,
@@ -20,6 +19,9 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+
+import { wsClient } from "@/api/wsClient";
+import { checkHealth } from "@/api/api-file";
 
 export default function HomePage() {
   const {
@@ -60,13 +62,43 @@ export default function HomePage() {
     propertiesData,
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
-    uploads,
     handleUploadFiles,
   } = useFileManager();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [renameInput, setRenameInput] = useState("");
   const [folderInput, setFolderInput] = useState("");
+  const [isWsConnected, setIsWsConnected] = useState(false);
+  const [isHealthConnected, setIsHealthConnected] = useState(false);
+
+  useEffect(() => {
+    const performHealthCheck = async () => {
+      const isHealthy = await checkHealth();
+      setIsHealthConnected(isHealthy);
+    };
+    void performHealthCheck();
+
+    const unsubscribeWs = wsClient.subscribeStatus((connected) => {
+      setIsWsConnected(connected);
+    });
+
+    const handleWsReconnect = () => {
+      void performHealthCheck().then(() => {
+        void handleRefresh();
+      });
+    };
+    window.addEventListener('ws-reconnected', handleWsReconnect);
+
+    const healthInterval = setInterval(() => {
+      void performHealthCheck();
+    }, 30000);
+
+    return () => {
+      unsubscribeWs();
+      window.removeEventListener('ws-reconnected', handleWsReconnect);
+      clearInterval(healthInterval);
+    };
+  }, [handleRefresh]);
 
   useEffect(() => {
     if (isRenameDialogOpen && itemToRename) {
@@ -175,7 +207,12 @@ export default function HomePage() {
   return (
     <DefaultLayout>
       <div className="flex flex-1 w-full overflow-hidden relative">
-        <HomeSidebar isOpen={isSidebarOpen} onClose={() => { setIsSidebarOpen(false); }} />
+        <HomeSidebar 
+          isOpen={isSidebarOpen} 
+          onClose={() => { setIsSidebarOpen(false); }} 
+          isWsConnected={isWsConnected}
+          isHealthConnected={isHealthConnected}
+        />
 
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden" onClick={(e) => {
           // Prevent clearing selection if clicking inside a toolbar button, menu, dialog, or popover
@@ -237,8 +274,6 @@ export default function HomePage() {
 
         <OperationQueueProgress />
       </div>
-
-      <UploadProgressWidget uploads={uploads} />
 
       {selectedVideo && (
         <VideoPlayerModalV2

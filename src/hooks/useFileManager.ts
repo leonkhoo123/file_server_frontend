@@ -4,10 +4,12 @@ import { toast } from "sonner";
 import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile } from "@/api/api-file";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
+import { usePreferences } from "@/context/PreferencesContext";
 
 export function useFileManager() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { showHidden } = usePreferences();
   
   const [items, setItems] = useState<ItemsResponse>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -23,7 +25,7 @@ export function useFileManager() {
     setIsLoading(true);
     setError(false);
     try {
-      const itemsrs = await fetchDirList(currentPath);
+      const itemsrs = await fetchDirList(currentPath, showHidden);
       setItems(itemsrs);
     } catch (err: any) {
       console.error("MyErr: ", err);
@@ -39,7 +41,7 @@ export function useFileManager() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPath, navigate]);
+  }, [currentPath, showHidden, navigate]);
 
   // Load files effect
   useEffect(() => {
@@ -54,7 +56,7 @@ export function useFileManager() {
 
       try {
         const path = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
-        const itemsrs = await fetchDirList(path);
+        const itemsrs = await fetchDirList(path, showHidden);
         setItems(itemsrs);
         setCurrentPath(itemsrs.path);
       } catch (err: any) {
@@ -74,7 +76,7 @@ export function useFileManager() {
     };
 
     void loadFiles();
-  }, [location, navigate]);
+  }, [location, showHidden, navigate]);
 
   // Listen for websocket operations completion to auto-refresh
   useEffect(() => {

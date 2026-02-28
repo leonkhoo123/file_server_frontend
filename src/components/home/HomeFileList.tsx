@@ -50,6 +50,7 @@ export default function HomeFileList({
           <div className="space-y-1">
             {items.items.map((file, index) => {
               const isSelected = selectedItems.has(file.name);
+              const isHidden = file.name.startsWith('.');
               return (
                 <div key={index} className="group">
                   <div
@@ -62,20 +63,20 @@ export default function HomeFileList({
                     }`}
                   >
                     {/* NAME */}
-                    <div className="flex-1 flex items-center space-x-3 min-w-0 pr-2 md:pr-4">
+                    <div className={`flex-1 flex items-center space-x-3 min-w-0 pr-2 md:pr-4 ${isHidden ? 'opacity-60' : ''}`}>
                       {file.type === "dir" ? (
                         <>
-                          <Folder className="h-5 w-5 text-blue-500 shrink-0 fill-blue-500/20" />
+                          <Folder className="h-5 w-5 shrink-0 text-blue-500 fill-blue-500/20" />
                           <div className="flex flex-col min-w-0 w-full text-left">
-                            <span className="truncate font-medium">{file.name}</span>
+                            <span className="truncate font-medium text-foreground">{file.name}</span>
                           </div>
                         </>
                       ) : (
                         <>
-                          <File className="h-5 w-5 text-gray-400 shrink-0" />
+                          <File className="h-5 w-5 shrink-0 text-gray-400" />
                           <div className="flex flex-col min-w-0 w-full text-left">
-                            <span className="truncate">{file.name}</span>
-                            <span className="text-xs text-muted-foreground lg:hidden truncate mt-0.5">
+                            <span className="truncate text-foreground">{file.name}</span>
+                            <span className="text-xs truncate mt-0.5 lg:hidden text-muted-foreground">
                               {formatBytes(file.size)} • {formatLastModified(file.modified)}
                             </span>
                           </div>
@@ -84,12 +85,12 @@ export default function HomeFileList({
                     </div>
 
                     {/* SIZE (desktop only) */}
-                    <div className="w-24 md:w-32 hidden lg:block text-right text-sm text-muted-foreground">
+                    <div className={`w-24 md:w-32 hidden lg:block text-right text-sm text-muted-foreground ${isHidden ? 'opacity-60' : ''}`}>
                       {file.type === "dir" ? "--" : formatBytes(file.size)}
                     </div>
 
                     {/* LAST MODIFIED (desktop only) */}
-                    <div className="w-32 md:w-48 hidden lg:block text-right text-sm text-muted-foreground">
+                    <div className={`w-32 md:w-48 hidden lg:block text-right text-sm text-muted-foreground ${isHidden ? 'opacity-60' : ''}`}>
                       {formatLastModified(file.modified)}
                     </div>
                   </div>

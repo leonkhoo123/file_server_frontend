@@ -17,16 +17,16 @@ export interface FileInterface {
 }
 
 
-export const fetchDirList = async (path: string = "/"): Promise<ItemsResponse> => {
+export const fetchDirList = async (path = "/", showHidden = false): Promise<ItemsResponse> => {
   // Clean up path formatting (avoid duplicate slashes)
   const cleanPath = path.trim() === "" ? "/" : path;
 
   const rs = await axiosLayer.get("/files/file-list", {
-    params: { path: cleanPath },
+    params: { path: cleanPath, showHidden },
     headers: { "Accept": "application/json" },
   });
 
-  return rs.data;
+  return rs.data as ItemsResponse;
 };
 
 export const deleteTempRotate = async (path: string = "/", opId: string = generateOpId()) => {

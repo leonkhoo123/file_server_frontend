@@ -31,20 +31,23 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
         >
           Home
         </Button>
-        {currentPath.split("/").filter(Boolean).map((part, idx, arr) => (
-          <span key={idx} className="flex items-center">
-            <span className="mx-1 text-muted-foreground/50">/</span>
-            <button
-              onClick={() => {
-                const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                void navigate("/home" + targetPath);
-              }}
-              className="hover:underline hover:text-foreground transition-colors"
-            >
-              {part}
-            </button>
-          </span>
-        ))}
+        {currentPath.split("/").filter(Boolean).map((part, idx, arr) => {
+          const isHidden = part.startsWith('.');
+          return (
+            <span key={idx} className="flex items-center">
+              <span className="mx-1 text-muted-foreground/50">/</span>
+              <button
+                onClick={() => {
+                  const targetPath = "/" + arr.slice(0, idx + 1).join("/");
+                  void navigate("/home" + targetPath);
+                }}
+                className={`hover:underline hover:text-foreground transition-colors ${isHidden ? 'opacity-60' : ''}`}
+              >
+                {part}
+              </button>
+            </span>
+          );
+        })}
       </div>
     </div>
   );

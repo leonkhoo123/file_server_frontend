@@ -8,9 +8,10 @@ interface HomeSidebarProps {
   onClose: () => void;
   isWsConnected: boolean;
   isHealthConnected: boolean;
+  titleName?: string;
 }
 
-export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthConnected }: HomeSidebarProps) {
+export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthConnected, titleName }: HomeSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -50,7 +51,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
       >
         <div className="w-72 flex flex-col h-full overflow-hidden">
           <div className="px-4 py-3 border-b flex items-center justify-between shrink-0 min-h-[3.5rem]">
-            <h1 className="text-xl font-bold text-foreground tracking-tight">Cloud Drive</h1>
+            <h1 className="text-xl font-bold text-foreground tracking-tight">{titleName ?? "Cloud Drive"}</h1>
             <div className="flex items-center gap-2">
               <div className="flex flex-col gap-1 items-end">
                 <div className="flex items-center gap-1.5" title={`API: ${isHealthConnected ? 'OK' : 'Error'}`}>

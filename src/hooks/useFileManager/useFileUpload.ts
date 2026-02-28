@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { uploadFile, type UploadProgressEvent } from "@/api/api-file";
 import { useOperationProgress } from "@/context/OperationProgressContext";
 
-export function useFileUpload(handleRefresh: () => Promise<void>) {
+export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSize?: number) {
   const { addOrUpdateOperation } = useOperationProgress();
 
   const handleUploadFiles = useCallback(async (files: File[], targetPath: string) => {
@@ -50,7 +50,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>) {
               opPercentage: progress,
             });
           }
-        });
+        }, undefined, uploadChunkSize);
         
         addOrUpdateOperation({
           opId: upload.id,
@@ -79,7 +79,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>) {
     if (files.length > 0) {
       void handleRefresh();
     }
-  }, [addOrUpdateOperation, handleRefresh]);
+  }, [addOrUpdateOperation, handleRefresh, uploadChunkSize]);
 
   return { handleUploadFiles };
 }

@@ -21,9 +21,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 import { wsClient } from "@/api/wsClient";
-import { checkHealth } from "@/api/api-file";
+import { checkHealth, type HealthResponse } from "@/api/api-file";
 
 export default function HomePage() {
+  const [healthData, setHealthData] = useState<HealthResponse | null>(null);
+  
   const {
     items,
     isLoading,
@@ -63,7 +65,7 @@ export default function HomePage() {
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
     handleUploadFiles,
-  } = useFileManager();
+  } = useFileManager({ uploadChunkSize: healthData?.upload_chunk_size });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [renameInput, setRenameInput] = useState("");
@@ -74,18 +76,17 @@ export default function HomePage() {
   useEffect(() => {
     const performHealthCheck = async () => {
       const isHealthy = await checkHealth();
-      setIsHealthConnected(isHealthy);
+      setHealthData(isHealthy);
+      setIsHealthConnected(isHealthy !== null);
     };
-    void performHealthCheck();
 
     const unsubscribeWs = wsClient.subscribeStatus((connected) => {
       setIsWsConnected(connected);
+      void performHealthCheck();
     });
 
     const handleWsReconnect = () => {
-      void performHealthCheck().then(() => {
-        void handleRefresh();
-      });
+      void handleRefresh();
     };
     window.addEventListener('ws-reconnected', handleWsReconnect);
 
@@ -212,6 +213,7 @@ export default function HomePage() {
           onClose={() => { setIsSidebarOpen(false); }} 
           isWsConnected={isWsConnected}
           isHealthConnected={isHealthConnected}
+          titleName={healthData?.title_name}
         />
 
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden" onClick={(e) => {

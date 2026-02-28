@@ -8,7 +8,7 @@ import { useFileUpload } from "./useFileManager/useFileUpload";
 import { useVideoOperations } from "./useFileManager/useVideoOperations";
 import { useKeyboardShortcuts } from "./useFileManager/useKeyboardShortcuts";
 
-export function useFileManager() {
+export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number } = {}) {
   const navigate = useNavigate();
 
   // 1. Core File System (fetching, path, loading, errors)
@@ -74,7 +74,7 @@ export function useFileManager() {
   } = useFileOperations({ currentPath, selectedItems, setSelectedItems, handleRefresh, setIsLoading });
 
   // 5. Uploading files
-  const { handleUploadFiles } = useFileUpload(handleRefresh);
+  const { handleUploadFiles } = useFileUpload(handleRefresh, uploadChunkSize);
 
   // 6. Keyboard Shortcuts
   useKeyboardShortcuts({

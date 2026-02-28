@@ -17,12 +17,21 @@ export interface FileInterface {
 }
 
 
-export const checkHealth = async (): Promise<boolean> => {
+export interface HealthResponse {
+  title_name?: string;
+  upload_chunk_size?: number;
+  [key: string]: any;
+}
+
+export const checkHealth = async (): Promise<HealthResponse | null> => {
   try {
-    const rs = await axiosLayer.get("/health");
-    return rs.status === 200;
+    const rs = await axiosLayer.get<HealthResponse>("/health");
+    if (rs.status === 200) {
+      return rs.data;
+    }
+    return null;
   } catch {
-    return false;
+    return null;
   }
 };
 
@@ -156,10 +165,11 @@ export const uploadFile = async (
   path: string,
   file: File,
   onProgress?: (progressEvent: UploadProgressEvent) => void,
-  opId?: string
+  opId?: string,
+  chunkSize?: number
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
-  const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks
+  const CHUNK_SIZE = chunkSize && chunkSize > 0 ? chunkSize : 5 * 1024 * 1024; // Use provided size or default to 5MB
   const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1; // at least 1 chunk for empty files
   let loadedBytes = 0;
   

@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile, createFolder } from "@/api/api-file";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
 import { usePreferences } from "@/context/PreferencesContext";
@@ -191,18 +191,30 @@ export function useFileManager() {
     }
   };
 
-  const handleRename = async () => {
+  const [itemToRename, setItemToRename] = useState<string | null>(null);
+  const isRenameDialogOpen = itemToRename !== null;
+  const setIsRenameDialogOpen = (open: boolean) => {
+    if (!open) setItemToRename(null);
+  };
+
+  const handleRename = () => {
     if (selectedItems.size !== 1) {
       toast.error("Please select exactly one item to rename");
       return;
     }
-
     const oldName = Array.from(selectedItems)[0];
-    const newName = window.prompt("Enter new name:", oldName);
+    setItemToRename(oldName);
+  };
 
-    if (!newName || newName === oldName) return;
+  const confirmRename = async (newName: string) => {
+    if (!itemToRename || !newName || newName === itemToRename) {
+      setItemToRename(null);
+      return;
+    }
 
     try {
+      const oldName = itemToRename;
+      setItemToRename(null);
       setIsLoading(true);
       const source = currentPath === "/" ? `/${oldName}` : `${currentPath}/${oldName}`;
       await renameFile(source, newName);
@@ -212,6 +224,32 @@ export function useFileManager() {
     } catch (error) {
       console.error("Rename failed:", error);
       toast.error("Rename operation failed");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const [isCreateFolderDialogOpen, setIsCreateFolderDialogOpen] = useState(false);
+
+  const handleCreateFolder = () => {
+    setIsCreateFolderDialogOpen(true);
+  };
+
+  const confirmCreateFolder = async (folderName: string) => {
+    if (!folderName) {
+      setIsCreateFolderDialogOpen(false);
+      return;
+    }
+
+    try {
+      setIsCreateFolderDialogOpen(false);
+      setIsLoading(true);
+      await createFolder(currentPath, folderName);
+      toast.success("Folder created successfully");
+      await handleRefresh();
+    } catch (error) {
+      console.error("Create folder failed:", error);
+      toast.error("Create folder failed");
     } finally {
       setIsLoading(false);
     }
@@ -324,6 +362,14 @@ export function useFileManager() {
     setIsDeleteDialogOpen,
     itemsToDelete,
     handleRename,
+    confirmRename,
+    itemToRename,
+    isRenameDialogOpen,
+    setIsRenameDialogOpen,
+    handleCreateFolder,
+    confirmCreateFolder,
+    isCreateFolderDialogOpen,
+    setIsCreateFolderDialogOpen,
     handleBack,
     handleFileClick,
     handleFileDoubleClick,

@@ -95,5 +95,14 @@ export const renameFile = async (source: string, newName: string, opId: string =
   return rs.data;
 };
 
-
+export const createFolder = async (path: string, folderName: string, opId: string = generateOpId()) => {
+  const rs = await axiosLayer.post("/files/create-folder", {
+    path,
+    folderName,
+    opId
+  }, {
+    headers: { "Accept": "application/json" },
+  });
+  return rs.data;
+};
 

@@ -1,6 +1,12 @@
-import { ArrowLeft, CheckSquare, Scissors, Copy, Clipboard, Pencil, Trash2, Plus, BrushCleaning, RefreshCcw } from "lucide-react";
+import { ArrowLeft, CheckSquare, Scissors, Copy, Clipboard, Pencil, Trash2, Plus, BrushCleaning, RefreshCcw, FolderPlus, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface HomeToolbarProps {
   currentPath: string;
@@ -17,6 +23,7 @@ interface HomeToolbarProps {
   onDelete: () => void;
   onCleanUp: () => void;
   onRefresh: () => void;
+  onCreateFolder: () => void;
 }
 
 export default function HomeToolbar({
@@ -34,6 +41,7 @@ export default function HomeToolbar({
   onDelete,
   onCleanUp,
   onRefresh,
+  onCreateFolder,
 }: HomeToolbarProps) {
   return (
     <div className="flex items-center gap-1 p-2 px-4 border-b bg-muted/5 shrink-0 overflow-x-auto">
@@ -65,10 +73,24 @@ export default function HomeToolbar({
 
       <div className="h-4 w-[1px] bg-border mx-1" />
 
-      <Button variant="ghost" size="sm" onClick={() => toast.info("Add/Upload functionality - to be implemented")} className="h-8 px-2" title="Add/Upload">
-        <Plus className="h-4 w-4 md:mr-1" />
-        <span className="hidden md:inline">New</span>
-      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 px-2" title="New">
+            <Plus className="h-4 w-4 md:mr-1" />
+            <span className="hidden md:inline">New</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={onCreateFolder}>
+            <FolderPlus className="mr-2 h-4 w-4" />
+            <span>Create Folder</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => toast.info("Upload file functionality - to be implemented")}>
+            <Upload className="mr-2 h-4 w-4" />
+            <span>Upload File</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       <div className="flex-1" />
 

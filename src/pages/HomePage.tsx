@@ -17,6 +17,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export default function HomePage() {
   const {
@@ -38,6 +39,14 @@ export default function HomePage() {
     setIsDeleteDialogOpen,
     itemsToDelete,
     handleRename,
+    confirmRename,
+    itemToRename,
+    isRenameDialogOpen,
+    setIsRenameDialogOpen,
+    handleCreateFolder,
+    confirmCreateFolder,
+    isCreateFolderDialogOpen,
+    setIsCreateFolderDialogOpen,
     handleBack,
     handleFileClick,
     handleFileDoubleClick,
@@ -47,6 +56,27 @@ export default function HomePage() {
   } = useFileManager();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [renameInput, setRenameInput] = useState("");
+  const [folderInput, setFolderInput] = useState("");
+
+  useEffect(() => {
+    if (isRenameDialogOpen && itemToRename) {
+      setRenameInput(itemToRename);
+    } else {
+      setRenameInput("");
+    }
+  }, [isRenameDialogOpen, itemToRename]);
+
+  useEffect(() => {
+    if (isCreateFolderDialogOpen) {
+      setFolderInput("New Folder");
+    } else {
+      setFolderInput("");
+    }
+  }, [isCreateFolderDialogOpen]);
+
+  const isRenameExists = items?.items.some(item => item.name.toLowerCase() === renameInput.toLowerCase() && item.name.toLowerCase() !== itemToRename?.toLowerCase());
+  const isFolderExists = items?.items.some(item => item.name.toLowerCase() === folderInput.toLowerCase());
 
   useEffect(() => {
     const handleResize = () => {
@@ -89,6 +119,7 @@ export default function HomePage() {
             onDelete={handleDelete}
             onCleanUp={removeRotateTemp}
             onRefresh={handleRefresh}
+            onCreateFolder={handleCreateFolder}
           />
 
           <HomeFileList
@@ -131,6 +162,72 @@ export default function HomePage() {
             </Button>
             <Button variant="destructive" onClick={() => { void confirmDelete(); }} disabled={isLoading}>
               {isLoading ? "Deleting..." : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rename Item</DialogTitle>
+            <DialogDescription>
+              Enter a new name for the item.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={renameInput}
+              onChange={(e) => { setRenameInput(e.target.value); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isRenameExists) void confirmRename(renameInput);
+              }}
+              placeholder="New name"
+              autoFocus
+            />
+            {isRenameExists && (
+              <p className="text-destructive text-sm mt-2">A file or folder with this name already exists.</p>
+            )}
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => { setIsRenameDialogOpen(false); }}>
+              Cancel
+            </Button>
+            <Button onClick={() => { void confirmRename(renameInput); }} disabled={isLoading || !renameInput || renameInput === itemToRename || isRenameExists}>
+              {isLoading ? "Renaming..." : "Rename"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isCreateFolderDialogOpen} onOpenChange={setIsCreateFolderDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Folder</DialogTitle>
+            <DialogDescription>
+              Enter a name for the new folder.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input 
+              value={folderInput}
+              onChange={(e) => { setFolderInput(e.target.value); }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isFolderExists) void confirmCreateFolder(folderInput);
+              }}
+              placeholder="Folder name"
+              autoFocus
+            />
+            {isFolderExists && (
+              <p className="text-destructive text-sm mt-2">A file or folder with this name already exists.</p>
+            )}
+          </div>
+          <DialogFooter className="flex gap-2 sm:justify-end">
+            <Button variant="outline" onClick={() => { setIsCreateFolderDialogOpen(false); }}>
+              Cancel
+            </Button>
+            <Button onClick={() => { void confirmCreateFolder(folderInput); }} disabled={isLoading || !folderInput || isFolderExists}>
+              {isLoading ? "Creating..." : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>

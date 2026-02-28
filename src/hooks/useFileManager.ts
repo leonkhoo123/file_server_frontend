@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile, createFolder } from "@/api/api-file";
+import { fetchDirList, type ItemsResponse, type FileInterface, deleteTempRotate, copyFiles, moveFiles, deleteFiles, deletePermanentFiles, renameFile, createFolder, getFileProperties, type PropertiesResponse } from "@/api/api-file";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
 import { usePreferences } from "@/context/PreferencesContext";
@@ -21,6 +21,7 @@ export function useFileManager() {
   const [clipboardItems, setClipboardItems] = useState<{ items: string[], operation: 'cut' | 'copy' | null, sourceDir?: string }>({ items: [], operation: null });
 
   const [lastSelectedIndex, setLastSelectedIndex] = useState<number | null>(null);
+  const [selectionAnchorIndex, setSelectionAnchorIndex] = useState<number | null>(null);
 
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);
@@ -52,6 +53,7 @@ export function useFileManager() {
     const loadFiles = async () => {
       setIsLoading(true);
       setError(false);
+      setItems(undefined); // Clear items to show skeleton on directory change
       setSelectedItems(new Set()); // Clear selections when changing directories
       setLastSelectedIndex(null);
 
@@ -96,6 +98,7 @@ export function useFileManager() {
   const handleClearSelection = () => {
     setSelectedItems(new Set());
     setLastSelectedIndex(null);
+    setSelectionAnchorIndex(null);
   };
 
   const handleSelectAll = () => {
@@ -235,6 +238,28 @@ export function useFileManager() {
     setIsCreateFolderDialogOpen(true);
   };
 
+  const [propertiesData, setPropertiesData] = useState<PropertiesResponse | null>(null);
+  const [isPropertiesDialogOpen, setIsPropertiesDialogOpen] = useState(false);
+  const [isPropertiesLoading, setIsPropertiesLoading] = useState(false);
+
+  const handleProperties = async () => {
+    if (selectedItems.size === 0) return;
+    try {
+      setIsPropertiesLoading(true);
+      const sources = Array.from(selectedItems).map(name =>
+        currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
+      );
+      const data = await getFileProperties(sources);
+      setPropertiesData(data);
+      setIsPropertiesDialogOpen(true);
+    } catch (error) {
+      console.error("Get properties failed:", error);
+      toast.error("Failed to get properties");
+    } finally {
+      setIsPropertiesLoading(false);
+    }
+  };
+
   const confirmCreateFolder = async (folderName: string) => {
     if (!folderName) {
       setIsCreateFolderDialogOpen(false);
@@ -268,11 +293,11 @@ export function useFileManager() {
     setSelectedItems(prev => {
       let newSet = new Set(prev);
       
-      if (event.shiftKey && lastSelectedIndex !== null && items?.items) {
+      if (event.shiftKey && selectionAnchorIndex !== null && items?.items) {
         // Shift+Click: Select range and clear others
         newSet = new Set();
-        const start = Math.min(lastSelectedIndex, index);
-        const end = Math.max(lastSelectedIndex, index);
+        const start = Math.min(selectionAnchorIndex, index);
+        const end = Math.max(selectionAnchorIndex, index);
         for (let i = start; i <= end; i++) {
           newSet.add(items.items[i].name);
         }
@@ -283,14 +308,30 @@ export function useFileManager() {
         } else {
           newSet.add(fileInfo.name);
         }
-        setLastSelectedIndex(index);
+        setSelectionAnchorIndex(index);
       } else {
         // Normal click: Single selection
         newSet = new Set();
         newSet.add(fileInfo.name);
-        setLastSelectedIndex(index);
+        setSelectionAnchorIndex(index);
       }
       
+      setLastSelectedIndex(index);
+      return newSet;
+    });
+  };
+
+  const handleFileContextMenu = (fileInfo: FileInterface, index: number) => {
+    // We don't prevent default here because ContextMenu from radix handles it,
+    // but we do need to update selection if the item is not already selected.
+    setSelectedItems(prev => {
+      if (prev.has(fileInfo.name)) {
+        return prev;
+      }
+      const newSet = new Set<string>();
+      newSet.add(fileInfo.name);
+      setSelectionAnchorIndex(index);
+      setLastSelectedIndex(index);
       return newSet;
     });
   };
@@ -342,6 +383,107 @@ export function useFileManager() {
     }
   };
 
+  // Listen for keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Don't interfere if user is typing in an input
+      if (document.activeElement?.tagName === "INPUT" || document.activeElement?.tagName === "TEXTAREA" || document.activeElement?.hasAttribute("contenteditable")) {
+        return;
+      }
+      
+      // Don't interfere if a dialog is open
+      if (document.querySelector('[role="dialog"]')) {
+        return;
+      }
+
+      // We only care about specific keys
+      const isArrowUp = e.key === 'ArrowUp';
+      const isArrowDown = e.key === 'ArrowDown';
+      const isEnter = e.key === 'Enter';
+      const isDelete = e.key === 'Delete';
+      const isEscape = e.key === 'Escape';
+      const isA = e.key.toLowerCase() === 'a';
+      
+      if (!isArrowUp && !isArrowDown && !isEnter && !isDelete && !isEscape && !isA) {
+        return;
+      }
+
+      // Ctrl+A / Cmd+A
+      if (isA && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        handleSelectAll();
+        return;
+      }
+
+      if (isEscape) {
+        e.preventDefault();
+        handleClearSelection();
+        return;
+      }
+
+      if (isDelete && selectedItems.size > 0) {
+        e.preventDefault();
+        handleDelete();
+        return;
+      }
+
+      if (!items?.items || items.items.length === 0) return;
+
+      if (isEnter) {
+        if (selectedItems.size === 1 && lastSelectedIndex !== null) {
+          e.preventDefault();
+          handleFileDoubleClick(items.items[lastSelectedIndex]);
+        }
+        return;
+      }
+
+      if (isArrowUp || isArrowDown) {
+        e.preventDefault(); // Prevent page scrolling
+
+        let nextIndex = 0;
+
+        if (lastSelectedIndex !== null) {
+          nextIndex = isArrowDown ? lastSelectedIndex + 1 : lastSelectedIndex - 1;
+          nextIndex = Math.max(0, Math.min(nextIndex, items.items.length - 1));
+        } else {
+          nextIndex = isArrowDown ? 0 : items.items.length - 1;
+        }
+
+        if (e.shiftKey) {
+          const anchor = selectionAnchorIndex ?? lastSelectedIndex ?? nextIndex;
+          const newSet = new Set<string>();
+          const start = Math.min(anchor, nextIndex);
+          const end = Math.max(anchor, nextIndex);
+          for (let i = start; i <= end; i++) {
+            newSet.add(items.items[i].name);
+          }
+          setSelectedItems(newSet);
+          if (selectionAnchorIndex === null) {
+            setSelectionAnchorIndex(anchor);
+          }
+        } else {
+          const newSet = new Set<string>();
+          newSet.add(items.items[nextIndex].name);
+          setSelectedItems(newSet);
+          setSelectionAnchorIndex(nextIndex);
+        }
+        
+        setLastSelectedIndex(nextIndex);
+
+        // Scroll into view
+        setTimeout(() => {
+          const element = document.getElementById(`file-item-${nextIndex}`);
+          if (element) {
+            element.scrollIntoView({ block: "nearest", behavior: "smooth" });
+          }
+        }, 0);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => { window.removeEventListener('keydown', handleKeyDown); };
+  }, [items, lastSelectedIndex, selectionAnchorIndex, selectedItems, handleSelectAll, handleClearSelection, handleDelete, handleFileDoubleClick]);
+
   return {
     items,
     isLoading,
@@ -372,9 +514,15 @@ export function useFileManager() {
     setIsCreateFolderDialogOpen,
     handleBack,
     handleFileClick,
+    handleFileContextMenu,
     handleFileDoubleClick,
     handlePlayerClose,
     removeRotateTemp,
     handleRefresh,
+    handleProperties,
+    propertiesData,
+    isPropertiesDialogOpen,
+    setIsPropertiesDialogOpen,
+    isPropertiesLoading,
   };
 }

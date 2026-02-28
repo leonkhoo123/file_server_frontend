@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useOperationProgress } from '../../context/OperationProgressContext';
 import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
@@ -8,6 +8,25 @@ import type { OperationMessage } from '@/api/wsClient';
 export function OperationQueueProgress() {
     const { operations, clearCompleted, dismissOperation } = useOperationProgress();
     const [isExpanded, setIsExpanded] = useState(false);
+    const panelRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent | TouchEvent) {
+            if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
+                setIsExpanded(false);
+            }
+        }
+
+        if (isExpanded) {
+            document.addEventListener('mousedown', handleClickOutside);
+            document.addEventListener('touchstart', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+            document.removeEventListener('touchstart', handleClickOutside);
+        };
+    }, [isExpanded]);
 
     const opsList = Object.values(operations).reverse();
 
@@ -125,7 +144,10 @@ export function OperationQueueProgress() {
     };
 
     return (
-        <div className="absolute bottom-4 left-4 z-50 flex flex-col items-start justify-end">
+        <div 
+            ref={panelRef}
+            className="absolute bottom-4 left-4 z-50 flex flex-col items-start justify-end"
+        >
             {/* Pop up panel with animation */}
             <div 
                 className={`

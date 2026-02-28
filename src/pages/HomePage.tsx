@@ -8,6 +8,7 @@ import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
 import HomeToolbar from "@/components/home/HomeToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
+import HomePropertiesModal from "@/components/home/HomePropertiesModal";
 import {
   Dialog,
   DialogContent,
@@ -49,10 +50,15 @@ export default function HomePage() {
     setIsCreateFolderDialogOpen,
     handleBack,
     handleFileClick,
+    handleFileContextMenu,
     handleFileDoubleClick,
     handlePlayerClose,
     removeRotateTemp,
     handleRefresh,
+    handleProperties,
+    propertiesData,
+    isPropertiesDialogOpen,
+    setIsPropertiesDialogOpen,
   } = useFileManager();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -75,8 +81,8 @@ export default function HomePage() {
     }
   }, [isCreateFolderDialogOpen]);
 
-  const isRenameExists = items?.items.some(item => item.name.toLowerCase() === renameInput.toLowerCase() && item.name.toLowerCase() !== itemToRename?.toLowerCase());
-  const isFolderExists = items?.items.some(item => item.name.toLowerCase() === folderInput.toLowerCase());
+  const isRenameExists = (items?.items ?? []).some(item => item.name.toLowerCase() === renameInput.toLowerCase() && item.name.toLowerCase() !== itemToRename?.toLowerCase());
+  const isFolderExists = (items?.items ?? []).some(item => item.name.toLowerCase() === folderInput.toLowerCase());
 
   useEffect(() => {
     const handleResize = () => {
@@ -94,6 +100,73 @@ export default function HomePage() {
     return () => { window.removeEventListener('resize', handleResize); };
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore if typing in an input, textarea, etc.
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "INPUT" ||
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "SELECT" ||
+        target.isContentEditable
+      ) {
+        return;
+      }
+
+      // F5 or Ctrl/Cmd + R for refresh
+      if (e.key === "F5" || ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "r")) {
+        e.preventDefault();
+        void handleRefresh();
+        return;
+      }
+
+      // Only handle these if no dialogs or video player are open
+      if (
+        isRenameDialogOpen ||
+        isCreateFolderDialogOpen ||
+        isDeleteDialogOpen ||
+        isPropertiesDialogOpen ||
+        !!selectedVideo
+      ) {
+        return;
+      }
+
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a") {
+        e.preventDefault();
+        handleSelectAll();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c") {
+        e.preventDefault();
+        handleCopy();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "x") {
+        e.preventDefault();
+        handleCut();
+      } else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v") {
+        e.preventDefault();
+        void handlePaste();
+      } else if (e.key === "Backspace") {
+        e.preventDefault();
+        handleBack();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [
+    handleRefresh,
+    handleSelectAll,
+    handleCopy,
+    handleCut,
+    handlePaste,
+    handleBack,
+    isRenameDialogOpen,
+    isCreateFolderDialogOpen,
+    isDeleteDialogOpen,
+    isPropertiesDialogOpen,
+    selectedVideo,
+  ]);
+
   const toggleSidebar = () => { setIsSidebarOpen(!isSidebarOpen); };
 
   return (
@@ -101,7 +174,7 @@ export default function HomePage() {
       <div className="flex flex-1 w-full overflow-hidden relative">
         <HomeSidebar isOpen={isSidebarOpen} onClose={() => { setIsSidebarOpen(false); }} />
 
-        <div className="flex-1 flex flex-col min-w-0 bg-background" onClick={handleClearSelection}>
+        <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden" onClick={handleClearSelection}>
           <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
 
           <HomeToolbar
@@ -129,7 +202,18 @@ export default function HomePage() {
             selectedItems={selectedItems}
             onRefresh={handleRefresh}
             onFileClick={handleFileClick}
+            onFileContextMenu={handleFileContextMenu}
             onFileDoubleClick={handleFileDoubleClick}
+            onCut={handleCut}
+            onCopy={handleCopy}
+            onRename={handleRename}
+            onDelete={handleDelete}
+            onPaste={handlePaste}
+            onProperties={handleProperties}
+            clipboardItemsCount={clipboardItems.items.length}
+            clipboardOperation={clipboardItems.operation}
+            clipboardSourceDir={clipboardItems.sourceDir}
+            currentPath={currentPath}
           />
         </div>
 
@@ -232,6 +316,12 @@ export default function HomePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <HomePropertiesModal
+        isOpen={isPropertiesDialogOpen}
+        onOpenChange={setIsPropertiesDialogOpen}
+        data={propertiesData}
+      />
+
     </DefaultLayout>
   );
 }

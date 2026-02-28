@@ -1,0 +1,101 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import type { PropertiesResponse } from "@/api/api-file";
+import { formatBytes, formatLastModified } from "@/utils/utils";
+import { File, Folder, Files } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+
+interface HomePropertiesModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+  data: PropertiesResponse | null;
+}
+
+export default function HomePropertiesModal({ isOpen, onOpenChange, data }: HomePropertiesModalProps) {
+  if (!data) return null;
+
+  const isMultiple = data.type === "multiple";
+  const isDir = data.type === "directory";
+
+  const getIcon = () => {
+    if (isMultiple) return <Files className="w-12 h-12 text-blue-500" />;
+    if (isDir) return <Folder className="w-12 h-12 text-blue-500 fill-blue-500/20" />;
+    return <File className="w-12 h-12 text-gray-500" />;
+  };
+
+  const title = isMultiple
+    ? "Info (Multiple Items)"
+    : data.name
+    ? `${data.name} Info`
+    : "Info";
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+
+        <div className="flex flex-col gap-4 py-4">
+          <div className="flex items-center gap-4">
+            {getIcon()}
+            <span className="text-xl font-medium break-all line-clamp-2">
+              {isMultiple ? "Multiple Items" : data.name}
+            </span>
+          </div>
+
+          <Separator />
+
+          <div className="grid grid-cols-[100px_1fr] gap-2 text-sm">
+            <span className="font-semibold text-muted-foreground">Type:</span>
+            <span>
+              {isMultiple ? "Multiple Items" : isDir ? "Folder" : "File"}
+            </span>
+
+            <span className="font-semibold text-muted-foreground">Location:</span>
+            <span className="break-all">{data.location}</span>
+
+            <span className="font-semibold text-muted-foreground">Size:</span>
+            <span>
+              {formatBytes(data.totalSizeBytes)} ({data.totalSizeBytes.toLocaleString()} bytes)
+            </span>
+
+            {(isDir || isMultiple) && (
+              <>
+                <span className="font-semibold text-muted-foreground">Contains:</span>
+                <span>
+                  {data.contains.files} Files, {data.contains.folders} Folders
+                </span>
+              </>
+            )}
+
+            <Separator className="col-span-2 my-2" />
+
+            {!isMultiple && (
+              <>
+                <span className="font-semibold text-muted-foreground">Created:</span>
+                <span>{data.createdAt ? formatLastModified(data.createdAt) : "Unknown"}</span>
+
+                <span className="font-semibold text-muted-foreground">Modified:</span>
+                <span>{data.modifiedAt ? formatLastModified(data.modifiedAt) : "Unknown"}</span>
+
+                <span className="font-semibold text-muted-foreground">Accessed:</span>
+                <span>{data.accessedAt ? formatLastModified(data.accessedAt) : "Unknown"}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button onClick={() => { onOpenChange(false); }}>Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -106,3 +106,28 @@ export const createFolder = async (path: string, folderName: string, opId: strin
   return rs.data;
 };
 
+export interface PropertiesContains {
+  files: number;
+  folders: number;
+}
+
+export interface PropertiesResponse {
+  type: "file" | "directory" | "multiple";
+  name: string | null;
+  location: string;
+  totalSizeBytes: number;
+  contains: PropertiesContains;
+  createdAt: string | null;
+  modifiedAt: string | null;
+  accessedAt: string | null;
+}
+
+export const getFileProperties = async (sources: string[]): Promise<PropertiesResponse> => {
+  const rs = await axiosLayer.post("/files/properties", {
+    sources
+  }, {
+    headers: { "Accept": "application/json" },
+  });
+  return rs.data as PropertiesResponse;
+};
+

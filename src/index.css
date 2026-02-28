@@ -113,10 +113,10 @@
 
 .main-view {
   /* Default (mobile first) */
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: auto;
+  margin-right: auto;
   width: 100%;
-  max-width: 1024px
+  max-width: 1920px;
 }
 
 @layer base {

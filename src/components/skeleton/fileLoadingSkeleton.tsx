@@ -8,7 +8,7 @@ export const FileListTableSkeleton: React.FC = () => {
     <div className="max-h-[calc(100vh-200px)] scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/30 dark:scrollbar-thumb-white/30 scrollbar-track-white/0 overflow-y-scroll">
       {Array.from({ length: 10 }).map((_, i) => (
         <React.Fragment key={i}>
-          <div className="flex items-center px-2 md:px-4 py-3 rounded-md mb-1">
+          <div className="flex items-center px-4 md:px-6 py-3 rounded-md mb-1">
             {/* CHECKBOX PLACEHOLDER */}
             <div className="w-8 md:w-10 shrink-0 flex justify-center">
                <Skeleton className="h-4 w-4 md:h-5 md:w-5 rounded-sm" />

@@ -174,7 +174,19 @@ export default function HomePage() {
       <div className="flex flex-1 w-full overflow-hidden relative">
         <HomeSidebar isOpen={isSidebarOpen} onClose={() => { setIsSidebarOpen(false); }} />
 
-        <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden" onClick={handleClearSelection}>
+        <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden" onClick={(e) => {
+          // Prevent clearing selection if clicking inside a toolbar button, menu, dialog, or popover
+          const target = e.target as HTMLElement;
+          if (
+            target.closest('button') ||
+            target.closest('[role="menuitem"]') ||
+            target.closest('[role="dialog"]') ||
+            target.closest('[data-radix-popper-content-wrapper]')
+          ) {
+            return;
+          }
+          handleClearSelection();
+        }}>
           <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
 
           <HomeToolbar
@@ -210,6 +222,7 @@ export default function HomePage() {
             onDelete={handleDelete}
             onPaste={handlePaste}
             onProperties={handleProperties}
+            clipboardItems={clipboardItems.items}
             clipboardItemsCount={clipboardItems.items.length}
             clipboardOperation={clipboardItems.operation}
             clipboardSourceDir={clipboardItems.sourceDir}
@@ -244,7 +257,7 @@ export default function HomePage() {
             <Button variant="outline" onClick={() => { setIsDeleteDialogOpen(false); }}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={() => { void confirmDelete(); }} disabled={isLoading}>
+            <Button autoFocus variant="destructive" onClick={() => { void confirmDelete(); }} disabled={isLoading}>
               {isLoading ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>

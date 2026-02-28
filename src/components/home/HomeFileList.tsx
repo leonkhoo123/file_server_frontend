@@ -26,6 +26,7 @@ interface HomeFileListProps {
   onDelete: () => void;
   onPaste: () => void;
   onProperties: () => void;
+  clipboardItems: string[];
   clipboardItemsCount: number;
   clipboardOperation: 'cut' | 'copy' | null;
   clipboardSourceDir?: string;
@@ -47,6 +48,7 @@ export default function HomeFileList({
   onDelete,
   onPaste,
   onProperties,
+  clipboardItems,
   clipboardItemsCount,
   clipboardOperation,
   clipboardSourceDir,
@@ -55,7 +57,7 @@ export default function HomeFileList({
   return (
     <>
       {/* Table Header */}
-      <div className="flex border-b font-semibold py-2 px-2 md:px-4 text-sm bg-muted/30 shrink-0">
+      <div className="flex border-b font-semibold py-2 px-6 md:px-10 text-sm bg-muted/30 shrink-0">
         <div className="flex-1 text-left text-muted-foreground">Name</div>
         <div className="w-24 md:w-32 hidden lg:block text-right text-muted-foreground">Size</div>
         <div className="w-32 md:w-48 hidden lg:block text-right text-muted-foreground">Last Modified</div>
@@ -80,6 +82,8 @@ export default function HomeFileList({
             {items.items.map((file, index) => {
               const isSelected = selectedItems.has(file.name);
               const isHidden = file.name.startsWith('.');
+              const filePath = currentPath === "/" ? `/${file.name}` : `${currentPath}/${file.name}`;
+              const isCut = clipboardOperation === 'cut' && clipboardItems.includes(filePath);
               return (
                 <ContextMenu key={file.name} onOpenChange={(open) => {
                   if (open) {
@@ -91,11 +95,11 @@ export default function HomeFileList({
                       <div
                         onClick={(e) => { onFileClick(file, index, e); }}
                         onDoubleClick={() => { onFileDoubleClick(file); }}
-                        className={`flex items-center px-2 md:px-4 py-2 md:py-3 cursor-pointer rounded-md transition-colors select-none ${
+                        className={`flex items-center px-4 md:px-6 py-2 md:py-3 cursor-pointer rounded-md transition-colors select-none ${
                           isSelected
                             ? 'bg-blue-100 dark:bg-blue-900/40 hover:bg-blue-200 dark:hover:bg-blue-900/60'
                             : 'hover:bg-muted/50'
-                        }`}
+                        } ${isCut ? 'opacity-50' : ''}`}
                       >
                         {/* NAME */}
                         <div className={`flex-1 flex items-center space-x-3 min-w-0 pr-2 md:pr-4 ${isHidden ? 'opacity-60' : ''}`}>
@@ -108,6 +112,9 @@ export default function HomeFileList({
                               )}
                               <div className="flex flex-col min-w-0 w-full text-left">
                                 <span className="truncate font-medium text-foreground">{file.name === ".cloud_delete" ? "Recycle Bin" : file.name}</span>
+                                <span className="text-xs truncate mt-0.5 lg:hidden text-muted-foreground">
+                                  {formatLastModified(file.modified)}
+                                </span>
                               </div>
                             </>
                           ) : (
@@ -136,32 +143,32 @@ export default function HomeFileList({
                     </div>
                   </ContextMenuTrigger>
                   <ContextMenuContent className="w-64">
-                    <ContextMenuItem onClick={onCut} disabled={selectedItems.size === 0}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCut(); }} disabled={selectedItems.size === 0}>
                       <Scissors className="mr-2 h-4 w-4" />
                       Cut
                     </ContextMenuItem>
-                    <ContextMenuItem onClick={onCopy} disabled={selectedItems.size === 0}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCopy(); }} disabled={selectedItems.size === 0}>
                       <Copy className="mr-2 h-4 w-4" />
                       Copy
                     </ContextMenuItem>
                     <ContextMenuItem 
-                      onClick={onPaste} 
+                      onClick={(e) => { e.stopPropagation(); onPaste(); }} 
                       disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath)}
                     >
                       <Clipboard className="mr-2 h-4 w-4" />
                       Paste
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onClick={onRename} disabled={selectedItems.size !== 1}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onRename(); }} disabled={selectedItems.size !== 1}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Rename
                     </ContextMenuItem>
-                    <ContextMenuItem onClick={onDelete} disabled={selectedItems.size === 0} className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30">
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={selectedItems.size === 0} className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30">
                       <TrashIcon className="mr-2 h-4 w-4" />
                       Delete
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onClick={onProperties} disabled={selectedItems.size === 0}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onProperties(); }} disabled={selectedItems.size === 0}>
                       <Info className="mr-2 h-4 w-4" />
                       Info
                     </ContextMenuItem>

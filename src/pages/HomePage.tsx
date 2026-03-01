@@ -255,13 +255,8 @@ export default function HomePage() {
             <HomeBreadcrumb 
               currentPath={currentPath} 
               onToggleSidebar={toggleSidebar} 
-              onCreateFolder={handleCreateFolder}
-              onPaste={() => { void handlePaste(); }}
               onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
               onRefresh={() => { void handleRefresh(); }}
-              clipboardItemsCount={clipboardItems.items.length}
-              clipboardOperation={clipboardItems.operation}
-              clipboardSourceDir={clipboardItems.sourceDir}
             />
           </div>
 

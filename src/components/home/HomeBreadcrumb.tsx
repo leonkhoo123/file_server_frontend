@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft, MoreVertical, FolderPlus, Clipboard, Info } from "lucide-react";
+import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft, MoreVertical, Info } from "lucide-react";
 import { encodePathToUrl } from "@/utils/utils";
 import { logout } from "@/api/api-auth";
 import { useTheme } from "@/components/theme-provider";
@@ -18,25 +18,15 @@ import {
 interface HomeBreadcrumbProps {
   currentPath: string;
   onToggleSidebar?: () => void;
-  onCreateFolder?: () => void;
-  onPaste?: () => void;
   onProperties?: (fileName?: string, isCurrentDir?: boolean) => void;
   onRefresh?: () => void;
-  clipboardItemsCount?: number;
-  clipboardOperation?: 'cut' | 'copy' | null;
-  clipboardSourceDir?: string;
 }
 
 export default function HomeBreadcrumb({ 
   currentPath, 
   onToggleSidebar,
-  onCreateFolder,
-  onPaste,
   onProperties,
   onRefresh,
-  clipboardItemsCount = 0,
-  clipboardOperation = null,
-  clipboardSourceDir,
 }: HomeBreadcrumbProps) {
   const navigate = useNavigate();
   const updateSW = registerSW();
@@ -190,18 +180,6 @@ export default function HomeBreadcrumb({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onCreateFolder}>
-                <FolderPlus className="mr-2 h-4 w-4" />
-                New Folder
-              </DropdownMenuItem>
-              <DropdownMenuItem 
-                onClick={onPaste} 
-                disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath)}
-              >
-                <Clipboard className="mr-2 h-4 w-4" />
-                Paste
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={onRefresh}>
                 <RefreshCcw className="mr-2 h-4 w-4" />
                 Refresh

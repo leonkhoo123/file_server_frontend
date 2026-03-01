@@ -50,16 +50,16 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
   };
 
   return (
-    <div className="h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background shrink-0 gap-2">
+    <div className="h-16 md:h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background shrink-0 gap-2">
       <div className="flex items-center gap-2 overflow-hidden">
         {onToggleSidebar && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className={`mr-1 h-8 w-8 text-muted-foreground hover:text-foreground shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}
+            className={`mr-1 h-12 w-12 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-7 w-7 md:h-5 md:w-5" />
           </Button>
         )}
         <div className="flex items-center text-sm text-muted-foreground overflow-hidden whitespace-nowrap">
@@ -101,12 +101,12 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
                   const targetPath = "/" + parts.join("/");
                   void navigate("/home" + encodePathToUrl(targetPath));
                 }}
-                className="mr-1 h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+                className="mr-1 h-12 w-12 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0"
               >
-                <ArrowLeft className="h-5 w-5" />
+                <ArrowLeft className="h-7 w-7 md:h-5 md:w-5" />
               </Button>
             )}
-            <span className="font-semibold text-foreground text-base">
+            <span className="font-semibold text-foreground text-xl md:text-base">
               {currentPath === "/" 
                 ? "Home" 
                 : currentPath.split("/").filter(Boolean).pop() === '.cloud_delete' 
@@ -120,8 +120,8 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
       <div className={`flex items-center gap-2 shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Settings className="h-[1.2rem] w-[1.2rem] transition-all" />
+            <Button variant="outline" size="icon" className="h-12 w-12 md:h-9 md:w-9">
+              <Settings className="h-7 w-7 md:h-[1.2rem] md:w-[1.2rem] transition-all" />
               <span className="sr-only">Settings</span>
             </Button>
           </DropdownMenuTrigger>

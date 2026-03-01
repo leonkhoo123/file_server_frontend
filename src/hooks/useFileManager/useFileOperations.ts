@@ -46,9 +46,6 @@ export function useFileOperations({
       currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
     );
     setClipboardItems({ items: sources, operation: 'cut', sourceDir: currentPath });
-    if (window.innerWidth >= 768) {
-      toast.success(`${selectedItems.size} item(s) cut`);
-    }
   };
 
   const handleCopy = () => {
@@ -60,9 +57,6 @@ export function useFileOperations({
       currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
     );
     setClipboardItems({ items: sources, operation: 'copy', sourceDir: currentPath });
-    if (window.innerWidth >= 768) {
-      toast.success(`${selectedItems.size} item(s) copied`);
-    }
   };
 
   const handlePaste = async () => {
@@ -75,10 +69,8 @@ export function useFileOperations({
       setIsLoading(true);
       if (clipboardItems.operation === 'copy') {
         await copyFiles(clipboardItems.items, currentPath);
-        toast.success(`Added ${clipboardItems.items.length} item(s) to copy queue`);
       } else {
         await moveFiles(clipboardItems.items, currentPath);
-        toast.success(`Added ${clipboardItems.items.length} item(s) to move queue`);
       }
       setClipboardItems({ items: [], operation: null }); // Clear clipboard after successful paste
       await handleRefresh();
@@ -94,7 +86,11 @@ export function useFileOperations({
     setClipboardItems({ items: [], operation: null, sourceDir: undefined });
   };
 
-  const handleDelete = () => {
+  const handleDelete = (fileName?: string | React.MouseEvent | Event) => {
+    if (fileName && typeof fileName === 'string') {
+      setItemsToDelete(new Set([fileName]));
+      return;
+    }
     if (selectedItems.size === 0) return;
     setItemsToDelete(new Set(selectedItems));
   };
@@ -110,10 +106,8 @@ export function useFileOperations({
       
       if (currentPath.startsWith("/.cloud_delete") || currentPath === "/.cloud_delete") {
         await deletePermanentFiles(sources);
-        toast.success(`Permanently deleted ${itemsToDelete.size} item(s)`);
       } else {
         await deleteFiles(sources);
-        toast.success(`Moved ${itemsToDelete.size} item(s) to recycle bin`);
       }
 
       setSelectedItems(new Set());
@@ -126,8 +120,8 @@ export function useFileOperations({
     }
   };
 
-  const handleRename = (fileName?: string) => {
-    if (fileName) {
+  const handleRename = (fileName?: string | React.MouseEvent | Event) => {
+    if (fileName && typeof fileName === 'string') {
       setItemToRename(fileName);
       return;
     }
@@ -151,7 +145,6 @@ export function useFileOperations({
       setIsLoading(true);
       const source = currentPath === "/" ? `/${oldName}` : `${currentPath}/${oldName}`;
       await renameFile(source, newName);
-      toast.success("Item renamed successfully");
       setSelectedItems(new Set());
       await handleRefresh();
     } catch (error) {
@@ -176,7 +169,6 @@ export function useFileOperations({
       setIsCreateFolderDialogOpen(false);
       setIsLoading(true);
       await createFolder(currentPath, folderName);
-      toast.success("Folder created successfully");
       await handleRefresh();
     } catch (error) {
       console.error("Create folder failed:", error);
@@ -186,15 +178,16 @@ export function useFileOperations({
     }
   };
 
-  const handleProperties = async (fileName?: string, isCurrentDir = false) => {
-    if (!isCurrentDir && !fileName && selectedItems.size === 0) return;
+  const handleProperties = async (fileName?: string | React.MouseEvent | Event, isCurrentDir = false) => {
+    const targetFileName = typeof fileName === 'string' ? fileName : undefined;
+    if (!isCurrentDir && !targetFileName && selectedItems.size === 0) return;
     try {
       setIsPropertiesLoading(true);
       let sources: string[];
       if (isCurrentDir) {
         sources = [currentPath];
       } else {
-        const itemsToFetch = fileName ? [fileName] : Array.from(selectedItems);
+        const itemsToFetch = targetFileName ? [targetFileName] : Array.from(selectedItems);
         sources = itemsToFetch.map(name =>
           currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
         );

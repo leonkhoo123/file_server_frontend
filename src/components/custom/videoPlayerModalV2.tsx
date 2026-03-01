@@ -437,22 +437,23 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
 
       {/* CONTROLS */}
       <div
-        className={`absolute right-0 top-1/4 flex flex-col p-2 space-y-2 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"
+        className={`absolute right-0 top-0 bottom-12 flex flex-col overflow-y-auto p-2 transition-opacity duration-300 ${showControls ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
         onMouseDown={handleControlPressStart}
         onMouseUp={handleControlPressEnd}
         onTouchStart={handleControlPressStart}
         onTouchEnd={handleControlPressEnd}
       >
-        <Button
-          variant="ghost"
-          onClick={() => { skip(-1); }}
-          // If your parent uses onMouseDown/onTouchStart, 
-          // you must stop those specifically too:
-          className="hover:bg-white/80 w-full bg-white/30"
-        >
-          <SkipBack className="h-4 w-4 mr-1" /> 1s
-        </Button>
+        <div className="my-auto flex flex-col space-y-2 min-h-min w-24">
+          <Button
+            variant="ghost"
+            onClick={() => { skip(-1); }}
+            // If your parent uses onMouseDown/onTouchStart, 
+            // you must stop those specifically too:
+            className="hover:bg-white/80 w-full bg-white/30"
+          >
+            <SkipBack className="h-4 w-4 mr-1" /> 1s
+          </Button>
 
         {/* forward 3 sec */}
         <Button
@@ -482,23 +483,22 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
           {playbackRate !== 1.0 ? "x1" : "x2"}
         </Button>
 
-        {/* speed x3 */}
+        {/* slow mo x0.25 */}
         <Button
           variant="ghost"
-          onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 3.0); }}
+          onClick={() => { changeSpeed(playbackRate !== 1.0 ? 1.0 : 0.25); }}
           className="hover:bg-white/80 w-full bg-white/30"
         >
           <Zap className="h-4 w-4 mr-1" />
-          {playbackRate !== 1.0 ? "x1" : "x3"}
+          {playbackRate !== 1.0 ? "x1" : "x0.25"}
         </Button>
 
         {/* play/pause */}
-        <div className="text-sm text-white">{playbackRate.toFixed(1)}x</div>
+        <div className="text-sm text-white text-center">{playbackRate}x</div>
         <Button
           variant="ghost"
           size="icon"
           onClick={togglePlay}
-
           className="hover:bg-white/80 w-full bg-white/30 py-10"
         >
           {isPlaying ? (
@@ -513,7 +513,7 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={openRenameModal}
-          className="hover:bg-green-300/80 w-full bg-green-300/30 mt-5"
+          className="hover:bg-green-300/80 w-full bg-green-300/30 mt-5 landscape:mt-2"
         >
           <TextCursorInput className="h-5 w-5" />
         </Button>
@@ -523,7 +523,7 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={handleDisqualified}
-          className="hover:bg-red-300/80 w-full bg-red-300/30 mt-5"
+          className="hover:bg-red-300/80 w-full bg-red-300/30 mt-5 landscape:mt-2"
         >
           <ListX className="h-5 w-5" />
         </Button>
@@ -543,10 +543,11 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
           variant="ghost"
           size="icon"
           onClick={() => { onClose(disqualified, file.path, isNewName, newName, rotation); }}
-          className="hover:bg-white/80 w-full bg-white/30 mt-5"
+          className="hover:bg-white/80 w-full bg-white/30 mt-5 landscape:mt-2"
         >
           <LogOut className="h-5 w-5" />
         </Button>
+        </div>
       </div>
 
       {/* RENAME MODAL */}

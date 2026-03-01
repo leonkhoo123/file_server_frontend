@@ -322,18 +322,18 @@ export default function HomePage() {
 
         {/* Mobile Clipboard Toast */}
         {!selectedVideo && clipboardItems.items.length > 0 && (
-          <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-popover text-popover-foreground border border-border/50 p-1.5 pl-3 rounded-full shadow-lg whitespace-nowrap">
-            <div className="flex items-center gap-1.5">
-              <Clipboard className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm font-medium">
+          <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-popover text-popover-foreground border border-border/50 p-2 pl-4 rounded-full shadow-lg whitespace-nowrap">
+            <div className="flex items-center gap-2">
+              <Clipboard className="w-5 h-5 text-muted-foreground" />
+              <span className="text-base font-medium">
                 {clipboardItems.items.length} item(s) {clipboardItems.operation === 'cut' ? 'cut' : 'copied'}
               </span>
             </div>
-            <div className="h-4 w-[1px] bg-border mx-1" />
+            <div className="h-5 w-[1px] bg-border mx-1" />
             <Button
               size="sm"
               variant="default"
-              className="h-7 px-5 text-xs rounded-full font-medium"
+              className="h-9 px-6 text-sm rounded-full font-medium"
               onClick={(e) => {
                 e.stopPropagation();
                 void handlePaste();
@@ -343,13 +343,13 @@ export default function HomePage() {
               Paste
             </Button>
             <button
-              className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              className="p-2 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
               onClick={(e) => {
                 e.stopPropagation();
                 handleClearClipboard();
               }}
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5" />
             </button>
           </div>
         )}
@@ -375,9 +375,9 @@ export default function HomePage() {
               <DropdownMenuTrigger asChild>
                 <div 
                   role="button"
-                  className="w-12 h-12 bg-background text-foreground shadow-lg rounded-full border flex items-center justify-center cursor-pointer hover:bg-muted transition-all duration-300"
+                  className="w-14 h-14 bg-background text-foreground shadow-lg rounded-full border flex items-center justify-center cursor-pointer hover:bg-muted transition-all duration-300"
                 >
-                  <Plus className="w-6 h-6" />
+                  <Plus className="w-7 h-7" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" sideOffset={12}>

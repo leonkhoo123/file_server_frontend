@@ -23,14 +23,12 @@ export function useVideoOperations({
         await postDisqualified(oriPath);
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
-        toast.success("Video Disqualified");
       } else if (isNewName) {
         setIsLoading(true);
         await renameFileMoveToDone(oriPath, newName, rotation);
         setIsLoading(false);
         const itemsrs = await fetchDirList(currentPath);
         setItems(itemsrs);
-        toast.success("Video Rename Done");
       }
     } catch (error) {
       console.error("Failed to move or rename file:", error);
@@ -44,7 +42,6 @@ export function useVideoOperations({
       await deleteTempRotate(currentPath);
       const itemsrs = await fetchDirList(currentPath);
       setItems(itemsrs);
-      toast.success("Successfully Clean Up");
     } catch (error: any) {
       setError(true);
       toast.error("Failed to Clean Up");

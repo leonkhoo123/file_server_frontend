@@ -63,35 +63,35 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
                   <div className={`w-1.5 h-1.5 rounded-full ${isWsConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="md:hidden h-8 w-8 text-muted-foreground hover:text-foreground shrink-0" onClick={onClose}>
-                <X className="h-4 w-4" />
+              <Button variant="ghost" size="icon" className="md:hidden h-12 w-12 text-muted-foreground hover:text-foreground shrink-0" onClick={onClose}>
+                <X className="h-6 w-6" />
               </Button>
             </div>
           </div>
           <div className="p-3 flex-1 overflow-auto space-y-1 pb-16">
             <div 
-              className={`flex items-center gap-3 text-sm px-3 py-2 rounded-md transition-colors cursor-pointer
+              className={`flex items-center gap-3 text-base md:text-sm px-3 py-3 md:py-2 rounded-md transition-colors cursor-pointer
                 ${isActive("/.cloud_delete") 
                   ? "bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400" 
                   : "text-foreground hover:bg-muted/50"
                 }`}
               onClick={() => { handleNavigate("/home/recycle_bin"); }}
             >
-              <Trash2 className={`h-4 w-4 shrink-0 ${isActive("/.cloud_delete") ? "text-blue-500" : "text-gray-500"}`} />
+              <Trash2 className={`h-5 w-5 md:h-4 md:w-4 shrink-0 ${isActive("/.cloud_delete") ? "text-blue-500" : "text-gray-500"}`} />
               <span className="truncate">Recycle Bin</span>
             </div>
 
             {/* Placeholder Items */}
-            <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
-              <Folder className="h-4 w-4 text-blue-400/50 shrink-0" />
+            <div className="flex items-center gap-3 text-base md:text-sm text-muted-foreground px-3 py-3 md:py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+              <Folder className="h-5 w-5 md:h-4 md:w-4 text-blue-400/50 shrink-0" />
               <span className="truncate">Projects</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
-              <Folder className="h-4 w-4 text-blue-400/50 shrink-0" />
+            <div className="flex items-center gap-3 text-base md:text-sm text-muted-foreground px-3 py-3 md:py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+              <Folder className="h-5 w-5 md:h-4 md:w-4 text-blue-400/50 shrink-0" />
               <span className="truncate">Documents</span>
             </div>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground px-3 py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
-              <Folder className="h-4 w-4 text-blue-400/50 shrink-0" />
+            <div className="flex items-center gap-3 text-base md:text-sm text-muted-foreground px-3 py-3 md:py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+              <Folder className="h-5 w-5 md:h-4 md:w-4 text-blue-400/50 shrink-0" />
               <span className="truncate">Downloads</span>
             </div>
           </div>

@@ -181,8 +181,12 @@ export function useFileOperations({
   const handleProperties = async (fileName?: string | React.MouseEvent | Event, isCurrentDir = false) => {
     const targetFileName = typeof fileName === 'string' ? fileName : undefined;
     if (!isCurrentDir && !targetFileName && selectedItems.size === 0) return;
+    
+    setPropertiesData(null);
+    setIsPropertiesDialogOpen(true);
+    setIsPropertiesLoading(true);
+
     try {
-      setIsPropertiesLoading(true);
       let sources: string[];
       if (isCurrentDir) {
         sources = [currentPath];
@@ -194,10 +198,10 @@ export function useFileOperations({
       }
       const data = await getFileProperties(sources);
       setPropertiesData(data);
-      setIsPropertiesDialogOpen(true);
     } catch (error) {
       console.error("Get properties failed:", error);
       toast.error("Failed to get properties");
+      setIsPropertiesDialogOpen(false);
     } finally {
       setIsPropertiesLoading(false);
     }

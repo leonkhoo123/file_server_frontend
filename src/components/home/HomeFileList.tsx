@@ -1,6 +1,5 @@
-import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical } from "lucide-react";
+import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import FileListTableSkeleton from "@/components/skeleton/fileLoadingSkeleton";
 import { formatBytes, formatLastModified } from "@/utils/utils";
 import type { ItemsResponse, FileInterface } from "@/api/api-file";
 import {
@@ -255,14 +254,17 @@ export default function HomeFileList({
   }, [isTouchDevice, onFileDoubleClick]);
 
   const fileListContainer = (
-    <div className="flex-1 relative overflow-y-scroll p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent">
-      {/* Skeleton Layer */}
+    <div className="flex-1 min-h-0 relative overflow-y-scroll p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent">
+      {/* Loading Overlay */}
       <div 
-        className={`absolute top-2 left-2 right-2 md:top-4 md:left-4 md:right-4 transition-opacity duration-300 pointer-events-none z-10 ${
+        className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300 pointer-events-none z-10 ${
           isLoading && !items ? 'opacity-100' : 'opacity-0'
         }`}
       >
-        <FileListTableSkeleton />
+        <div className="flex flex-col items-center justify-center text-muted-foreground">
+          <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
+          <p>Loading files...</p>
+        </div>
       </div>
 
       {/* Content Layer */}
@@ -282,9 +284,9 @@ export default function HomeFileList({
             <p>This folder is empty.</p>
           </div>
         ) : (
-          <div className={`space-y-1 transition-opacity duration-300 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {displayItems.items.map((file, index) => {
-              const isSelected = selectedItems.has(file.name);
+            <div className={`space-y-1 transition-opacity duration-300 ${isLoading ? 'opacity-50 pointer-events-none' : ''}`}>
+              {displayItems.items.map((file, index) => {
+                const isSelected = selectedItems.has(file.name);
               const isHidden = file.name.startsWith('.');
               const filePath = currentPath === "/" ? `/${file.name}` : `${currentPath}/${file.name}`;
               const isCut = clipboardOperation === 'cut' && clipboardItems.includes(filePath);
@@ -438,6 +440,15 @@ export default function HomeFileList({
                 </ContextMenu>
               );
             })}
+            
+            {/* Counts acting as spacer */}
+            <div className="flex items-center justify-center text-sm text-muted-foreground h-20 md:h-12 border-t mt-2 border-border/50">
+              {displayItems.folder_count !== undefined ? (
+                <span>{displayItems.folder_count} folder(s), {displayItems.file_count} file(s), total {displayItems.count} item(s)</span>
+              ) : (
+                <span>total {displayItems.items.length} item(s)</span>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -446,7 +457,7 @@ export default function HomeFileList({
 
   return (
     <div 
-      className="flex flex-col h-full w-full relative"
+      className="flex flex-col h-full w-full relative min-h-0"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}

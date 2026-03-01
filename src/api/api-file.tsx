@@ -4,6 +4,9 @@ import { generateOpId } from "../utils/id";
 export interface ItemsResponse {
   items: FileInterface[];
   path: string;
+  file_count?: number;
+  folder_count?: number;
+  count?: number;
 }
 
 export interface FileInterface {

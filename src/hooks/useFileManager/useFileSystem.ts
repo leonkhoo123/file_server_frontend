@@ -73,8 +73,14 @@ export function useFileSystem() {
 
   useEffect(() => {
     const unsubscribe = wsClient.subscribe((msg: OperationMessage) => {
-      if (msg.opStatus === 'completed' && msg.destDir === currentPath) {
-        void handleRefresh();
+      if (msg.opStatus === 'completed') {
+        if (
+          msg.destDir === currentPath || 
+          msg.opType === 'delete_permanent' || 
+          msg.opType === 'delete'
+        ) {
+          void handleRefresh();
+        }
       }
     });
 

@@ -46,7 +46,9 @@ export function useFileOperations({
       currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
     );
     setClipboardItems({ items: sources, operation: 'cut', sourceDir: currentPath });
-    toast.success(`${selectedItems.size} item(s) cut`);
+    if (window.innerWidth >= 768) {
+      toast.success(`${selectedItems.size} item(s) cut`);
+    }
   };
 
   const handleCopy = () => {
@@ -58,7 +60,9 @@ export function useFileOperations({
       currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
     );
     setClipboardItems({ items: sources, operation: 'copy', sourceDir: currentPath });
-    toast.success(`${selectedItems.size} item(s) copied`);
+    if (window.innerWidth >= 768) {
+      toast.success(`${selectedItems.size} item(s) copied`);
+    }
   };
 
   const handlePaste = async () => {
@@ -84,6 +88,10 @@ export function useFileOperations({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleClearClipboard = () => {
+    setClipboardItems({ items: [], operation: null, sourceDir: undefined });
   };
 
   const handleDelete = () => {
@@ -118,7 +126,11 @@ export function useFileOperations({
     }
   };
 
-  const handleRename = () => {
+  const handleRename = (fileName?: string) => {
+    if (fileName) {
+      setItemToRename(fileName);
+      return;
+    }
     if (selectedItems.size !== 1) {
       toast.error("Please select exactly one item to rename");
       return;
@@ -174,13 +186,19 @@ export function useFileOperations({
     }
   };
 
-  const handleProperties = async () => {
-    if (selectedItems.size === 0) return;
+  const handleProperties = async (fileName?: string, isCurrentDir = false) => {
+    if (!isCurrentDir && !fileName && selectedItems.size === 0) return;
     try {
       setIsPropertiesLoading(true);
-      const sources = Array.from(selectedItems).map(name =>
-        currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
-      );
+      let sources: string[];
+      if (isCurrentDir) {
+        sources = [currentPath];
+      } else {
+        const itemsToFetch = fileName ? [fileName] : Array.from(selectedItems);
+        sources = itemsToFetch.map(name =>
+          currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
+        );
+      }
       const data = await getFileProperties(sources);
       setPropertiesData(data);
       setIsPropertiesDialogOpen(true);
@@ -197,6 +215,7 @@ export function useFileOperations({
     handleCut,
     handleCopy,
     handlePaste,
+    handleClearClipboard,
     itemsToDelete,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,

@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { X, Clipboard, Plus, FolderPlus, Upload, FolderUp } from "lucide-react";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import VersionTag from "@/components/custom/versionTag";
 import VideoPlayerModalV2 from "@/components/custom/videoPlayerModalV2";
@@ -6,9 +7,16 @@ import { useFileManager } from "@/hooks/useFileManager";
 import HomeSidebar from "@/components/home/HomeSidebar";
 import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
 import HomeToolbar from "@/components/home/HomeToolbar";
+import MobileSelectionToolbar from "@/components/home/MobileSelectionToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
 import HomePropertiesModal from "@/components/home/HomePropertiesModal";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +47,7 @@ export default function HomePage() {
     handleCut,
     handleCopy,
     handlePaste,
+    handleClearClipboard,
     handleDelete,
     confirmDelete,
     isDeleteDialogOpen,
@@ -72,6 +81,18 @@ export default function HomePage() {
   const [folderInput, setFolderInput] = useState("");
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [isHealthConnected, setIsHealthConnected] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      void handleUploadFiles(Array.from(e.target.files), currentPath);
+    }
+    // reset input so the same files can be selected again if needed
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (folderInputRef.current) folderInputRef.current.value = "";
+  };
 
   useEffect(() => {
     const performHealthCheck = async () => {
@@ -208,13 +229,15 @@ export default function HomePage() {
   return (
     <DefaultLayout>
       <div className="flex flex-1 w-full overflow-hidden relative">
-        <HomeSidebar 
-          isOpen={isSidebarOpen} 
-          onClose={() => { setIsSidebarOpen(false); }} 
-          isWsConnected={isWsConnected}
-          isHealthConnected={isHealthConnected}
-          titleName={healthData?.title_name}
-        />
+        {!selectedVideo && (
+          <HomeSidebar 
+            isOpen={isSidebarOpen} 
+            onClose={() => { setIsSidebarOpen(false); }} 
+            isWsConnected={isWsConnected}
+            isHealthConnected={isHealthConnected}
+            titleName={healthData?.title_name}
+          />
+        )}
 
         <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden" onClick={(e) => {
           // Prevent clearing selection if clicking inside a toolbar button, menu, dialog, or popover
@@ -229,33 +252,53 @@ export default function HomePage() {
           }
           handleClearSelection();
         }}>
-          <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
+          <div className="md:hidden">
+            {selectedItems.size > 0 ? (
+              <MobileSelectionToolbar
+                selectedItemsSize={selectedItems.size}
+                onCancel={handleClearSelection}
+                onSelectAll={handleSelectAll}
+                onCut={handleCut}
+                onCopy={handleCopy}
+                onDelete={handleDelete}
+                onProperties={() => { void handleProperties(); }}
+              />
+            ) : (
+              <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
+            )}
+          </div>
 
-          <HomeToolbar
-            currentPath={currentPath}
-            selectedItemsSize={selectedItems.size}
-            clipboardItemsCount={clipboardItems.items.length}
-            clipboardOperation={clipboardItems.operation}
-            clipboardSourceDir={clipboardItems.sourceDir}
-            onBack={handleBack}
-            onSelectAll={handleSelectAll}
-            onCut={handleCut}
-            onCopy={handleCopy}
-            onPaste={handlePaste}
-            onRename={handleRename}
-            onDelete={handleDelete}
-            onCleanUp={removeRotateTemp}
-            onRefresh={handleRefresh}
-            onCreateFolder={handleCreateFolder}
-            onUploadFiles={(files) => { void handleUploadFiles(files, currentPath); }}
-          />
+          <div className="hidden md:block">
+            <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
+          </div>
+
+          <div className="hidden md:block">
+            <HomeToolbar
+              currentPath={currentPath}
+              selectedItemsSize={selectedItems.size}
+              clipboardItemsCount={clipboardItems.items.length}
+              clipboardOperation={clipboardItems.operation}
+              clipboardSourceDir={clipboardItems.sourceDir}
+              onBack={handleBack}
+              onSelectAll={handleSelectAll}
+              onCut={handleCut}
+              onCopy={handleCopy}
+              onPaste={() => { void handlePaste(); }}
+              onRename={handleRename}
+              onDelete={handleDelete}
+              onCleanUp={removeRotateTemp}
+              onRefresh={() => { void handleRefresh(); }}
+              onCreateFolder={handleCreateFolder}
+              onUploadFiles={(files) => { void handleUploadFiles(files, currentPath); }}
+            />
+          </div>
 
           <HomeFileList
             isLoading={isLoading}
             error={error}
             items={items}
             selectedItems={selectedItems}
-            onRefresh={handleRefresh}
+            onRefresh={() => { void handleRefresh(); }}
             onFileClick={handleFileClick}
             onFileContextMenu={handleFileContextMenu}
             onFileDoubleClick={handleFileDoubleClick}
@@ -263,8 +306,9 @@ export default function HomePage() {
             onCopy={handleCopy}
             onRename={handleRename}
             onDelete={handleDelete}
-            onPaste={handlePaste}
-            onProperties={handleProperties}
+            onPaste={() => { void handlePaste(); }}
+            onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
+            onCreateFolder={handleCreateFolder}
             clipboardItems={clipboardItems.items}
             clipboardItemsCount={clipboardItems.items.length}
             clipboardOperation={clipboardItems.operation}
@@ -274,7 +318,85 @@ export default function HomePage() {
           />
         </div>
 
-        <OperationQueueProgress />
+        {!selectedVideo && <OperationQueueProgress />}
+
+        {/* Mobile Clipboard Toast */}
+        {!selectedVideo && clipboardItems.items.length > 0 && (
+          <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-popover text-popover-foreground border border-border/50 p-1.5 pl-3 rounded-full shadow-lg whitespace-nowrap">
+            <div className="flex items-center gap-1.5">
+              <Clipboard className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-medium">
+                {clipboardItems.items.length} item(s) {clipboardItems.operation === 'cut' ? 'cut' : 'copied'}
+              </span>
+            </div>
+            <div className="h-4 w-[1px] bg-border mx-1" />
+            <Button
+              size="sm"
+              variant="default"
+              className="h-7 px-5 text-xs rounded-full font-medium"
+              onClick={(e) => {
+                e.stopPropagation();
+                void handlePaste();
+              }}
+              disabled={clipboardItems.operation === 'cut' && clipboardItems.sourceDir === currentPath}
+            >
+              Paste
+            </Button>
+            <button
+              className="p-1.5 rounded-full hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClearClipboard();
+              }}
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Floating Action Button */}
+        {!selectedVideo && (
+          <div className="md:hidden absolute bottom-4 right-4 z-50">
+            <input 
+              type="file" 
+              multiple 
+              className="hidden" 
+              ref={fileInputRef} 
+              onChange={handleFileChange} 
+            />
+            <input 
+              type="file" 
+              className="hidden" 
+              ref={folderInputRef} 
+              {...{ webkitdirectory: "", directory: "" } as any} 
+              onChange={handleFileChange} 
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div 
+                  role="button"
+                  className="w-12 h-12 bg-background text-foreground shadow-lg rounded-full border flex items-center justify-center cursor-pointer hover:bg-muted transition-all duration-300"
+                >
+                  <Plus className="w-6 h-6" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" sideOffset={12}>
+                <DropdownMenuItem onClick={handleCreateFolder}>
+                  <FolderPlus className="mr-2 h-4 w-4" />
+                  <span>Create Folder</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+                  <Upload className="mr-2 h-4 w-4" />
+                  <span>Upload File</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => folderInputRef.current?.click()}>
+                  <FolderUp className="mr-2 h-4 w-4" />
+                  <span>Upload Folder</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )}
       </div>
 
       {selectedVideo && (

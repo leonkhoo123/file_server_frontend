@@ -35,6 +35,36 @@ export function useFileSelection(
 
   const handleFileClick = (fileInfo: FileInterface, index: number, event: React.MouseEvent) => {
     event.stopPropagation();
+    
+    // On touch devices (pointer: coarse), a single click/tap should enter the folder or open the file
+    // unless they are using modifier keys (which is rare on touch, but still handled).
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    
+    if (isTouchDevice && !event.shiftKey && !event.ctrlKey && !event.metaKey) {
+      if (selectedItems.size > 0) {
+        setSelectedItems(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(fileInfo.name)) {
+            newSet.delete(fileInfo.name);
+          } else {
+            newSet.add(fileInfo.name);
+          }
+          setSelectionAnchorIndex(index);
+          setLastSelectedIndex(index);
+          return newSet;
+        });
+        return;
+      }
+
+      if (fileInfo.isVideo) {
+        setSelectedVideo(fileInfo);
+      } else if (fileInfo.type === "dir") {
+        const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
+        void navigate("/home" + encodePathToUrl(newPath));
+      }
+      return;
+    }
+
     setSelectedItems(prev => {
       let newSet = new Set(prev);
       
@@ -80,6 +110,12 @@ export function useFileSelection(
   };
 
   const handleFileDoubleClick = (fileInfo: FileInterface) => {
+    const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+    if (isTouchDevice) {
+      // Prevent double click on touch devices to avoid triggering twice if double tap happens
+      return;
+    }
+
     if (fileInfo.isVideo) {
       setSelectedVideo(fileInfo);
     } else if (fileInfo.type === "dir") {

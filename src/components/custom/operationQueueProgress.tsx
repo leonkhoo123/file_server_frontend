@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useAutoAnimate } from '@formkit/auto-animate/react';
 import { useOperationProgress } from '../../context/OperationProgressContext';
 import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
@@ -10,6 +11,7 @@ export function OperationQueueProgress() {
     const [isExpanded, setIsExpanded] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
     const prevOpIdsRef = useRef<Set<string>>(new Set(Object.keys(operations)));
+    const [listRef] = useAutoAnimate<HTMLDivElement>();
 
     useEffect(() => {
         const currentIds = Object.keys(operations);
@@ -51,7 +53,24 @@ export function OperationQueueProgress() {
         };
     }, [isExpanded]);
 
-    const opsList = Object.values(operations).reverse();
+    const opsList = Object.values(operations).reverse().sort((a, b) => {
+        const getStatusWeight = (status: string) => {
+            switch (status) {
+                case 'in-progress': return 3;
+                case 'starting': return 2;
+                case 'queued': return 1;
+                default: return 0; // completed, error, etc
+            }
+        };
+
+        const weightA = getStatusWeight(a.opStatus);
+        const weightB = getStatusWeight(b.opStatus);
+        
+        if (weightA > weightB) return -1;
+        if (weightA < weightB) return 1;
+
+        return 0;
+    });
 
     const activeOps = opsList.filter(op => op.opStatus === 'in-progress' || op.opStatus === 'starting' || op.opStatus === 'queued');
     const hasActiveOps = activeOps.length > 0;
@@ -161,7 +180,7 @@ export function OperationQueueProgress() {
             );
         }
         return (
-            <div className="flex flex-col gap-2">
+            <div ref={listRef} className="flex flex-col gap-2">
                 {opsList.map(renderOpItem)}
             </div>
         );
@@ -175,7 +194,7 @@ export function OperationQueueProgress() {
             {/* Pop up panel with animation */}
             <div 
                 className={`
-                    w-[90vw] md:w-96 max-w-md shadow-xl bg-background rounded-lg border flex flex-col overflow-hidden mb-2
+                    w-[calc(100vw-2rem)] md:w-96 max-w-md shadow-xl bg-background rounded-lg border flex flex-col overflow-hidden mb-2
                     transition-all duration-300 ease-in-out origin-bottom-left
                     ${isExpanded ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4 pointer-events-none absolute bottom-12'}
                 `}
@@ -208,7 +227,7 @@ export function OperationQueueProgress() {
                         </Button>
                     </div>
                 </div>
-                <div className="max-h-[50vh] overflow-y-auto p-2 bg-card">
+                <div className="max-h-[30vh] overflow-y-auto p-2 bg-card">
                     {renderOpsListContent()}
                 </div>
             </div>

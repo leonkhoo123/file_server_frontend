@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff } from "lucide-react";
+import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft } from "lucide-react";
 import { encodePathToUrl } from "@/utils/utils";
 import { logout } from "@/api/api-auth";
 import { useTheme } from "@/components/theme-provider";
@@ -57,7 +57,7 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
             variant="ghost"
             size="icon"
             onClick={onToggleSidebar}
-            className="mr-1 h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+            className={`mr-1 h-8 w-8 text-muted-foreground hover:text-foreground shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}
           >
             <Menu className="h-5 w-5" />
           </Button>
@@ -67,31 +67,57 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
             variant="ghost"
             size="sm"
             onClick={() => { void navigate("/home"); }}
-            className="p-1 h-auto bg-transparent hover:bg-transparent hover:underline text-foreground shrink-0"
+            className="p-1 h-auto bg-transparent hover:bg-transparent hover:underline text-foreground shrink-0 hidden md:inline-flex"
           >
             Home
           </Button>
-          {currentPath.split("/").filter(Boolean).map((part, idx, arr) => {
-            const isHidden = part.startsWith('.');
-            return (
-              <span key={idx} className="flex items-center shrink-0">
-                <span className="mx-1 text-muted-foreground/50">/</span>
-                <button
-                  onClick={() => {
-                    const targetPath = "/" + arr.slice(0, idx + 1).join("/");
-                    void navigate("/home" + encodePathToUrl(targetPath));
-                  }}
-                  className={`hover:underline hover:text-foreground transition-colors ${isHidden ? 'opacity-60' : ''}`}
-                >
-                  {part === '.cloud_delete' ? 'Recycle Bin' : part}
-                </button>
-              </span>
-            );
-          })}
+          <div className="hidden md:flex items-center">
+            {currentPath.split("/").filter(Boolean).map((part, idx, arr) => {
+              const isHidden = part.startsWith('.');
+              return (
+                <span key={idx} className="flex items-center shrink-0">
+                  <span className="mx-1 text-muted-foreground/50">/</span>
+                  <button
+                    onClick={() => {
+                      const targetPath = "/" + arr.slice(0, idx + 1).join("/");
+                      void navigate("/home" + encodePathToUrl(targetPath));
+                    }}
+                    className={`hover:underline hover:text-foreground transition-colors ${isHidden ? 'opacity-60' : ''}`}
+                  >
+                    {part === '.cloud_delete' ? 'Recycle Bin' : part}
+                  </button>
+                </span>
+              );
+            })}
+          </div>
+          <div className="md:hidden flex items-center shrink-0">
+            {currentPath !== "/" && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  const parts = currentPath.split("/").filter(Boolean);
+                  parts.pop();
+                  const targetPath = "/" + parts.join("/");
+                  void navigate("/home" + encodePathToUrl(targetPath));
+                }}
+                className="mr-1 h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+            )}
+            <span className="font-semibold text-foreground text-base">
+              {currentPath === "/" 
+                ? "Home" 
+                : currentPath.split("/").filter(Boolean).pop() === '.cloud_delete' 
+                  ? 'Recycle Bin' 
+                  : currentPath.split("/").filter(Boolean).pop()}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 shrink-0">
+      <div className={`flex items-center gap-2 shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="icon">

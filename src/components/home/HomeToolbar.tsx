@@ -58,7 +58,7 @@ export default function HomeToolbar({
   };
 
   return (
-    <div className="flex items-center gap-1 p-2 px-4 border-b bg-muted/5 shrink-0 overflow-x-auto">
+    <div className="hidden md:flex items-center gap-1 p-2 px-4 border-b bg-muted/5 shrink-0 overflow-x-auto">
       <input 
         type="file" 
         multiple 

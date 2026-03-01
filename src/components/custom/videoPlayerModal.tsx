@@ -354,7 +354,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
           autoPlay
           playsInline
           className={`
-        ${isSideways ? 'max-h-[100vw] max-w-[100vh]' : 'max-h-screen max-w-full'}
+        ${isSideways ? 'max-h-[100dvw] max-w-[100dvh]' : 'max-h-dvh max-w-full'}
         object-contain
         transition-transform duration-300
       `}

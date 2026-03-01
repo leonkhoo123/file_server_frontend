@@ -68,6 +68,7 @@ export default function HomeFileList({
   const [isDragging, setIsDragging] = useState(false);
   const [displayItems, setDisplayItems] = useState<ItemsResponse | undefined>(items);
   const [transitioningFolder, setTransitioningFolder] = useState<string | null>(null);
+  const [openDropdownName, setOpenDropdownName] = useState<string | null>(null);
 
   useEffect(() => {
     if (items) {
@@ -307,7 +308,7 @@ export default function HomeFileList({
                         e.preventDefault();
                       }
                     }}
-                    className={`flex items-center px-4 md:px-6 py-2 md:py-3 cursor-pointer rounded-md transition-all duration-75 ease-out select-none min-h-[64px] md:min-h-[44px] [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent] ${
+                    className={`flex items-center pl-4 pr-1 md:px-6 py-2 md:py-3 cursor-pointer rounded-md transition-all duration-75 ease-out select-none min-h-[64px] md:min-h-[44px] [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent] ${
                       transitioningFolder === file.name
                         ? 'bg-blue-300/80 dark:bg-blue-600/80 scale-[0.96]'
                         : isSelected
@@ -352,16 +353,20 @@ export default function HomeFileList({
 
                     {/* ACTIONS (mobile only) */}
                     {selectedItems.size === 0 && (
-                      <div className="md:hidden ml-2 flex items-center shrink-0">
-                        <DropdownMenu>
+                      <div className="md:hidden ml-1 flex items-center shrink-0 relative">
+                        <DropdownMenu 
+                          open={openDropdownName === file.name}
+                          onOpenChange={(open) => {
+                            if (!open) setOpenDropdownName(null);
+                          }}
+                        >
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-12 w-12 text-muted-foreground" onClick={(e) => { e.stopPropagation(); }}>
-                              <MoreVertical className="h-6 w-6" />
-                            </Button>
+                            <div className="absolute inset-0 pointer-events-none" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48" onClick={(e) => { e.stopPropagation(); }}>
                             <DropdownMenuItem onClick={(e) => { 
                               e.stopPropagation(); 
+                              setOpenDropdownName(null);
                               onRename(file.name);
                             }}>
                               <Pencil className="mr-2 h-4 w-4" />
@@ -369,6 +374,7 @@ export default function HomeFileList({
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { 
                               e.stopPropagation(); 
+                              setOpenDropdownName(null);
                               onDelete(file.name);
                             }} className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30">
                               <TrashIcon className="mr-2 h-4 w-4" />
@@ -376,6 +382,7 @@ export default function HomeFileList({
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={(e) => { 
                               e.stopPropagation(); 
+                              setOpenDropdownName(null);
                               onProperties(file.name);
                             }}>
                               <Info className="mr-2 h-4 w-4" />
@@ -383,6 +390,18 @@ export default function HomeFileList({
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
+
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-10 w-8 text-muted-foreground" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setOpenDropdownName(openDropdownName === file.name ? null : file.name);
+                          }}
+                        >
+                          <MoreVertical className="h-5 w-5" />
+                        </Button>
                       </div>
                     )}
                   </div>

@@ -4,7 +4,7 @@ const NotFoundPage: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-800 p-4">
+    <div className="flex flex-col items-center justify-center min-h-dvh bg-gray-50 text-gray-800 p-4">
       
       {/* --- Error Code --- */}
       <h1 className="text-9xl font-extrabold text-gray-600 tracking-wider">

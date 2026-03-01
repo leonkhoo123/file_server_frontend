@@ -11,22 +11,16 @@ import MobileSelectionToolbar from "@/components/home/MobileSelectionToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
 import HomePropertiesModal from "@/components/home/HomePropertiesModal";
+import HomeDeleteDialog from "@/components/home/HomeDeleteDialog";
+import HomeRenameDialog from "@/components/home/HomeRenameDialog";
+import HomeCreateFolderDialog from "@/components/home/HomeCreateFolderDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 import { wsClient } from "@/api/wsClient";
 import { checkHealth, type HealthResponse } from "@/api/api-file";
@@ -77,8 +71,6 @@ export default function HomePage() {
   } = useFileManager({ uploadChunkSize: healthData?.upload_chunk_size });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [renameInput, setRenameInput] = useState("");
-  const [folderInput, setFolderInput] = useState("");
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [isHealthConnected, setIsHealthConnected] = useState(false);
 
@@ -121,25 +113,6 @@ export default function HomePage() {
       clearInterval(healthInterval);
     };
   }, [handleRefresh]);
-
-  useEffect(() => {
-    if (isRenameDialogOpen && itemToRename) {
-      setRenameInput(itemToRename);
-    } else {
-      setRenameInput("");
-    }
-  }, [isRenameDialogOpen, itemToRename]);
-
-  useEffect(() => {
-    if (isCreateFolderDialogOpen) {
-      setFolderInput("New Folder");
-    } else {
-      setFolderInput("");
-    }
-  }, [isCreateFolderDialogOpen]);
-
-  const isRenameExists = (items?.items ?? []).some(item => item.name.toLowerCase() === renameInput.toLowerCase() && item.name.toLowerCase() !== itemToRename?.toLowerCase());
-  const isFolderExists = (items?.items ?? []).some(item => item.name.toLowerCase() === folderInput.toLowerCase());
 
   useEffect(() => {
     const handleResize = () => {
@@ -264,12 +237,32 @@ export default function HomePage() {
                 onProperties={() => { void handleProperties(); }}
               />
             ) : (
-              <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
+              <HomeBreadcrumb 
+                currentPath={currentPath} 
+                onToggleSidebar={toggleSidebar} 
+                onCreateFolder={handleCreateFolder}
+                onPaste={() => { void handlePaste(); }}
+                onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
+                onRefresh={() => { void handleRefresh(); }}
+                clipboardItemsCount={clipboardItems.items.length}
+                clipboardOperation={clipboardItems.operation}
+                clipboardSourceDir={clipboardItems.sourceDir}
+              />
             )}
           </div>
 
           <div className="hidden md:block">
-            <HomeBreadcrumb currentPath={currentPath} onToggleSidebar={toggleSidebar} />
+            <HomeBreadcrumb 
+              currentPath={currentPath} 
+              onToggleSidebar={toggleSidebar} 
+              onCreateFolder={handleCreateFolder}
+              onPaste={() => { void handlePaste(); }}
+              onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
+              onRefresh={() => { void handleRefresh(); }}
+              clipboardItemsCount={clipboardItems.items.length}
+              clipboardOperation={clipboardItems.operation}
+              clipboardSourceDir={clipboardItems.sourceDir}
+            />
           </div>
 
           <div className="hidden md:block">
@@ -318,7 +311,11 @@ export default function HomePage() {
           />
         </div>
 
-        {!selectedVideo && <OperationQueueProgress />}
+        {!selectedVideo && (
+          <div className={clipboardItems.items.length > 0 ? "hidden md:block" : ""}>
+            <OperationQueueProgress />
+          </div>
+        )}
 
         {/* Mobile Clipboard Toast */}
         {!selectedVideo && clipboardItems.items.length > 0 && (
@@ -356,7 +353,7 @@ export default function HomePage() {
 
         {/* Mobile Floating Action Button */}
         {!selectedVideo && (
-          <div className="md:hidden absolute bottom-4 right-4 z-50">
+          <div className={`md:hidden absolute bottom-4 right-4 z-50 ${clipboardItems.items.length > 0 ? 'hidden' : ''}`}>
             <input 
               type="file" 
               multiple 
@@ -409,92 +406,32 @@ export default function HomePage() {
       )}
       <VersionTag />
 
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Delete Items</DialogTitle>
-            <DialogDescription>
-              {currentPath.startsWith("/.cloud_delete") 
-                ? `Are you sure you want to permanently delete ${itemsToDelete?.size ?? 0} item(s)? This action cannot be undone.`
-                : `Are you sure you want to move ${itemsToDelete?.size ?? 0} item(s) to the recycle bin?`}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-4 flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => { setIsDeleteDialogOpen(false); }}>
-              Cancel
-            </Button>
-            <Button autoFocus variant="destructive" onClick={() => { void confirmDelete(); }} disabled={isLoading}>
-              {isLoading ? "Deleting..." : "Delete"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <HomeDeleteDialog
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        itemsToDeleteSize={itemsToDelete?.size ?? 0}
+        currentPath={currentPath}
+        isLoading={isLoading}
+      />
 
-      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Rename Item</DialogTitle>
-            <DialogDescription>
-              Enter a new name for the item.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input 
-              value={renameInput}
-              onChange={(e) => { setRenameInput(e.target.value); }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isRenameExists) void confirmRename(renameInput);
-              }}
-              placeholder="New name"
-              autoFocus
-            />
-            {isRenameExists && (
-              <p className="text-destructive text-sm mt-2">A file or folder with this name already exists.</p>
-            )}
-          </div>
-          <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => { setIsRenameDialogOpen(false); }}>
-              Cancel
-            </Button>
-            <Button onClick={() => { void confirmRename(renameInput); }} disabled={isLoading || !renameInput || renameInput === itemToRename || isRenameExists}>
-              {isLoading ? "Renaming..." : "Rename"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <HomeRenameDialog
+        isOpen={isRenameDialogOpen}
+        onOpenChange={setIsRenameDialogOpen}
+        onConfirm={confirmRename}
+        itemToRename={itemToRename}
+        isLoading={isLoading}
+        existingNames={(items?.items ?? []).map(item => item.name)}
+      />
 
-      <Dialog open={isCreateFolderDialogOpen} onOpenChange={setIsCreateFolderDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Create Folder</DialogTitle>
-            <DialogDescription>
-              Enter a name for the new folder.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Input 
-              value={folderInput}
-              onChange={(e) => { setFolderInput(e.target.value); }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !isFolderExists) void confirmCreateFolder(folderInput);
-              }}
-              placeholder="Folder name"
-              autoFocus
-            />
-            {isFolderExists && (
-              <p className="text-destructive text-sm mt-2">A file or folder with this name already exists.</p>
-            )}
-          </div>
-          <DialogFooter className="flex gap-2 sm:justify-end">
-            <Button variant="outline" onClick={() => { setIsCreateFolderDialogOpen(false); }}>
-              Cancel
-            </Button>
-            <Button onClick={() => { void confirmCreateFolder(folderInput); }} disabled={isLoading || !folderInput || isFolderExists}>
-              {isLoading ? "Creating..." : "Create"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <HomeCreateFolderDialog
+        isOpen={isCreateFolderDialogOpen}
+        onOpenChange={setIsCreateFolderDialogOpen}
+        onConfirm={confirmCreateFolder}
+        isLoading={isLoading}
+        existingNames={(items?.items ?? []).map(item => item.name)}
+      />
+
       <HomePropertiesModal
         isOpen={isPropertiesDialogOpen}
         onOpenChange={setIsPropertiesDialogOpen}

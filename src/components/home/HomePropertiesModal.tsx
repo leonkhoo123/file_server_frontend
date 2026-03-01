@@ -37,22 +37,24 @@ export default function HomePropertiesModal({ isOpen, onOpenChange, data }: Home
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md w-[90vw] max-w-lg mx-auto overflow-hidden">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle className="break-all line-clamp-2 pr-6">{title}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-col gap-4 py-4">
-          <div className="flex items-center gap-4">
-            {getIcon()}
-            <span className="text-xl font-medium break-all line-clamp-2">
+        <div className="flex flex-col gap-4 py-4 max-h-[60vh] overflow-y-auto overflow-x-hidden">
+          <div className="flex items-center gap-4 w-full">
+            <div className="flex-shrink-0">
+              {getIcon()}
+            </div>
+            <span className="text-xl font-medium break-all line-clamp-3">
               {isMultiple ? "Multiple Items" : data.name}
             </span>
           </div>
 
           <Separator />
 
-          <div className="grid grid-cols-[100px_1fr] gap-2 text-sm">
+          <div className="grid grid-cols-[80px_1fr] sm:grid-cols-[100px_1fr] gap-2 text-sm w-full">
             <span className="font-semibold text-muted-foreground">Type:</span>
             <span>
               {isMultiple ? "Multiple Items" : isDir ? "Folder" : "File"}

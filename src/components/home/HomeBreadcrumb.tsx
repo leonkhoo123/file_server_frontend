@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft, MoreVertical, FolderPlus, Clipboard, Info } from "lucide-react";
 import { encodePathToUrl } from "@/utils/utils";
 import { logout } from "@/api/api-auth";
 import { useTheme } from "@/components/theme-provider";
@@ -18,9 +18,26 @@ import {
 interface HomeBreadcrumbProps {
   currentPath: string;
   onToggleSidebar?: () => void;
+  onCreateFolder?: () => void;
+  onPaste?: () => void;
+  onProperties?: (fileName?: string, isCurrentDir?: boolean) => void;
+  onRefresh?: () => void;
+  clipboardItemsCount?: number;
+  clipboardOperation?: 'cut' | 'copy' | null;
+  clipboardSourceDir?: string;
 }
 
-export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBreadcrumbProps) {
+export default function HomeBreadcrumb({ 
+  currentPath, 
+  onToggleSidebar,
+  onCreateFolder,
+  onPaste,
+  onProperties,
+  onRefresh,
+  clipboardItemsCount = 0,
+  clipboardOperation = null,
+  clipboardSourceDir,
+}: HomeBreadcrumbProps) {
   const navigate = useNavigate();
   const updateSW = registerSW();
   const { theme, setTheme } = useTheme();
@@ -50,7 +67,7 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
   };
 
   return (
-    <div className="h-16 md:h-14 border-b flex items-center justify-between px-4 md:px-6 bg-background shrink-0 gap-2">
+    <div className="h-16 md:h-14 border-b flex items-center justify-between px-2 md:px-6 bg-background shrink-0 gap-2">
       <div className="flex items-center gap-2 overflow-hidden">
         {onToggleSidebar && (
           <Button
@@ -59,7 +76,7 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
             onClick={onToggleSidebar}
             className={`mr-1 h-12 w-12 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}
           >
-            <Menu className="h-7 w-7 md:h-5 md:w-5" />
+            <Menu className="h-8 w-8 md:h-5 md:w-5" />
           </Button>
         )}
         <div className="flex items-center text-sm text-muted-foreground overflow-hidden whitespace-nowrap">
@@ -103,10 +120,10 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
                 }}
                 className="mr-1 h-12 w-12 md:h-8 md:w-8 text-muted-foreground hover:text-foreground shrink-0"
               >
-                <ArrowLeft className="h-7 w-7 md:h-5 md:w-5" />
+                <ArrowLeft className="h-8 w-8 md:h-5 md:w-5" />
               </Button>
             )}
-            <span className="font-semibold text-foreground text-xl md:text-base">
+            <span className="font-semibold text-foreground text-lg md:text-base">
               {currentPath === "/" 
                 ? "Home" 
                 : currentPath.split("/").filter(Boolean).pop() === '.cloud_delete' 
@@ -117,48 +134,85 @@ export default function HomeBreadcrumb({ currentPath, onToggleSidebar }: HomeBre
         </div>
       </div>
 
-      <div className={`flex items-center gap-2 shrink-0 ${currentPath !== "/" ? "hidden md:flex" : ""}`}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-12 w-12 md:h-9 md:w-9">
-              <Settings className="h-7 w-7 md:h-[1.2rem] md:w-[1.2rem] transition-all" />
-              <span className="sr-only">Settings</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            
-            <DropdownMenuItem onSelect={(e) => {
-              e.preventDefault();
-              toggleTheme();
-            }}>
-              {theme === "light" && <Sun className="mr-2 h-4 w-4" />}
-              {theme === "dark" && <Moon className="mr-2 h-4 w-4" />}
-              {theme === "system" && <Monitor className="mr-2 h-4 w-4" />}
-              <span>Theme: {theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
-            </DropdownMenuItem>
+      <div className="flex items-center gap-2 shrink-0">
+        {/* Settings Button */}
+        <div className={currentPath !== "/" ? "hidden md:flex" : "flex"}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="icon" className="h-12 w-12 md:h-9 md:w-9">
+                <Settings className="h-8 w-8 md:h-[1.2rem] md:w-[1.2rem] transition-all" />
+                <span className="sr-only">Settings</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              
+              <DropdownMenuItem onSelect={(e) => {
+                e.preventDefault();
+                toggleTheme();
+              }}>
+                {theme === "light" && <Sun className="mr-2 h-4 w-4" />}
+                {theme === "dark" && <Moon className="mr-2 h-4 w-4" />}
+                {theme === "system" && <Monitor className="mr-2 h-4 w-4" />}
+                <span>Theme: {theme.charAt(0).toUpperCase() + theme.slice(1)}</span>
+              </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={() => { setShowHidden(!showHidden); }}>
-              {showHidden ? (
-                <Eye className="mr-2 h-4 w-4" />
-              ) : (
-                <EyeOff className="mr-2 h-4 w-4" />
-              )}
-              <span>{showHidden ? "Hide Hidden Files" : "Show Hidden Files"}</span>
-            </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setShowHidden(!showHidden); }}>
+                {showHidden ? (
+                  <Eye className="mr-2 h-4 w-4" />
+                ) : (
+                  <EyeOff className="mr-2 h-4 w-4" />
+                )}
+                <span>{showHidden ? "Hide Hidden Files" : "Show Hidden Files"}</span>
+              </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
+              <DropdownMenuSeparator />
 
-            <DropdownMenuItem onClick={handleReload}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              <span>Reload App</span>
-            </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleReload}>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                <span>Reload App</span>
+              </DropdownMenuItem>
 
-            <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/30">
-              <LogOut className="mr-2 h-4 w-4" />
-              <span>Log Out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 focus:bg-red-100 dark:focus:bg-red-900/30">
+                <LogOut className="mr-2 h-4 w-4" />
+                <span>Log Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+
+        {/* 3-Dot Mobile Menu for Current Directory */}
+        <div className="md:hidden flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-12 w-12 text-muted-foreground">
+                <MoreVertical className="h-6 w-6" />
+                <span className="sr-only">More options</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem onClick={onCreateFolder}>
+                <FolderPlus className="mr-2 h-4 w-4" />
+                New Folder
+              </DropdownMenuItem>
+              <DropdownMenuItem 
+                onClick={onPaste} 
+                disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath)}
+              >
+                <Clipboard className="mr-2 h-4 w-4" />
+                Paste
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onRefresh}>
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Refresh
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onProperties?.(undefined, true)}>
+                <Info className="mr-2 h-4 w-4" />
+                Info
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       </div>
     </div>
   );

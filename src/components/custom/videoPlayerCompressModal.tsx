@@ -191,7 +191,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
           ref={videoRef}
           controls={false}
           autoPlay
-          className="max-h-[calc(100vh)] max-w-full object-contain"
+          className="max-h-[calc(100dvh)] max-w-full object-contain"
         />
       </div>
 

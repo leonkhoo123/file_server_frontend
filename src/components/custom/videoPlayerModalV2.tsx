@@ -398,7 +398,7 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
           autoPlay
           playsInline
           preload="auto"
-          className={`${isSideways ? "max-h-[100vw] max-w-[100vh]" : "max-h-screen max-w-full"} object-contain`}
+          className={`${isSideways ? "max-h-[100dvw] max-w-[100dvh]" : "max-h-dvh max-w-full"} object-contain`}
           style={{ transform: `rotate(${rotation}deg)` }}
         />
       </div>

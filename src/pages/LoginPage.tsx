@@ -33,7 +33,7 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-      <div className="flex justify-center items-center p-4 min-h-[calc(100vh-4rem)]">
+      <div className="flex justify-center items-center p-4 min-h-[calc(100dvh-4rem)]">
 
         {/* The max-w-md and w-full make the card responsive:
         - On mobile/small screens, it takes the full width (w-full).

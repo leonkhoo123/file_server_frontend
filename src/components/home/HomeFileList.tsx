@@ -160,6 +160,13 @@ export default function HomeFileList({
   }, [currentPath, onUploadDrop]);
 
   const touchTimer = useRef<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [currentPath]);
 
   const handleTouchStart = useCallback((file: FileInterface, index: number) => {
     if (touchTimer.current) {
@@ -255,7 +262,10 @@ export default function HomeFileList({
   }, [isTouchDevice, onFileDoubleClick]);
 
   const fileListContainer = (
-    <div className="flex-1 min-h-0 relative overflow-y-scroll p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent">
+    <div 
+      ref={scrollContainerRef}
+      className="flex-1 min-h-0 relative overflow-y-scroll p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent"
+    >
       {/* Loading Overlay */}
       <div 
         className={`absolute inset-0 flex flex-col items-center justify-center transition-opacity duration-300 pointer-events-none z-10 ${

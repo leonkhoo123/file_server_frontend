@@ -145,6 +145,14 @@ export function useFileOperations({
     setItemsToDelete(new Set(selectedItems));
   };
 
+  const handleEmptyRecycleBin = (allItemNames: string[]) => {
+    if (allItemNames.length > 0) {
+      setItemsToDelete(new Set(allItemNames));
+    } else {
+      toast.info("Recycle bin is already empty");
+    }
+  };
+
   const confirmDelete = async () => {
     if (!itemsToDelete || itemsToDelete.size === 0) return;
     try {
@@ -291,6 +299,7 @@ export function useFileOperations({
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
     handleDelete,
+    handleEmptyRecycleBin,
     confirmDelete,
     itemToRename,
     isRenameDialogOpen,

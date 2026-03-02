@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft, MoreVertical, Info, Sliders } from "lucide-react";
+import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft, MoreVertical, Info, Sliders, Trash2, Download } from "lucide-react";
 import { encodePathToUrl } from "@/utils/utils";
 import { logout } from "@/api/api-auth";
 import { useTheme } from "@/components/theme-provider";
@@ -19,16 +19,22 @@ import {
 
 interface HomeBreadcrumbProps {
   currentPath: string;
+  isFolderEmpty?: boolean;
   onToggleSidebar?: () => void;
   onProperties?: (fileName?: string, isCurrentDir?: boolean) => void;
   onRefresh?: () => void;
+  onDownload?: () => void;
+  onEmptyRecycleBin?: () => void;
 }
 
 export default function HomeBreadcrumb({ 
   currentPath, 
+  isFolderEmpty = false,
   onToggleSidebar,
   onProperties,
   onRefresh,
+  onDownload,
+  onEmptyRecycleBin,
 }: HomeBreadcrumbProps) {
   const navigate = useNavigate();
   const updateSW = registerSW();
@@ -178,8 +184,12 @@ export default function HomeBreadcrumb({
           </DropdownMenu>
         </div>
 
-        {/* 3-Dot Mobile Menu for Current Directory */}
-        <div className="md:hidden flex">
+        {/* Mobile Action Buttons */}
+        <div className="md:hidden flex items-center">
+          <Button variant="ghost" size="icon" className="h-12 w-12 text-muted-foreground" onClick={onRefresh}>
+            <RefreshCcw className="h-6 w-6" />
+            <span className="sr-only">Refresh</span>
+          </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-12 w-12 text-muted-foreground">
@@ -188,19 +198,23 @@ export default function HomeBreadcrumb({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem onClick={onRefresh}>
-                <RefreshCcw className="mr-2 h-4 w-4" />
-                Refresh
+              <DropdownMenuItem onClick={() => onDownload?.()} disabled={isFolderEmpty}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onProperties?.(undefined, true)}>
                 <Info className="mr-2 h-4 w-4" />
                 Info
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => { setShowConfigModal(true); }}>
-                <Sliders className="mr-2 h-4 w-4" />
-                Configurations
-              </DropdownMenuItem>
+              {currentPath.split("/").filter(Boolean).pop() === '.cloud_delete' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={onEmptyRecycleBin}>
+                    <Trash2 className="mr-2 h-4 w-4 text-red-600" />
+                    <span className="text-red-600">Empty Recycle Bin</span>
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

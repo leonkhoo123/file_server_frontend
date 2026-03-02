@@ -45,6 +45,7 @@ export default function HomePage() {
     handlePaste,
     handleClearClipboard,
     handleDelete,
+    handleEmptyRecycleBin,
     confirmDelete,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
@@ -261,9 +262,12 @@ export default function HomePage() {
             ) : (
               <HomeBreadcrumb 
                 currentPath={currentPath} 
+                isFolderEmpty={!items?.items || items.items.length === 0}
                 onToggleSidebar={toggleSidebar} 
                 onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
                 onRefresh={() => { void handleRefresh(); }}
+                onDownload={() => { handleDownload(); }}
+                onEmptyRecycleBin={() => { handleEmptyRecycleBin((items?.items ?? []).map(i => i.name)); }}
               />
             )}
           </div>
@@ -274,6 +278,7 @@ export default function HomePage() {
               onToggleSidebar={toggleSidebar} 
               onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
               onRefresh={() => { void handleRefresh(); }}
+              onEmptyRecycleBin={() => { handleEmptyRecycleBin((items?.items ?? []).map(i => i.name)); }}
             />
           </div>
 

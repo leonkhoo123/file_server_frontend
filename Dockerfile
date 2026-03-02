@@ -10,6 +10,9 @@ RUN npm ci
 # Copy the rest of the source
 COPY . .
 
+# Set Vite profile for production build
+ENV VITE_PROFILE=prod
+
 # Build for production
 RUN npm run build
 

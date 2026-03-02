@@ -2,6 +2,7 @@ import { useCallback } from 'react';
 import { toast } from "sonner";
 import { uploadFile, type UploadProgressEvent } from "@/api/api-file";
 import { useOperationProgress } from "@/context/OperationProgressContext";
+import { formatBytes } from "@/utils/utils";
 
 export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSize?: number) {
   const { addOrUpdateOperation } = useOperationProgress();
@@ -41,6 +42,15 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
         await uploadFile(targetPath, file, (progressEvent: UploadProgressEvent) => {
           if (progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            let speedText = progressEvent.rate ? `${formatBytes(progressEvent.rate)}/s` : '';
+            if (progressEvent.estimated) {
+                const est = progressEvent.estimated;
+                const minutes = Math.floor(est / 60);
+                const seconds = Math.floor(est % 60);
+                const timeStr = minutes > 0 ? `${String(minutes)}m ${String(seconds)}s` : `${String(seconds)}s`;
+                speedText += speedText ? ` • ${timeStr}` : timeStr;
+            }
+            const opSpeed = speedText || undefined;
             addOrUpdateOperation({
               opId: upload.id,
               opType: 'upload',
@@ -48,6 +58,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
               opStatus: 'in-progress',
               destDir: targetPath,
               opPercentage: progress,
+              opSpeed,
             });
           }
         }, upload.id, uploadChunkSize);

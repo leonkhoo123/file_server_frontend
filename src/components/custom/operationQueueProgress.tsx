@@ -180,7 +180,7 @@ export function OperationQueueProgress() {
             </div>
 
             {op.opStatus === 'in-progress' && (
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 mt-2">
                     {op.opPercentage !== undefined && op.opPercentage !== null && (
                         <Progress value={op.opPercentage} className="h-1.5" />
                     )}

@@ -22,7 +22,7 @@ export interface FileInterface {
 
 
 export interface HealthResponse {
-  title_name?: string;
+  service_name?: string;
   upload_chunk_size?: number;
   [key: string]: any;
 }
@@ -186,8 +186,14 @@ export const uploadFile = async (
   chunkSize?: number
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<any> => {
-  const CHUNK_SIZE = chunkSize && chunkSize > 0 ? chunkSize : 5 * 1024 * 1024; // Use provided size or default to 5MB
-  const totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1; // at least 1 chunk for empty files
+  let CHUNK_SIZE = chunkSize && chunkSize > 0 ? chunkSize : 5 * 1024 * 1024; // Use provided size or default to 5MB
+  let totalChunks = Math.ceil(file.size / CHUNK_SIZE) || 1; // at least 1 chunk for empty files
+
+  if (file.size >= 3 && totalChunks < 3) {
+    CHUNK_SIZE = Math.floor(file.size / 3);
+    totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  }
+
   let loadedBytes = 0;
   
   // Extract subdirectory if it's a folder upload (webkitRelativePath contains the full path including filename)
@@ -218,6 +224,7 @@ export const uploadFile = async (
   uploadControllers.set(identifier, controller);
 
   let lastResponse = null;
+  const startTime = Date.now();
 
   try {
     for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
@@ -259,13 +266,20 @@ export const uploadFile = async (
           if (onProgress && progressEvent.loaded) {
             // Calculate overall progress across chunks
             const overallLoaded = loadedBytes + progressEvent.loaded;
+            
+            const elapsedSeconds = Math.max((Date.now() - startTime) / 1000, 0.1);
+            const calculatedRate = overallLoaded / elapsedSeconds;
+            const calculatedEstimated = file.size > overallLoaded 
+              ? (file.size - overallLoaded) / calculatedRate 
+              : 0;
+
             onProgress({
               loaded: overallLoaded,
               total: file.size,
               progress: file.size > 0 ? overallLoaded / file.size : 1,
               bytes: progressEvent.bytes,
-              rate: progressEvent.rate,
-              estimated: progressEvent.estimated,
+              rate: calculatedRate,
+              estimated: calculatedEstimated,
               upload: true
             });
           }

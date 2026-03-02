@@ -208,7 +208,7 @@ export default function HomePage() {
             onClose={() => { setIsSidebarOpen(false); }} 
             isWsConnected={isWsConnected}
             isHealthConnected={isHealthConnected}
-            titleName={healthData?.title_name}
+            titleName={healthData?.service_name}
           />
         )}
 

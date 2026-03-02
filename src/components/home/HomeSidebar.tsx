@@ -1,7 +1,50 @@
-import { Folder, X, Trash2 } from "lucide-react";
+import { Folder, X, Trash2, Cloud } from "lucide-react";
+import { type StorageUsageResponse } from "@/api/api-file";
+import { formatBytes } from "@/utils/utils";
+import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { decodeUrlToPath } from "@/utils/utils";
+
+
+
+function StorageIndicator({ usage }: { usage?: StorageUsageResponse }) {
+  if (!usage) return null;
+
+  const usedFormatted = formatBytes(usage.used);
+  
+  if (usage.limit <= 0) {
+    return (
+      <div className="px-4 py-4 border-b">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <Cloud className="h-4 w-4" />
+          <span>Storage</span>
+        </div>
+        <div className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{usedFormatted}</span> used
+        </div>
+      </div>
+    );
+  }
+
+  const limitFormatted = formatBytes(usage.limit);
+  const leftFormatted = formatBytes(usage.left || Math.max(0, usage.limit - usage.used));
+  const percentage = Math.min(100, Math.max(0, (usage.used / usage.limit) * 100));
+
+  return (
+    <div className="px-4 py-4 border-b">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+        <Cloud className="h-4 w-4" />
+        <span>Storage</span>
+      </div>
+      <Progress value={percentage} className="h-2 mb-2 bg-muted/50" indicatorClassName={percentage > 90 ? "bg-red-500" : "bg-blue-500"} />
+      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+        <div><span className="font-medium text-foreground">{usedFormatted}</span> of <span className="font-medium text-foreground">{limitFormatted}</span> used</div>
+        <div><span className="font-medium text-foreground">{leftFormatted}</span> left</div>
+      </div>
+    </div>
+  );
+}
 
 interface HomeSidebarProps {
   isOpen: boolean;
@@ -9,9 +52,10 @@ interface HomeSidebarProps {
   isWsConnected: boolean;
   isHealthConnected: boolean;
   titleName?: string;
+  storageUsage?: StorageUsageResponse;
 }
 
-export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthConnected, titleName }: HomeSidebarProps) {
+export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthConnected, titleName, storageUsage }: HomeSidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -68,6 +112,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
               </Button>
             </div>
           </div>
+          <StorageIndicator usage={storageUsage} />
           <div className="p-3 flex-1 overflow-auto space-y-1 pb-16">
             <div 
               className={`flex items-center gap-3 text-base md:text-sm px-3 py-3 md:py-2 rounded-md transition-colors cursor-pointer

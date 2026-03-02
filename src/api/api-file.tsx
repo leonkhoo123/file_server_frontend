@@ -8,6 +8,7 @@ export interface ItemsResponse {
   file_count?: number;
   folder_count?: number;
   count?: number;
+  storage?: StorageUsageResponse;
 }
 
 export interface FileInterface {
@@ -398,3 +399,9 @@ export const uploadFile = async (
   return lastResponse;
 };
 
+
+export interface StorageUsageResponse {
+  used: number;
+  limit: number;
+  left: number;
+}

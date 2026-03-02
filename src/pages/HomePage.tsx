@@ -229,6 +229,7 @@ export default function HomePage() {
             isWsConnected={isWsConnected}
             isHealthConnected={isHealthConnected}
             titleName={healthData?.service_name}
+            storageUsage={items?.storage}
           />
         )}
 

@@ -3,11 +3,30 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { useDialogHistory } from "@/hooks/useDialogHistory"
 
 function Dialog({
+  open: controlledOpen,
+  onOpenChange,
+  defaultOpen,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root>) {
-  return <DialogPrimitive.Root data-slot="dialog" {...props} />
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = React.useState(defaultOpen || false);
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = (newOpen: boolean) => {
+    if (!isControlled) {
+      setInternalOpen(newOpen);
+    }
+    onOpenChange?.(newOpen);
+  };
+
+  useDialogHistory(!!open, () => {
+    handleOpenChange(false);
+  });
+
+  return <DialogPrimitive.Root data-slot="dialog" open={open} onOpenChange={handleOpenChange} {...props} />
 }
 
 function DialogTrigger({

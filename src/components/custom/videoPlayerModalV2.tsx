@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import type { FileInterface } from "@/api/api-file";
 
+import { useDialogHistory } from "@/hooks/useDialogHistory";
+
 interface VideoPlayerModalProps {
   file: FileInterface;
   isOpen: boolean;
@@ -278,21 +280,7 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
     }
   }, [showRenameModal, file.path, newName, handleRenameCancel, onClose]);
   
-  useEffect(() => {
-    // Push a dummy state to the history stack
-    window.history.pushState({ modalOpen: true }, '');
-
-    const handlePopState = (): void => {
-      // This triggers when the Android Back button is pressed
-      handleDismiss();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [handleDismiss]);
+  useDialogHistory(isOpen, handleDismiss);
 
   /* =====================================================
     KEYBOARD LISTENER

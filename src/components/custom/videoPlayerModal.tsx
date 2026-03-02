@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import type { FileInterface } from "@/api/api-file";
 
+import { useDialogHistory } from "@/hooks/useDialogHistory";
+
 interface VideoPlayerModalProps {
   file: FileInterface;
   isOpen: boolean;
@@ -309,26 +311,7 @@ const VideoPlayerModal: React.FC<VideoPlayerModalProps> = ({
   }, [showRenameModal, togglePlay, skip, handleRenameSave]);
 
   // The dependency array is empty, ensuring the function is stable
-  useEffect(() => {
-    // Push a dummy state to the history stack
-    window.history.pushState({ modalOpen: true }, '');
-
-    const handlePopState = (): void => {
-      // This triggers when the Android Back button is pressed
-      handleDismiss();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-
-      // Clean up: If the component closes normally, remove the dummy history entry
-      // if (window.history.state?.modalOpen) {
-      //   window.history.back();
-      // }
-    };
-  }, [handleDismiss]);
+  useDialogHistory(isOpen, handleDismiss);
 
   useEffect(() => {
     // Add the keydown listener to the document

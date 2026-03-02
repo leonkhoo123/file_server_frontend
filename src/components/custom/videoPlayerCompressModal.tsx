@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import type { FileInterface } from "@/api/api-file";
 
+import { useDialogHistory } from "@/hooks/useDialogHistory";
+
 interface VideoPlayerCompressModalProps {
   file: FileInterface;
   isOpen: boolean;
@@ -155,7 +157,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
     setShowRenameModal(true);
   };
 
-  const handleRenameCancel = () => { setShowRenameModal(false); };
+  const handleRenameCancel = useCallback(() => { setShowRenameModal(false); }, []);
 
   const handleRenameSave = () => {
     let finalName = tempName.trim();
@@ -179,6 +181,16 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
     setisNewname(false);
     setShowRenameModal(false);
   };
+
+  const handleDismiss = useCallback(() => {
+    if (showRenameModal) {
+      handleRenameCancel();
+    } else {
+      onClose(disqualified, file.path, isNewName, newName);
+    }
+  }, [showRenameModal, disqualified, file.path, isNewName, newName, onClose, handleRenameCancel]);
+
+  useDialogHistory(isOpen, handleDismiss);
 
   if (!isOpen) return null;
 
@@ -321,7 +333,7 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => { onClose(disqualified, file.path, isNewName, newName); }}
+          onClick={handleDismiss}
           className="hover:bg-white/80 w-full bg-white/30 mt-5"
         >
           <LogOut className="h-5 w-5" />

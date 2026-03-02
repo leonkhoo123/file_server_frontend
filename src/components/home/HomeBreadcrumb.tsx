@@ -197,7 +197,7 @@ export default function HomeBreadcrumb({
                 <span className="sr-only">More options</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuItem onClick={() => onDownload?.()} disabled={isFolderEmpty}>
                 <Download className="mr-2 h-4 w-4" />
                 Download

@@ -50,7 +50,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
               opPercentage: progress,
             });
           }
-        }, undefined, uploadChunkSize);
+        }, upload.id, uploadChunkSize);
         
         addOrUpdateOperation({
           opId: upload.id,
@@ -63,15 +63,20 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
       } catch (error: unknown) {
         console.error("Upload error:", error);
         const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        const isCancelled = errorMessage === "Upload cancelled";
+        
         addOrUpdateOperation({
           opId: upload.id,
           opType: 'upload',
-          opName: `Failed to upload ${upload.name}`,
-          opStatus: 'error',
+          opName: isCancelled ? `Cancelled upload for ${upload.name}` : `Failed to upload ${upload.name}`,
+          opStatus: isCancelled ? 'aborted' : 'error',
           destDir: targetPath,
-          error: errorMessage,
+          error: isCancelled ? undefined : errorMessage,
         });
-        toast.error(`Failed to upload ${file.name}`);
+        
+        if (!isCancelled) {
+            toast.error(`Failed to upload ${file.name}`);
+        }
       }
     }
     

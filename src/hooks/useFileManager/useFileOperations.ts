@@ -46,6 +46,10 @@ export function useFileOperations({
       currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
     );
     setClipboardItems({ items: sources, operation: 'cut', sourceDir: currentPath });
+
+    if (window.innerWidth >= 768) {
+      toast.success(`${selectedItems.size} item(s) ready to move`);
+    }
   };
 
   const handleCopy = () => {
@@ -57,6 +61,10 @@ export function useFileOperations({
       currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
     );
     setClipboardItems({ items: sources, operation: 'copy', sourceDir: currentPath });
+
+    if (window.innerWidth >= 768) {
+      toast.success(`${selectedItems.size} item(s) added to clipboard`);
+    }
   };
 
   const handlePaste = async () => {

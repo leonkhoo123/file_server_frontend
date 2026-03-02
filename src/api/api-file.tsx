@@ -1,4 +1,5 @@
 import axiosLayer from './axiosLayer';   // axios instance WITHOUT token
+import axios from 'axios';
 import { generateOpId } from "../utils/id";
 
 export interface ItemsResponse {
@@ -152,6 +153,16 @@ export const getFileProperties = async (sources: string[]): Promise<PropertiesRe
   return rs.data as PropertiesResponse;
 };
 
+export const cancelOperation = async (opId: string, cancel = true) => {
+  const rs = await axiosLayer.post("/files/cancel", {
+    opId,
+    cancel
+  }, {
+    headers: { "Accept": "application/json" },
+  });
+  return rs.data;
+};
+
 import * as CRC32 from 'crc-32';
 
 export interface UploadProgressEvent {
@@ -163,6 +174,9 @@ export interface UploadProgressEvent {
   estimated?: number;
   upload: boolean;
 }
+
+export const uploadControllers = new Map<string, AbortController>();
+export const cancelledUploads = new Set<string>();
 
 export const uploadFile = async (
   path: string,
@@ -193,60 +207,98 @@ export const uploadFile = async (
     }
   }
 
-  const identifier = opId ?? btoa(encodeURIComponent(`${filename}-${file.size}-${file.lastModified}-${destination}`)).replace(/[/+=]/g, '_');
+  const identifier = opId ?? btoa(encodeURIComponent(`${filename}-${String(file.size)}-${String(file.lastModified)}-${destination}`)).replace(/[/+=]/g, '_');
+
+  if (cancelledUploads.has(identifier)) {
+    cancelledUploads.delete(identifier);
+    throw new Error("Upload cancelled");
+  }
+
+  const controller = new AbortController();
+  uploadControllers.set(identifier, controller);
 
   let lastResponse = null;
 
-  for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
-    const start = (chunkNumber - 1) * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, file.size);
-    const chunkBlob = file.slice(start, end);
-    
-    // Calculate CRC32 checksum for the chunk
-    const arrayBuffer = await chunkBlob.arrayBuffer();
-    const buffer = new Uint8Array(arrayBuffer);
-    const checksumNum = CRC32.buf(buffer);
-    const checksum = (checksumNum >>> 0).toString(16).padStart(8, '0');
+  try {
+    for (let chunkNumber = 1; chunkNumber <= totalChunks; chunkNumber++) {
+      if (controller.signal.aborted) {
+        throw new Error("Upload cancelled");
+      }
+      
+      const start = (chunkNumber - 1) * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, file.size);
+      const chunkBlob = file.slice(start, end);
+      
+      // Calculate CRC32 checksum for the chunk
+      const arrayBuffer = await chunkBlob.arrayBuffer();
+      const buffer = new Uint8Array(arrayBuffer);
+      const checksumNum = CRC32.buf(buffer);
+      const checksum = (checksumNum >>> 0).toString(16).padStart(8, '0');
 
-    let status = 'uploading';
-    if (chunkNumber === 1 && totalChunks === 1) status = 'end';
-    else if (chunkNumber === 1) status = 'start';
-    else if (chunkNumber === totalChunks) status = 'end';
+      let status = 'uploading';
+      if (chunkNumber === 1 && totalChunks === 1) status = 'end';
+      else if (chunkNumber === 1) status = 'start';
+      else if (chunkNumber === totalChunks) status = 'end';
 
-    const formData = new FormData();
-    formData.append("identifier", identifier);
-    formData.append("filename", filename);
-    formData.append("destination", destination);
-    formData.append("chunkNumber", chunkNumber.toString());
-    formData.append("totalChunks", totalChunks.toString());
-    formData.append("status", status);
-    formData.append("checksum", checksum);
-    formData.append("chunk", chunkBlob, filename);
+      const formData = new FormData();
+      formData.append("identifier", identifier);
+      formData.append("filename", filename);
+      formData.append("destination", destination);
+      formData.append("chunkNumber", chunkNumber.toString());
+      formData.append("totalChunks", totalChunks.toString());
+      formData.append("status", status);
+      formData.append("checksum", checksum);
+      formData.append("chunk", chunkBlob, filename);
 
-    const rs = await axiosLayer.post("/files/upload-chunk", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-      onUploadProgress: (progressEvent) => {
-        if (onProgress && progressEvent.loaded) {
-          // Calculate overall progress across chunks
-          const overallLoaded = loadedBytes + progressEvent.loaded;
-          onProgress({
-            loaded: overallLoaded,
-            total: file.size,
-            progress: file.size > 0 ? overallLoaded / file.size : 1,
-            bytes: progressEvent.bytes,
-            rate: progressEvent.rate,
-            estimated: progressEvent.estimated,
-            upload: true
-          });
-        }
-      },
-    });
+      const rs = await axiosLayer.post("/files/upload-chunk", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+        signal: controller.signal,
+        onUploadProgress: (progressEvent) => {
+          if (onProgress && progressEvent.loaded) {
+            // Calculate overall progress across chunks
+            const overallLoaded = loadedBytes + progressEvent.loaded;
+            onProgress({
+              loaded: overallLoaded,
+              total: file.size,
+              progress: file.size > 0 ? overallLoaded / file.size : 1,
+              bytes: progressEvent.bytes,
+              rate: progressEvent.rate,
+              estimated: progressEvent.estimated,
+              upload: true
+            });
+          }
+        },
+      });
 
-    loadedBytes += chunkBlob.size;
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-    lastResponse = rs.data;
+      loadedBytes += chunkBlob.size;
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      lastResponse = rs.data;
+    }
+  } catch (error: unknown) {
+    if (axios.isCancel(error) || (error instanceof Error && error.message === "Upload cancelled")) {
+      // Send cancel request without payload
+      const formData = new FormData();
+      formData.append("identifier", identifier);
+      formData.append("filename", filename);
+      formData.append("destination", destination);
+      formData.append("status", "cancel");
+
+      try {
+        await axiosLayer.post("/files/upload-chunk", formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+      } catch (cancelError) {
+        console.error("Failed to send cancel status", cancelError);
+      }
+      throw new Error("Upload cancelled");
+    }
+    throw error;
+  } finally {
+    uploadControllers.delete(identifier);
   }
 
   return lastResponse;

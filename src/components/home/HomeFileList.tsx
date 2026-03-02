@@ -36,7 +36,7 @@ interface HomeFileListProps {
   onCreateFolder: () => void;
   clipboardItems: string[];
   clipboardItemsCount: number;
-  clipboardOperation: 'cut' | 'copy' | null;
+  clipboardOperation: 'cut' | 'copy' | null; 
   clipboardSourceDir?: string;
   currentPath: string;
   onUploadDrop: (files: File[], targetPath: string) => void;
@@ -274,7 +274,7 @@ export default function HomeFileList({
       >
         <div className="flex flex-col items-center justify-center text-muted-foreground">
           <Loader2 className="h-10 w-10 animate-spin text-blue-500 mb-4" />
-          <p>Loading files...</p>
+          <p>Loading</p>
         </div>
       </div>
 

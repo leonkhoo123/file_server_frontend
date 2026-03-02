@@ -5,6 +5,7 @@ import { Progress } from '../ui/progress';
 import { Button } from '../ui/button';
 import { X, ChevronDown, CheckCircle2, AlertCircle, Loader2, Files, Trash2, Edit, Move, Copy, UploadCloud } from 'lucide-react';
 import type { OperationMessage } from '@/api/wsClient';
+import { cancelOperation, uploadControllers, cancelledUploads } from '@/api/api-file';
 
 export function OperationQueueProgress() {
     const { operations, clearCompleted, dismissOperation } = useOperationProgress();
@@ -74,7 +75,7 @@ export function OperationQueueProgress() {
 
     const activeOps = opsList.filter(op => op.opStatus === 'in-progress' || op.opStatus === 'starting' || op.opStatus === 'queued');
     const hasActiveOps = activeOps.length > 0;
-    const hasCompletedOps = opsList.some(op => op.opStatus === 'completed' || op.opStatus === 'error');
+    const hasCompletedOps = opsList.some(op => op.opStatus === 'completed' || op.opStatus === 'error' || op.opStatus === 'aborted');
 
     const title = hasActiveOps 
         ? `${String(activeOps.length)} operation${activeOps.length > 1 ? 's' : ''} in progress` 
@@ -108,6 +109,7 @@ export function OperationQueueProgress() {
         switch (status) {
             case 'completed': return <CheckCircle2 className="w-5 h-5 text-green-500" />;
             case 'error': return <AlertCircle className="w-5 h-5 text-red-500" />;
+            case 'aborted': return <AlertCircle className="w-5 h-5 text-orange-500" />;
             case 'in-progress':
             case 'starting':
             case 'queued': return <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />;
@@ -117,12 +119,12 @@ export function OperationQueueProgress() {
 
     const renderOpItem = (op: OperationMessage) => (
         <div key={op.opId} className="flex flex-col border rounded-md p-2 bg-background shadow-sm">
-            <div className="flex justify-between items-center mb-2">
+            <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2 min-w-0 pr-2">
                     <div className="p-1.5 bg-muted rounded-md text-foreground shrink-0">
                         {getIconForType(op.opType)}
                     </div>
-                    <div className="flex flex-col min-w-0">
+                    <div className="flex flex-col min-w-0 justify-center">
                         {op.opName ? (
                             <span className="text-sm text-left break-words line-clamp-2" title={op.opName}>
                                 {op.opName}
@@ -135,7 +137,7 @@ export function OperationQueueProgress() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     {getStatusIcon(op.opStatus)}
-                    {(op.opStatus === 'completed' || op.opStatus === 'error') && (
+                    {(op.opStatus === 'completed' || op.opStatus === 'error' || op.opStatus === 'aborted') && (
                         <Button
                             variant="ghost"
                             size="icon"
@@ -143,6 +145,35 @@ export function OperationQueueProgress() {
                             onClick={(e) => { e.stopPropagation(); dismissOperation(op.opId); }}
                         >
                             <X className="w-3 h-3" />
+                        </Button>
+                    )}
+                    {(op.opStatus === 'in-progress' || op.opStatus === 'starting' || op.opStatus === 'queued') && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-5 w-5"
+                            onClick={(e) => { 
+                                e.stopPropagation(); 
+                                void (async () => {
+                                    try {
+                                        if (op.opType === 'upload') {
+                                            cancelledUploads.add(op.opId); // Mark as cancelled for queued uploads
+                                            const controller = uploadControllers.get(op.opId);
+                                            if (controller) {
+                                                controller.abort();
+                                            } else {
+                                                await cancelOperation(op.opId);
+                                            }
+                                        } else {
+                                            await cancelOperation(op.opId);
+                                        }
+                                    } catch (error) {
+                                        console.error('Failed to cancel operation', error);
+                                    }
+                                })();
+                            }}
+                        >
+                            <X className="w-3 h-3 text-muted-foreground hover:text-red-500" />
                         </Button>
                     )}
                 </div>
@@ -163,7 +194,7 @@ export function OperationQueueProgress() {
                 </div>
             )}
             
-            {op.error && (
+            {op.error && op.opStatus !== 'aborted' && (
                 <div className="text-xs text-red-500 mt-1 bg-red-50 p-1.5 rounded border border-red-100">
                     {op.error}
                 </div>

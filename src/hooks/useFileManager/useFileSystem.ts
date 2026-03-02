@@ -19,7 +19,10 @@ export function useFileSystem() {
     setIsLoading(true);
     setError(false);
     try {
-      const itemsrs = await fetchDirList(currentPath, showHidden);
+      const [itemsrs] = await Promise.all([
+        fetchDirList(currentPath, showHidden),
+        new Promise(resolve => setTimeout(resolve, 200))
+      ]);
       setItems(itemsrs);
     } catch (err: any) {
       console.error("MyErr: ", err);
@@ -49,7 +52,10 @@ export function useFileSystem() {
       try {
         const rawPath = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
         const path = decodeUrlToPath(rawPath);
-        const itemsrs = await fetchDirList(path, showHidden);
+        const [itemsrs] = await Promise.all([
+          fetchDirList(path, showHidden),
+          new Promise(resolve => setTimeout(resolve, 200))
+        ]);
         setItems(itemsrs);
         setCurrentPath(itemsrs.path);
       } catch (err: any) {

@@ -32,7 +32,7 @@ export function OperationProgressProvider({ children }: { children: ReactNode })
         setOperations(prev => {
             const next = { ...prev };
             for (const key in next) {
-                if (next[key].opStatus === 'completed' || next[key].opStatus === 'error') {
+                if (next[key].opStatus === 'completed' || next[key].opStatus === 'error' || next[key].opStatus === 'aborted') {
                     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
                     delete next[key];
                 }

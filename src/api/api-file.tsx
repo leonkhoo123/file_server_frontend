@@ -164,6 +164,7 @@ export const cancelOperation = async (opId: string, cancel = true) => {
 };
 
 import * as CRC32 from 'crc-32';
+import { toast } from 'sonner';
 
 export const downloadFiles = (sources: string[]) => {
   if (sources.length === 0) return;
@@ -178,19 +179,20 @@ export const downloadFiles = (sources: string[]) => {
                 (navigator.userAgent.includes("Mac") && "ontouchend" in document);
 
   if (isIOS) {
-    // In iOS PWAs, a direct window.open triggers the Safari View Controller,
-    // which correctly displays the native download prompt and progress manager
-    // rather than silently downloading and forcing a Quick Look preview.
-    window.open(url, '_blank');
-    return;
+    // In iOS PWAs, auth cookies are not shared with window.open (Safari View Controller),
+    // and standard <a> tag downloads are buffered silently into memory before showing a Quick Look preview.
+    // The industry practice here is to inform the user of this OS limitation so they know it's working.
+    toast.info("Download started in background", {
+      description: "Please wait. iOS will pop up a save menu when the file is fully ready.",
+      duration: 6000,
+    });
   }
   
-  // Create an invisible anchor tag to trigger download for other platforms
+  // Create an invisible anchor tag to trigger download
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = url;
   a.setAttribute('download', '');
-  a.target = '_blank';
   document.body.appendChild(a);
   a.click();
   

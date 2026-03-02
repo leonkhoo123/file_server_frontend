@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { 
   copyFiles, moveFiles, deleteFiles, deletePermanentFiles, 
   renameFile, createFolder, getFileProperties, downloadFiles,
+  checkDuplicates,
+  type DuplicateItem,
   type PropertiesResponse 
 } from "@/api/api-file";
 
@@ -27,6 +29,9 @@ export function useFileOperations({
   const [isPropertiesDialogOpen, setIsPropertiesDialogOpen] = useState(false);
   const [isPropertiesLoading, setIsPropertiesLoading] = useState(false);
   const [isDownloadDirDialogOpen, setIsDownloadDirDialogOpen] = useState(false);
+  const [isDuplicateCheckDialogOpen, setIsDuplicateCheckDialogOpen] = useState(false);
+  const [isDuplicateChecking, setIsDuplicateChecking] = useState(false);
+  const [duplicateItems, setDuplicateItems] = useState<DuplicateItem[]>([]);
 
   const isDeleteDialogOpen = itemsToDelete !== null;
   const setIsDeleteDialogOpen = (open: boolean) => {
@@ -68,14 +73,15 @@ export function useFileOperations({
     }
   };
 
-  const handlePaste = async () => {
+  const executePaste = async () => {
     if (clipboardItems.items.length === 0 || !clipboardItems.operation) {
-      toast.error("Clipboard is empty");
       return;
     }
 
     try {
       setIsLoading(true);
+      setIsDuplicateCheckDialogOpen(false);
+      
       if (clipboardItems.operation === 'copy') {
         await copyFiles(clipboardItems.items, currentPath);
       } else {
@@ -88,6 +94,41 @@ export function useFileOperations({
       toast.error("Paste operation failed");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handlePaste = async () => {
+    if (clipboardItems.items.length === 0 || !clipboardItems.operation) {
+      toast.error("Clipboard is empty");
+      return;
+    }
+
+    try {
+      setIsDuplicateCheckDialogOpen(true);
+      setIsDuplicateChecking(true);
+      setDuplicateItems([]);
+      
+      const startTime = Date.now();
+      const res = await checkDuplicates(clipboardItems.items, currentPath);
+      
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsedTime));
+      }
+      
+      setIsDuplicateChecking(false);
+
+      if (res.hasDuplicates) {
+        setDuplicateItems(res.duplicates);
+      } else {
+        setIsDuplicateCheckDialogOpen(false);
+        await executePaste();
+      }
+    } catch (error) {
+      console.error("Check duplicates failed:", error);
+      toast.error("Failed to check for duplicates");
+      setIsDuplicateChecking(false);
+      setIsDuplicateCheckDialogOpen(false);
     }
   };
 
@@ -268,6 +309,11 @@ export function useFileOperations({
     handleDownload,
     isDownloadDirDialogOpen,
     setIsDownloadDirDialogOpen,
-    confirmDownloadDir
+    confirmDownloadDir,
+    isDuplicateCheckDialogOpen,
+    setIsDuplicateCheckDialogOpen,
+    isDuplicateChecking,
+    duplicateItems,
+    executePaste
   };
 }

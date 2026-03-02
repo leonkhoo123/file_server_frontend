@@ -27,6 +27,7 @@ interface HomeToolbarProps {
   onRefresh: () => void;
   onCreateFolder: () => void;
   onUploadFiles?: (files: File[]) => void;
+  isRecycleBinSelected?: boolean;
 }
 
 export default function HomeToolbar({
@@ -48,9 +49,12 @@ export default function HomeToolbar({
   onRefresh,
   onCreateFolder,
   onUploadFiles,
+  isRecycleBinSelected = false,
 }: HomeToolbarProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+
+  const isRecycleBin = currentPath === '/.cloud_delete' || currentPath.startsWith('/.cloud_delete/');
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0 && onUploadFiles) {
@@ -88,22 +92,22 @@ export default function HomeToolbar({
       <Button variant="ghost" size="sm" onClick={onSelectAll} className="h-8 w-8 p-0" title="Select All">
         <CheckSquare className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onCut} disabled={selectedItemsSize === 0} className="h-8 w-8 p-0" title="Cut">
+      <Button variant="ghost" size="sm" onClick={onCut} disabled={selectedItemsSize === 0 || isRecycleBinSelected} className="h-8 w-8 p-0" title="Cut">
         <Scissors className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onCopy} disabled={selectedItemsSize === 0} className="h-8 w-8 p-0" title="Copy">
+      <Button variant="ghost" size="sm" onClick={onCopy} disabled={selectedItemsSize === 0 || isRecycleBin || isRecycleBinSelected} className="h-8 w-8 p-0" title="Copy">
         <Copy className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onPaste} disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath)} className="h-8 w-8 p-0" title="Paste">
+      <Button variant="ghost" size="sm" onClick={onPaste} disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath) || isRecycleBin} className="h-8 w-8 p-0" title="Paste">
         <Clipboard className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onRename} disabled={selectedItemsSize !== 1} className="h-8 w-8 p-0" title="Rename">
+      <Button variant="ghost" size="sm" onClick={onRename} disabled={selectedItemsSize !== 1 || isRecycleBin || isRecycleBinSelected} className="h-8 w-8 p-0" title="Rename">
         <Pencil className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onDelete} disabled={selectedItemsSize === 0} className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete">
+      <Button variant="ghost" size="sm" onClick={onDelete} disabled={selectedItemsSize === 0 || isRecycleBinSelected} className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete">
         <Trash2 className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="sm" onClick={onDownload} disabled={selectedItemsSize === 0 && isFolderEmpty} className="h-8 w-8 p-0" title="Download">
+      <Button variant="ghost" size="sm" onClick={onDownload} disabled={(selectedItemsSize === 0 && isFolderEmpty) || isRecycleBinSelected} className="h-8 w-8 p-0" title="Download">
         <Download className="h-4 w-4" />
       </Button>
 
@@ -117,15 +121,15 @@ export default function HomeToolbar({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={onCreateFolder}>
+          <DropdownMenuItem onClick={onCreateFolder} disabled={isRecycleBin}>
             <FolderPlus className="mr-2 h-4 w-4" />
             <span>Create Folder</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+          <DropdownMenuItem onClick={() => fileInputRef.current?.click()} disabled={isRecycleBin}>
             <Upload className="mr-2 h-4 w-4" />
             <span>Upload File</span>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => folderInputRef.current?.click()}>
+          <DropdownMenuItem onClick={() => folderInputRef.current?.click()} disabled={isRecycleBin}>
             <FolderUp className="mr-2 h-4 w-4" />
             <span>Upload Folder</span>
           </DropdownMenuItem>

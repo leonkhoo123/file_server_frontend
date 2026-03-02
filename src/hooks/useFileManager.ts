@@ -75,11 +75,24 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     handleDownload,
     isDownloadDirDialogOpen,
     setIsDownloadDirDialogOpen,
-    confirmDownloadDir
+    confirmDownloadDir,
+    isDuplicateCheckDialogOpen,
+    setIsDuplicateCheckDialogOpen,
+    isDuplicateChecking,
+    duplicateItems,
+    executePaste
   } = useFileOperations({ currentPath, selectedItems, setSelectedItems, handleRefresh, setIsLoading });
 
   // 5. Uploading files
-  const { handleUploadFiles } = useFileUpload(handleRefresh, uploadChunkSize);
+  const { 
+    handleUploadFiles,
+    executeUpload,
+    isUploadDuplicateCheckDialogOpen,
+    setIsUploadDuplicateCheckDialogOpen,
+    isUploadDuplicateChecking,
+    uploadDuplicateItems,
+    setPendingUploads
+  } = useFileUpload(handleRefresh, uploadChunkSize);
 
   // 6. Keyboard Shortcuts
   useKeyboardShortcuts({
@@ -147,9 +160,20 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     setIsPropertiesDialogOpen,
     isPropertiesLoading,
     handleUploadFiles,
+    executeUpload,
+    isUploadDuplicateCheckDialogOpen,
+    setIsUploadDuplicateCheckDialogOpen,
+    isUploadDuplicateChecking,
+    uploadDuplicateItems,
+    setPendingUploads,
     handleDownload,
     isDownloadDirDialogOpen,
     setIsDownloadDirDialogOpen,
     confirmDownloadDir,
+    isDuplicateCheckDialogOpen,
+    setIsDuplicateCheckDialogOpen,
+    isDuplicateChecking,
+    duplicateItems,
+    executePaste,
   };
 }

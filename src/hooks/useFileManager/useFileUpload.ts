@@ -1,14 +1,26 @@
-import { useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { toast } from "sonner";
-import { uploadFile, type UploadProgressEvent } from "@/api/api-file";
+import { uploadFile, checkUploadDuplicates, type UploadProgressEvent, type DuplicateItem } from "@/api/api-file";
 import { useOperationProgress } from "@/context/OperationProgressContext";
 import { formatBytes } from "@/utils/utils";
 
 export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSize?: number) {
   const { addOrUpdateOperation } = useOperationProgress();
+  const [isUploadDuplicateCheckDialogOpen, setIsUploadDuplicateCheckDialogOpen] = useState(false);
+  const [isUploadDuplicateChecking, setIsUploadDuplicateChecking] = useState(false);
+  const [uploadDuplicateItems, setUploadDuplicateItems] = useState<DuplicateItem[]>([]);
+  const [pendingUploads, setPendingUploads] = useState<{ files: File[], targetPath: string } | null>(null);
 
-  const handleUploadFiles = useCallback(async (files: File[], targetPath: string) => {
-    const newUploads = files.map(file => ({
+  const executeUpload = useCallback(async (directFiles?: File[], directTargetPath?: string) => {
+    const filesToUpload = directFiles ?? pendingUploads?.files;
+    const target = directTargetPath ?? pendingUploads?.targetPath;
+
+    if (!filesToUpload || !target) return;
+    
+    setIsUploadDuplicateCheckDialogOpen(false);
+    setPendingUploads(null);
+
+    const newUploads = filesToUpload.map(file => ({
       id: "upload-" + Math.random().toString(36).substring(7),
       name: file.name,
     }));
@@ -20,13 +32,13 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
         opType: 'upload',
         opName: `Uploading ${upload.name}`,
         opStatus: 'queued',
-        destDir: targetPath,
+        destDir: target,
         opPercentage: 0,
       });
     });
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
+    for (let i = 0; i < filesToUpload.length; i++) {
+      const file = filesToUpload[i];
       const upload = newUploads[i];
 
       addOrUpdateOperation({
@@ -34,12 +46,12 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
         opType: 'upload',
         opName: `Uploading ${upload.name}`,
         opStatus: 'in-progress',
-        destDir: targetPath,
+        destDir: target,
         opPercentage: 0,
       });
 
       try {
-        await uploadFile(targetPath, file, (progressEvent: UploadProgressEvent) => {
+        await uploadFile(target, file, (progressEvent: UploadProgressEvent) => {
           if (progressEvent.total) {
             const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             let speedText = progressEvent.rate ? `${formatBytes(progressEvent.rate)}/s` : '';
@@ -56,7 +68,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
               opType: 'upload',
               opName: `Uploading ${upload.name}`,
               opStatus: 'in-progress',
-              destDir: targetPath,
+              destDir: target,
               opPercentage: progress,
               opSpeed,
             });
@@ -68,7 +80,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
           opType: 'upload',
           opName: `Uploaded ${upload.name}`,
           opStatus: 'completed',
-          destDir: targetPath,
+          destDir: target,
           opPercentage: 100,
         });
       } catch (error: unknown) {
@@ -81,7 +93,7 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
           opType: 'upload',
           opName: isCancelled ? `Cancelled upload for ${upload.name}` : `Failed to upload ${upload.name}`,
           opStatus: isCancelled ? 'aborted' : 'error',
-          destDir: targetPath,
+          destDir: target,
           error: isCancelled ? undefined : errorMessage,
         });
         
@@ -92,10 +104,52 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
     }
     
     // Refresh after all uploads finish
-    if (files.length > 0) {
+    if (filesToUpload.length > 0) {
       void handleRefresh();
     }
-  }, [addOrUpdateOperation, handleRefresh, uploadChunkSize]);
+  }, [pendingUploads, addOrUpdateOperation, handleRefresh, uploadChunkSize]);
 
-  return { handleUploadFiles };
+  const handleUploadFiles = useCallback(async (files: File[], targetPath: string) => {
+    if (files.length === 0) return;
+
+    try {
+      setIsUploadDuplicateCheckDialogOpen(true);
+      setIsUploadDuplicateChecking(true);
+      setUploadDuplicateItems([]);
+      setPendingUploads({ files, targetPath });
+
+      const fileDetails = files.map(f => {
+        const customPath = ((f as unknown) as { customPath?: string }).customPath ?? f.webkitRelativePath;
+        return {
+          path: customPath || f.name,
+          size: f.size,
+          modifiedAt: new Date(f.lastModified).toISOString()
+        };
+      });
+
+      const startTime = Date.now();
+      const res = await checkUploadDuplicates(fileDetails, targetPath);
+      
+      const elapsedTime = Date.now() - startTime;
+      if (elapsedTime < 300) {
+        await new Promise(resolve => setTimeout(resolve, 300 - elapsedTime));
+      }
+
+      setIsUploadDuplicateChecking(false);
+
+      if (res.hasDuplicates) {
+        setUploadDuplicateItems(res.duplicates);
+      } else {
+        void executeUpload(files, targetPath);
+      }
+    } catch (error) {
+      console.error("Check upload duplicates failed:", error);
+      toast.error("Failed to check for duplicates before upload");
+      setIsUploadDuplicateChecking(false);
+      setIsUploadDuplicateCheckDialogOpen(false);
+      setPendingUploads(null);
+    }
+  }, [executeUpload]);
+
+  return { handleUploadFiles, executeUpload, isUploadDuplicateCheckDialogOpen, setIsUploadDuplicateCheckDialogOpen, isUploadDuplicateChecking, uploadDuplicateItems, setPendingUploads };
 }

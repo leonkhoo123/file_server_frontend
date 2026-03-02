@@ -72,6 +72,8 @@ export default function HomeFileList({
   const [transitioningFolder, setTransitioningFolder] = useState<string | null>(null);
   const [openDropdownName, setOpenDropdownName] = useState<string | null>(null);
 
+  const isRecycleBin = currentPath === '/.cloud_delete' || currentPath.startsWith('/.cloud_delete/');
+
   useEffect(() => {
     if (items) {
       setDisplayItems(items);
@@ -82,22 +84,22 @@ export default function HomeFileList({
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(true);
-  }, []);
+    if (!isRecycleBin) setIsDragging(true);
+  }, [isRecycleBin]);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setIsDragging(false);
-  }, []);
+    if (!isRecycleBin) setIsDragging(false);
+  }, [isRecycleBin]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!isDragging) {
+    if (!isDragging && !isRecycleBin) {
       setIsDragging(true);
     }
-  }, [isDragging]);
+  }, [isDragging, isRecycleBin]);
 
   const traverseFileTree = async (item: any, path: string, files: File[]): Promise<void> => {
     return new Promise((resolve) => {
@@ -156,10 +158,10 @@ export default function HomeFileList({
       }
     }
 
-    if (files.length > 0) {
+    if (files.length > 0 && !isRecycleBin) {
       onUploadDrop(files, currentPath);
     }
-  }, [currentPath, onUploadDrop]);
+  }, [currentPath, onUploadDrop, isRecycleBin]);
 
   const touchTimer = useRef<number | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -376,7 +378,7 @@ export default function HomeFileList({
                             <div className="absolute inset-0 pointer-events-none" />
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-48" onClick={(e) => { e.stopPropagation(); }}>
-                            <DropdownMenuItem onClick={(e) => { 
+                            <DropdownMenuItem disabled={isRecycleBin || file.name === '.cloud_delete'} onClick={(e) => { 
                               e.stopPropagation(); 
                               setOpenDropdownName(null);
                               onRename(file.name);
@@ -384,7 +386,7 @@ export default function HomeFileList({
                               <Pencil className="mr-2 h-4 w-4" />
                               Rename
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={(e) => { 
+                            <DropdownMenuItem disabled={file.name === '.cloud_delete'} onClick={(e) => { 
                               e.stopPropagation(); 
                               setOpenDropdownName(null);
                               onDelete(file.name);
@@ -446,32 +448,32 @@ export default function HomeFileList({
                     {fileContent}
                   </ContextMenuTrigger>
                   <ContextMenuContent className="w-64">
-                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCut(); }} disabled={selectedItems.size === 0}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCut(); }} disabled={selectedItems.size === 0 || selectedItems.has('.cloud_delete')}>
                       <Scissors className="mr-2 h-4 w-4" />
                       Cut
                     </ContextMenuItem>
-                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCopy(); }} disabled={selectedItems.size === 0}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCopy(); }} disabled={selectedItems.size === 0 || isRecycleBin || selectedItems.has('.cloud_delete')}>
                       <Copy className="mr-2 h-4 w-4" />
                       Copy
                     </ContextMenuItem>
                     <ContextMenuItem 
                       onClick={(e) => { e.stopPropagation(); onPaste(); }} 
-                      disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath)}
+                      disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath) || isRecycleBin}
                     >
                       <Clipboard className="mr-2 h-4 w-4" />
                       Paste
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onRename(); }} disabled={selectedItems.size !== 1}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onRename(); }} disabled={selectedItems.size !== 1 || isRecycleBin || selectedItems.has('.cloud_delete')}>
                       <Pencil className="mr-2 h-4 w-4" />
                       Rename
                     </ContextMenuItem>
-                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={selectedItems.size === 0} className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30">
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={selectedItems.size === 0 || selectedItems.has('.cloud_delete')} className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30">
                       <TrashIcon className="mr-2 h-4 w-4" />
                       Delete
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDownload(); }} disabled={selectedItems.size === 0}>
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDownload(); }} disabled={selectedItems.size === 0 || selectedItems.has('.cloud_delete')}>
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </ContextMenuItem>
@@ -530,13 +532,13 @@ export default function HomeFileList({
             {fileListContainer}
           </ContextMenuTrigger>
           <ContextMenuContent className="w-64">
-            <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCreateFolder(); }}>
+            <ContextMenuItem onClick={(e) => { e.stopPropagation(); onCreateFolder(); }} disabled={isRecycleBin}>
               <Folder className="mr-2 h-4 w-4" />
               New Folder
             </ContextMenuItem>
             <ContextMenuItem 
               onClick={(e) => { e.stopPropagation(); onPaste(); }} 
-              disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath)}
+              disabled={clipboardItemsCount === 0 || (clipboardOperation === 'cut' && clipboardSourceDir === currentPath) || isRecycleBin}
             >
               <Clipboard className="mr-2 h-4 w-4" />
               Paste

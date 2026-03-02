@@ -15,6 +15,7 @@ import HomeDownloadDirDialog from "@/components/home/HomeDownloadDirDialog";
 import HomeDeleteDialog from "@/components/home/HomeDeleteDialog";
 import HomeRenameDialog from "@/components/home/HomeRenameDialog";
 import HomeCreateFolderDialog from "@/components/home/HomeCreateFolderDialog";
+import HomeDuplicateCheckDialog from "@/components/home/HomeDuplicateCheckDialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -69,10 +70,21 @@ export default function HomePage() {
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
     handleUploadFiles,
+    executeUpload,
+    isUploadDuplicateCheckDialogOpen,
+    setIsUploadDuplicateCheckDialogOpen,
+    isUploadDuplicateChecking,
+    uploadDuplicateItems,
+    setPendingUploads,
     handleDownload,
     isDownloadDirDialogOpen,
     setIsDownloadDirDialogOpen,
     confirmDownloadDir,
+    isDuplicateCheckDialogOpen,
+    setIsDuplicateCheckDialogOpen,
+    isDuplicateChecking,
+    duplicateItems,
+    executePaste,
   } = useFileManager({ uploadChunkSize: healthData?.upload_chunk_size });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
@@ -243,6 +255,8 @@ export default function HomePage() {
                 onDelete={handleDelete}
                 onProperties={() => { void handleProperties(); }}
                 onDownload={handleDownload}
+                isRecycleBin={currentPath === '/.cloud_delete' || currentPath.startsWith('/.cloud_delete/')}
+                isRecycleBinSelected={selectedItems.has('.cloud_delete')}
               />
             ) : (
               <HomeBreadcrumb 
@@ -283,6 +297,7 @@ export default function HomePage() {
               onRefresh={() => { void handleRefresh(); }}
               onCreateFolder={handleCreateFolder}
               onUploadFiles={(files) => { void handleUploadFiles(files, currentPath); }}
+              isRecycleBinSelected={selectedItems.has('.cloud_delete')}
             />
           </div>
 
@@ -444,6 +459,26 @@ export default function HomePage() {
         onOpenChange={setIsDownloadDirDialogOpen}
         onConfirm={confirmDownloadDir}
         currentPath={currentPath}
+      />
+
+      <HomeDuplicateCheckDialog
+        isOpen={isDuplicateCheckDialogOpen}
+        onOpenChange={setIsDuplicateCheckDialogOpen}
+        onConfirm={executePaste}
+        onCancel={() => { setIsDuplicateCheckDialogOpen(false); }}
+        duplicates={duplicateItems}
+        isLoading={isLoading}
+        isChecking={isDuplicateChecking}
+      />
+
+      <HomeDuplicateCheckDialog
+        isOpen={isUploadDuplicateCheckDialogOpen}
+        onOpenChange={setIsUploadDuplicateCheckDialogOpen}
+        onConfirm={executeUpload}
+        onCancel={() => { setIsUploadDuplicateCheckDialogOpen(false); setPendingUploads(null); }}
+        duplicates={uploadDuplicateItems}
+        isLoading={false}
+        isChecking={isUploadDuplicateChecking}
       />
 
     </DefaultLayout>

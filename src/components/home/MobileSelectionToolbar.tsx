@@ -10,6 +10,8 @@ interface MobileSelectionToolbarProps {
   onDelete: () => void;
   onProperties: () => void;
   onDownload: () => void;
+  isRecycleBin?: boolean;
+  isRecycleBinSelected?: boolean;
 }
 
 export default function MobileSelectionToolbar({
@@ -21,6 +23,8 @@ export default function MobileSelectionToolbar({
   onDelete,
   onProperties,
   onDownload,
+  isRecycleBin = false,
+  isRecycleBinSelected = false,
 }: MobileSelectionToolbarProps) {
   if (selectedItemsSize === 0) return null;
 
@@ -37,19 +41,19 @@ export default function MobileSelectionToolbar({
         <Button variant="ghost" size="sm" onClick={onSelectAll} className="h-12 w-10 p-0" title="Select All">
           <CheckSquare className="h-8 w-8" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={onCut} className="h-12 w-10 p-0" title="Cut">
+        <Button variant="ghost" size="sm" onClick={onCut} disabled={isRecycleBinSelected} className="h-12 w-10 p-0" title="Cut">
           <Scissors className="h-8 w-8" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={onCopy} className="h-12 w-10 p-0" title="Copy">
+        <Button variant="ghost" size="sm" onClick={onCopy} disabled={isRecycleBin || isRecycleBinSelected} className="h-12 w-10 p-0" title="Copy">
           <Copy className="h-8 w-8" />
         </Button>
         <Button variant="ghost" size="sm" onClick={onProperties} className="h-12 w-10 p-0" title="Info">
           <Info className="h-8 w-8" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={onDownload} className="h-12 w-10 p-0" title="Download">
+        <Button variant="ghost" size="sm" onClick={onDownload} disabled={isRecycleBinSelected} className="h-12 w-10 p-0" title="Download">
           <Download className="h-8 w-8" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={onDelete} className="h-12 w-10 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete">
+        <Button variant="ghost" size="sm" onClick={onDelete} disabled={isRecycleBinSelected} className="h-12 w-10 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete">
           <Trash2 className="h-8 w-8" />
         </Button>
       </div>

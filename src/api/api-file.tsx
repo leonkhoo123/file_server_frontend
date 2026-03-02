@@ -128,6 +128,49 @@ export const createFolder = async (path: string, folderName: string, opId: strin
   return rs.data;
 };
 
+export interface FileDetail {
+  name: string;
+  isDir: boolean;
+  size: number;
+  modifiedAt: string;
+}
+
+export interface DuplicateItem {
+  source: FileDetail;
+  target: FileDetail;
+}
+
+export interface CheckDuplicatesResponse {
+  hasDuplicates: boolean;
+  duplicates: DuplicateItem[];
+}
+
+export const checkDuplicates = async (sources: string[], destDir: string): Promise<CheckDuplicatesResponse> => {
+  const rs = await axiosLayer.post("/files/check-duplicates", {
+    sources,
+    destDir
+  }, {
+    headers: { "Accept": "application/json" },
+  });
+  return rs.data as CheckDuplicatesResponse;
+};
+
+export interface UploadFileDetailReq {
+  path: string;
+  size: number;
+  modifiedAt: string;
+}
+
+export const checkUploadDuplicates = async (files: UploadFileDetailReq[], destDir: string): Promise<CheckDuplicatesResponse> => {
+  const rs = await axiosLayer.post("/files/check-upload-duplicates", {
+    files,
+    destDir
+  }, {
+    headers: { "Accept": "application/json" },
+  });
+  return rs.data as CheckDuplicatesResponse;
+};
+
 export interface PropertiesContains {
   files: number;
   folders: number;
@@ -184,7 +227,7 @@ export const downloadFiles = (sources: string[]) => {
     // The industry practice here is to inform the user of this OS limitation so they know it's working.
     toast.info("Download started in background", {
       description: "Please wait. iOS will pop up a save menu when the file is fully ready.",
-      duration: 6000,
+      duration: 8000,
     });
   }
   

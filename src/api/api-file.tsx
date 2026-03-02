@@ -171,12 +171,26 @@ export const downloadFiles = (sources: string[]) => {
   const params = new URLSearchParams();
   sources.forEach(src => { params.append('source', src); });
   
-  // Create an invisible anchor tag to trigger download
   const url = `${baseUrl}/files/download?${params.toString()}`;
+
+  // Check if device is iOS (including iPadOS)
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+
+  if (isIOS) {
+    // In iOS PWAs, a direct window.open triggers the Safari View Controller,
+    // which correctly displays the native download prompt and progress manager
+    // rather than silently downloading and forcing a Quick Look preview.
+    window.open(url, '_blank');
+    return;
+  }
+  
+  // Create an invisible anchor tag to trigger download for other platforms
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = url;
   a.setAttribute('download', '');
+  a.target = '_blank';
   document.body.appendChild(a);
   a.click();
   

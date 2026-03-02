@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { toast } from "sonner";
 import { 
   copyFiles, moveFiles, deleteFiles, deletePermanentFiles, 
-  renameFile, createFolder, getFileProperties, 
+  renameFile, createFolder, getFileProperties, downloadFiles,
   type PropertiesResponse 
 } from "@/api/api-file";
 
@@ -26,6 +26,7 @@ export function useFileOperations({
   const [propertiesData, setPropertiesData] = useState<PropertiesResponse | null>(null);
   const [isPropertiesDialogOpen, setIsPropertiesDialogOpen] = useState(false);
   const [isPropertiesLoading, setIsPropertiesLoading] = useState(false);
+  const [isDownloadDirDialogOpen, setIsDownloadDirDialogOpen] = useState(false);
 
   const isDeleteDialogOpen = itemsToDelete !== null;
   const setIsDeleteDialogOpen = (open: boolean) => {
@@ -186,6 +187,30 @@ export function useFileOperations({
     }
   };
 
+  const handleDownload = (fileName?: string | React.MouseEvent | Event) => {
+    const targetFileName = typeof fileName === 'string' ? fileName : undefined;
+    if (!targetFileName && selectedItems.size === 0) {
+      setIsDownloadDirDialogOpen(true);
+      return;
+    }
+
+    let sources: string[];
+    if (targetFileName) {
+      sources = [currentPath === "/" ? `/${targetFileName}` : `${currentPath}/${targetFileName}`];
+    } else {
+      sources = Array.from(selectedItems).map(name =>
+        currentPath === "/" ? `/${name}` : `${currentPath}/${name}`
+      );
+    }
+    
+    downloadFiles(sources);
+  };
+
+  const confirmDownloadDir = () => {
+    downloadFiles([currentPath]);
+    setIsDownloadDirDialogOpen(false);
+  };
+
   const handleProperties = async (fileName?: string | React.MouseEvent | Event, isCurrentDir = false) => {
     const targetFileName = typeof fileName === 'string' ? fileName : undefined;
     if (!isCurrentDir && !targetFileName && selectedItems.size === 0) return;
@@ -239,6 +264,10 @@ export function useFileOperations({
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
     isPropertiesLoading,
-    handleProperties
+    handleProperties,
+    handleDownload,
+    isDownloadDirDialogOpen,
+    setIsDownloadDirDialogOpen,
+    confirmDownloadDir
   };
 }

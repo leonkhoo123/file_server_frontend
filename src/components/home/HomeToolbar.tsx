@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckSquare, Scissors, Copy, Clipboard, Pencil, Trash2, Plus, BrushCleaning, RefreshCcw, FolderPlus, Upload, FolderUp } from "lucide-react";
+import { ArrowLeft, CheckSquare, Scissors, Copy, Clipboard, Pencil, Trash2, Plus, BrushCleaning, RefreshCcw, FolderPlus, Upload, FolderUp, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRef } from "react";
 import {
@@ -14,6 +14,7 @@ interface HomeToolbarProps {
   clipboardItemsCount: number;
   clipboardOperation: 'cut' | 'copy' | null;
   clipboardSourceDir?: string;
+  isFolderEmpty?: boolean;
   onBack: () => void;
   onSelectAll: () => void;
   onCut: () => void;
@@ -21,6 +22,7 @@ interface HomeToolbarProps {
   onPaste: () => void;
   onRename: () => void;
   onDelete: () => void;
+  onDownload: () => void;
   onCleanUp: () => void;
   onRefresh: () => void;
   onCreateFolder: () => void;
@@ -33,6 +35,7 @@ export default function HomeToolbar({
   clipboardItemsCount,
   clipboardOperation,
   clipboardSourceDir,
+  isFolderEmpty = false,
   onBack,
   onSelectAll,
   onCut,
@@ -40,6 +43,7 @@ export default function HomeToolbar({
   onPaste,
   onRename,
   onDelete,
+  onDownload,
   onCleanUp,
   onRefresh,
   onCreateFolder,
@@ -98,6 +102,9 @@ export default function HomeToolbar({
       </Button>
       <Button variant="ghost" size="sm" onClick={onDelete} disabled={selectedItemsSize === 0} className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete">
         <Trash2 className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onDownload} disabled={selectedItemsSize === 0 && isFolderEmpty} className="h-8 w-8 p-0" title="Download">
+        <Download className="h-4 w-4" />
       </Button>
 
       <div className="h-4 w-[1px] bg-border mx-1" />

@@ -1,4 +1,4 @@
-import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2 } from "lucide-react";
+import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBytes, formatLastModified } from "@/utils/utils";
 import type { ItemsResponse, FileInterface } from "@/api/api-file";
@@ -33,6 +33,7 @@ interface HomeFileListProps {
   onDelete: (fileName?: string) => void;
   onPaste: () => void;
   onProperties: (fileName?: string, isCurrentDir?: boolean) => void;
+  onDownload: (fileName?: string) => void;
   onCreateFolder: () => void;
   clipboardItems: string[];
   clipboardItemsCount: number;
@@ -57,6 +58,7 @@ export default function HomeFileList({
   onDelete,
   onPaste,
   onProperties,
+  onDownload,
   onCreateFolder,
   clipboardItems,
   clipboardItemsCount,
@@ -393,6 +395,14 @@ export default function HomeFileList({
                             <DropdownMenuItem onClick={(e) => { 
                               e.stopPropagation(); 
                               setOpenDropdownName(null);
+                              onDownload(file.name);
+                            }}>
+                              <Download className="mr-2 h-4 w-4" />
+                              Download
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={(e) => { 
+                              e.stopPropagation(); 
+                              setOpenDropdownName(null);
                               onProperties(file.name);
                             }}>
                               <Info className="mr-2 h-4 w-4" />
@@ -461,6 +471,10 @@ export default function HomeFileList({
                       Delete
                     </ContextMenuItem>
                     <ContextMenuSeparator />
+                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDownload(); }} disabled={selectedItems.size === 0}>
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </ContextMenuItem>
                     <ContextMenuItem onClick={(e) => { e.stopPropagation(); onProperties(); }} disabled={selectedItems.size === 0}>
                       <Info className="mr-2 h-4 w-4" />
                       Info

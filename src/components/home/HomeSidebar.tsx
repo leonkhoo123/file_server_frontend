@@ -17,7 +17,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
 
   const handleNavigate = (path: string) => {
     void navigate(path);
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 1024) {
       onClose();
     }
   };
@@ -33,7 +33,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
       {/* Mobile Backdrop */}
       {isOpen && (
         <div 
-          className="fixed inset-0 z-20 bg-background/80 backdrop-blur-sm md:hidden"
+          className="fixed inset-0 z-20 bg-background/80 backdrop-blur-sm lg:hidden"
           onClick={onClose}
         />
       )}
@@ -41,12 +41,12 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
       {/* Sidebar/Drawer */}
       <aside 
         className={`
-          fixed md:relative z-30 h-full
+          fixed lg:relative z-30 h-full
           bg-muted/10 flex flex-col flex-shrink-0
           transition-all duration-300 ease-in-out overflow-hidden
           ${isOpen 
             ? "translate-x-0 w-72 border-r" 
-            : "-translate-x-full w-72 md:w-0 md:translate-x-0 border-transparent md:border-r-0"}
+            : "-translate-x-full w-72 lg:w-0 lg:translate-x-0 border-transparent lg:border-r-0"}
         `}
       >
         <div className="w-72 flex flex-col h-full overflow-hidden">
@@ -63,7 +63,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
                   <div className={`w-1.5 h-1.5 rounded-full ${isWsConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
                 </div>
               </div>
-              <Button variant="ghost" size="icon" className="md:hidden h-12 w-12 text-muted-foreground hover:text-foreground shrink-0" onClick={onClose}>
+              <Button variant="ghost" size="icon" className="lg:hidden h-12 w-12 text-muted-foreground hover:text-foreground shrink-0" onClick={onClose}>
                 <X className="h-6 w-6" />
               </Button>
             </div>

@@ -71,7 +71,11 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
     isPropertiesLoading,
-    handleProperties
+    handleProperties,
+    handleDownload,
+    isDownloadDirDialogOpen,
+    setIsDownloadDirDialogOpen,
+    confirmDownloadDir
   } = useFileOperations({ currentPath, selectedItems, setSelectedItems, handleRefresh, setIsLoading });
 
   // 5. Uploading files
@@ -143,5 +147,9 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     setIsPropertiesDialogOpen,
     isPropertiesLoading,
     handleUploadFiles,
+    handleDownload,
+    isDownloadDirDialogOpen,
+    setIsDownloadDirDialogOpen,
+    confirmDownloadDir,
   };
 }

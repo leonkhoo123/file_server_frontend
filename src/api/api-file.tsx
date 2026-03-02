@@ -165,6 +165,27 @@ export const cancelOperation = async (opId: string, cancel = true) => {
 
 import * as CRC32 from 'crc-32';
 
+export const downloadFiles = (sources: string[]) => {
+  if (sources.length === 0) return;
+  const baseUrl = axiosLayer.defaults.baseURL;
+  const params = new URLSearchParams();
+  sources.forEach(src => { params.append('source', src); });
+  
+  // Create an invisible anchor tag to trigger download
+  const url = `${baseUrl}/files/download?${params.toString()}`;
+  const a = document.createElement('a');
+  a.style.display = 'none';
+  a.href = url;
+  a.setAttribute('download', '');
+  document.body.appendChild(a);
+  a.click();
+  
+  // Clean up
+  setTimeout(() => {
+    document.body.removeChild(a);
+  }, 100);
+};
+
 export interface UploadProgressEvent {
   loaded: number;
   total: number;

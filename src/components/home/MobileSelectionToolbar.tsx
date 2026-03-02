@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckSquare, Scissors, Copy, Trash2, Info } from "lucide-react";
+import { ArrowLeft, CheckSquare, Scissors, Copy, Trash2, Info, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface MobileSelectionToolbarProps {
@@ -9,6 +9,7 @@ interface MobileSelectionToolbarProps {
   onCopy: () => void;
   onDelete: () => void;
   onProperties: () => void;
+  onDownload: () => void;
 }
 
 export default function MobileSelectionToolbar({
@@ -19,6 +20,7 @@ export default function MobileSelectionToolbar({
   onCopy,
   onDelete,
   onProperties,
+  onDownload,
 }: MobileSelectionToolbarProps) {
   if (selectedItemsSize === 0) return null;
 
@@ -43,6 +45,9 @@ export default function MobileSelectionToolbar({
         </Button>
         <Button variant="ghost" size="sm" onClick={onProperties} className="h-12 w-10 p-0" title="Info">
           <Info className="h-8 w-8" />
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDownload} className="h-12 w-10 p-0" title="Download">
+          <Download className="h-8 w-8" />
         </Button>
         <Button variant="ghost" size="sm" onClick={onDelete} className="h-12 w-10 p-0 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" title="Delete">
           <Trash2 className="h-8 w-8" />

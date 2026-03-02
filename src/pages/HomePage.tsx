@@ -11,6 +11,7 @@ import MobileSelectionToolbar from "@/components/home/MobileSelectionToolbar";
 import HomeFileList from "@/components/home/HomeFileList";
 import { OperationQueueProgress } from "@/components/custom/operationQueueProgress";
 import HomePropertiesModal from "@/components/home/HomePropertiesModal";
+import HomeDownloadDirDialog from "@/components/home/HomeDownloadDirDialog";
 import HomeDeleteDialog from "@/components/home/HomeDeleteDialog";
 import HomeRenameDialog from "@/components/home/HomeRenameDialog";
 import HomeCreateFolderDialog from "@/components/home/HomeCreateFolderDialog";
@@ -68,9 +69,13 @@ export default function HomePage() {
     isPropertiesDialogOpen,
     setIsPropertiesDialogOpen,
     handleUploadFiles,
+    handleDownload,
+    isDownloadDirDialogOpen,
+    setIsDownloadDirDialogOpen,
+    confirmDownloadDir,
   } = useFileManager({ uploadChunkSize: healthData?.upload_chunk_size });
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
   const [isWsConnected, setIsWsConnected] = useState(false);
   const [isHealthConnected, setIsHealthConnected] = useState(false);
 
@@ -116,7 +121,7 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
+      if (window.innerWidth < 1024) {
         setIsSidebarOpen(false);
       } else {
         setIsSidebarOpen(true);
@@ -156,6 +161,7 @@ export default function HomePage() {
         isCreateFolderDialogOpen ||
         isDeleteDialogOpen ||
         isPropertiesDialogOpen ||
+        isDownloadDirDialogOpen ||
         !!selectedVideo
       ) {
         return;
@@ -194,6 +200,7 @@ export default function HomePage() {
     isCreateFolderDialogOpen,
     isDeleteDialogOpen,
     isPropertiesDialogOpen,
+    isDownloadDirDialogOpen,
     selectedVideo,
   ]);
 
@@ -235,6 +242,7 @@ export default function HomePage() {
                 onCopy={handleCopy}
                 onDelete={handleDelete}
                 onProperties={() => { void handleProperties(); }}
+                onDownload={handleDownload}
               />
             ) : (
               <HomeBreadcrumb 
@@ -262,6 +270,7 @@ export default function HomePage() {
               clipboardItemsCount={clipboardItems.items.length}
               clipboardOperation={clipboardItems.operation}
               clipboardSourceDir={clipboardItems.sourceDir}
+              isFolderEmpty={!items?.items || items.items.length === 0}
               onBack={handleBack}
               onSelectAll={handleSelectAll}
               onCut={handleCut}
@@ -269,6 +278,7 @@ export default function HomePage() {
               onPaste={() => { void handlePaste(); }}
               onRename={handleRename}
               onDelete={handleDelete}
+              onDownload={handleDownload}
               onCleanUp={removeRotateTemp}
               onRefresh={() => { void handleRefresh(); }}
               onCreateFolder={handleCreateFolder}
@@ -291,6 +301,7 @@ export default function HomePage() {
             onDelete={handleDelete}
             onPaste={() => { void handlePaste(); }}
             onProperties={(name, isCurrentDir) => { void handleProperties(name, isCurrentDir); }}
+            onDownload={(name) => { handleDownload(name); }}
             onCreateFolder={handleCreateFolder}
             clipboardItems={clipboardItems.items}
             clipboardItemsCount={clipboardItems.items.length}
@@ -426,6 +437,13 @@ export default function HomePage() {
         isOpen={isPropertiesDialogOpen}
         onOpenChange={setIsPropertiesDialogOpen}
         data={propertiesData}
+      />
+
+      <HomeDownloadDirDialog
+        isOpen={isDownloadDirDialogOpen}
+        onOpenChange={setIsDownloadDirDialogOpen}
+        onConfirm={confirmDownloadDir}
+        currentPath={currentPath}
       />
 
     </DefaultLayout>

@@ -1,6 +1,7 @@
 import axiosLayer from './axiosLayer';   // axios instance WITHOUT token
 import axios from 'axios';
 import { generateOpId } from "../utils/id";
+import { getConfig } from '../config';
 
 export interface ItemsResponse {
   items: FileInterface[];
@@ -212,7 +213,7 @@ import { toast } from 'sonner';
 
 export const downloadFiles = (sources: string[]) => {
   if (sources.length === 0) return;
-  const baseUrl = axiosLayer.defaults.baseURL;
+  const baseUrl = getConfig().apiBaseUrl;
   const params = new URLSearchParams();
   sources.forEach(src => { params.append('source', src); });
   

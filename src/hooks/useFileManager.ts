@@ -1,5 +1,7 @@
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { encodePathToUrl } from "@/utils/utils";
+import { type FileInterface } from "@/api/api-file";
 
 import { useFileSystem } from "./useFileManager/useFileSystem";
 import { useFileSelection } from "./useFileManager/useFileSelection";
@@ -31,6 +33,8 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     removeRotateTemp
   } = useVideoOperations({ currentPath, setItems, setIsLoading, setError });
 
+  const [selectedPhoto, setSelectedPhoto] = useState<FileInterface | null>(null);
+
   // 3. Selection state and click handlers
   const {
     selectedItems,
@@ -44,7 +48,7 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     handleFileClick,
     handleFileContextMenu,
     handleFileDoubleClick
-  } = useFileSelection(items, currentPath, setSelectedVideo);
+  } = useFileSelection(items, currentPath, setSelectedVideo, setSelectedPhoto);
 
   // 4. File Actions (copy, cut, paste, delete, rename, properties, folder)
   const {
@@ -125,6 +129,8 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     error,
     selectedVideo,
     setSelectedVideo,
+    selectedPhoto,
+    setSelectedPhoto,
     currentPath,
     selectedItems,
     clipboardItems,

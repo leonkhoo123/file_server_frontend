@@ -3,6 +3,7 @@ import { X, Clipboard, Plus, FolderPlus, Upload, FolderUp } from "lucide-react";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import VersionTag from "@/components/custom/versionTag";
 import VideoPlayerModalV2 from "@/components/custom/videoPlayerModalV2";
+import PhotoViewerModal from "@/components/custom/photoViewerModal";
 import { useFileManager } from "@/hooks/useFileManager";
 import HomeSidebar from "@/components/home/HomeSidebar";
 import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
@@ -35,6 +36,8 @@ export default function HomePage() {
     isLoading,
     error,
     selectedVideo,
+    selectedPhoto,
+    setSelectedPhoto,
     currentPath,
     selectedItems,
     clipboardItems,
@@ -175,7 +178,8 @@ export default function HomePage() {
         isDeleteDialogOpen ||
         isPropertiesDialogOpen ||
         isDownloadDirDialogOpen ||
-        !!selectedVideo
+        !!selectedVideo ||
+        !!selectedPhoto
       ) {
         return;
       }
@@ -215,6 +219,7 @@ export default function HomePage() {
     isPropertiesDialogOpen,
     isDownloadDirDialogOpen,
     selectedVideo,
+    selectedPhoto,
   ]);
 
   const toggleSidebar = () => { setIsSidebarOpen(!isSidebarOpen); };
@@ -222,7 +227,7 @@ export default function HomePage() {
   return (
     <DefaultLayout>
       <div className="flex flex-1 w-full overflow-hidden relative">
-        {!selectedVideo && (
+        {!selectedVideo && !selectedPhoto && (
           <HomeSidebar 
             isOpen={isSidebarOpen} 
             onClose={() => { setIsSidebarOpen(false); }} 
@@ -333,14 +338,14 @@ export default function HomePage() {
           />
         </div>
 
-        {!selectedVideo && (
+        {!selectedVideo && !selectedPhoto && (
           <div className={clipboardItems.items.length > 0 ? "hidden md:block" : ""}>
             <OperationQueueProgress />
           </div>
         )}
 
         {/* Mobile Clipboard Toast */}
-        {!selectedVideo && clipboardItems.items.length > 0 && (
+        {!selectedVideo && !selectedPhoto && clipboardItems.items.length > 0 && (
           <div className="md:hidden absolute bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 bg-popover text-popover-foreground border border-border/50 p-2 pl-4 rounded-full shadow-lg whitespace-nowrap">
             <div className="flex items-center gap-2">
               <Clipboard className="w-5 h-5 text-muted-foreground" />
@@ -374,7 +379,7 @@ export default function HomePage() {
         )}
 
         {/* Mobile Floating Action Button */}
-        {!selectedVideo && (
+        {!selectedVideo && !selectedPhoto && (
           <div className={`md:hidden absolute bottom-4 right-4 z-50 ${clipboardItems.items.length > 0 ? 'hidden' : ''}`}>
             <input 
               type="file" 
@@ -424,6 +429,15 @@ export default function HomePage() {
           isOpen={!!selectedVideo}
           // eslint-disable-next-line @typescript-eslint/no-misused-promises
           onClose={handlePlayerClose}
+        />
+      )}
+      
+      {selectedPhoto && (
+        <PhotoViewerModal
+          initialFile={selectedPhoto}
+          allItems={items?.items ?? []}
+          isOpen={!!selectedPhoto}
+          onClose={() => { setSelectedPhoto(null); }}
         />
       )}
       <VersionTag />

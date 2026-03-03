@@ -74,3 +74,8 @@ export const decodeUrlToPath = (urlPath: string) => {
     if (urlPath.startsWith('/recycle_bin/')) return urlPath.replace('/recycle_bin/', '/.cloud_delete/');
     return urlPath;
 };
+
+export const isImageFile = (filename: string): boolean => {
+    const ext = filename.split('.').pop()?.toLowerCase();
+    return ext ? ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'bmp', 'ico', 'svg'].includes(ext) : false;
+};

@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { toast } from "sonner";
+import axios from 'axios';
 import { uploadFile, checkUploadDuplicates, type UploadProgressEvent, type DuplicateItem } from "@/api/api-file";
 import { useOperationProgress } from "@/context/OperationProgressContext";
 import { formatBytes } from "@/utils/utils";
@@ -85,7 +86,15 @@ export function useFileUpload(handleRefresh: () => Promise<void>, uploadChunkSiz
         });
       } catch (error: unknown) {
         console.error("Upload error:", error);
-        const errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        let errorMessage = error instanceof Error ? error.message : 'Upload failed';
+        
+        if (axios.isAxiosError(error) && error.response?.data) {
+          const errData = error.response.data as { error?: string };
+          if (errData.error) {
+            errorMessage = errData.error;
+          }
+        }
+        
         const isCancelled = errorMessage === "Upload cancelled";
         
         addOrUpdateOperation({

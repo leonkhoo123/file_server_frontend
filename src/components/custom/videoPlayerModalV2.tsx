@@ -140,10 +140,7 @@ const VideoPlayerModalV2: React.FC<VideoPlayerModalProps> = ({
       const video = videoRef.current;
       if (!video) return;
 
-      const vidUrl =
-        import.meta.env.VITE_BUILD_PROFILE === "local"
-          ? `http://${window.location.hostname}:3333/${file.url}`
-          : `http://${window.location.hostname}:30333/${file.url}`;
+      const vidUrl = file.url;
 
       video.src = vidUrl;
       video.play().catch(() => { setIsPlaying(false); });

@@ -8,84 +8,171 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'; // shadcn/ui Card components
-import { login } from '@/api/api-auth';
+import { login, verifyMfa, setupMfa, enableMfa } from '@/api/api-auth';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import VersionTag from '@/components/custom/versionTag';
+import OtpInput from 'react-otp-input';
+import { QRCodeSVG } from 'qrcode.react';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaSetupRequired, setMfaSetupRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [qrUrl, setQrUrl] = useState('');
+  const [setupSecret, setSetupSecret] = useState('');
+  
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault(); // ✅ Don't forget this important step!
+  const handleLoginSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await login(username, password);
-      toast.success("Welcome");
-      void navigate("/home")
-    } catch (err) {
-      // 💡 Add your actual login logic here
-      toast.error("Something Went Wrong");
-      console.log(err)
+      const res = await login(username, password);
+      if (res?.mfa_required) {
+        setMfaRequired(true);
+        toast.info("MFA required. Please enter your code.");
+      } else if (res?.mfa_setup_required) {
+        setMfaSetupRequired(true);
+        const setupRes = await setupMfa();
+        setQrUrl(setupRes.url);
+        setSetupSecret(setupRes.secret);
+        toast.info("Please set up Two-Factor Authentication.");
+      } else {
+        toast.success("Welcome");
+        void navigate("/home");
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error ?? "Login Failed");
     }
+  };
 
+  const handleMfaSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await verifyMfa(mfaCode);
+      toast.success("Welcome");
+      void navigate("/home");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error ?? "Invalid MFA Code");
+    }
+  };
+
+  const handleMfaSetupSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      await enableMfa(mfaCode);
+      toast.success("MFA Setup Successful! Welcome");
+      void navigate("/home");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error ?? "Invalid MFA Code for setup");
+    }
   };
 
   return (
       <div className="flex justify-center items-center p-4 min-h-[calc(100dvh-4rem)]">
-
-        {/* The max-w-md and w-full make the card responsive:
-        - On mobile/small screens, it takes the full width (w-full).
-        - On larger screens (iPad/PC), it caps its width at 'md' (28rem) for better readability.
-      */}
         <Card className="w-full max-w-md shadow-xl transition-all duration-300">
-
           <CardHeader className="text-center">
             <CardTitle className="text-3xl font-bold tracking-tight">
-              Login
+              {mfaRequired ? 'Two-Factor Authentication' : mfaSetupRequired ? 'Set Up 2FA' : 'Login'}
             </CardTitle>
           </CardHeader>
-
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-
-              {/* --- Username Input --- */}
-              <div className="space-y-2">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  type="text"
-                  placeholder="Username"
-                  required
-                  value={username}
-                  onChange={(e) => { setUsername(e.target.value); }}
-                />
-              </div>
-
-              {/* --- Password Input --- */}
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Password"
-                  required
-                  value={password}
-                  onChange={(e) => { setPassword(e.target.value); }}
-                />
-              </div>
-
-              {/* --- Submit Button --- */}
-              <Button type="submit" className="w-full">
-                Sign In
-              </Button>
-
-            </form>
+            {!mfaRequired && !mfaSetupRequired ? (
+              <form onSubmit={handleLoginSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="username">Username</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="Username"
+                    required
+                    value={username}
+                    onChange={(e) => { setUsername(e.target.value); }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="Password"
+                    required
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); }}
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  Sign In
+                </Button>
+              </form>
+            ) : mfaSetupRequired ? (
+              <form onSubmit={handleMfaSetupSubmit} className="space-y-6 flex flex-col items-center">
+                <div className="text-center text-sm text-muted-foreground mb-4">
+                  Scan this QR code with your authenticator app (like Google Authenticator or Authy).
+                </div>
+                {qrUrl && (
+                  <div className="bg-white p-4 rounded-md mb-4 flex justify-center">
+                    <QRCodeSVG value={qrUrl} size={200} />
+                  </div>
+                )}
+                <div className="text-center text-xs font-mono bg-zinc-100 dark:bg-zinc-900 p-2 rounded w-full break-all mb-4">
+                  {setupSecret}
+                </div>
+                <div className="flex justify-center w-full">
+                  <OtpInput
+                    value={mfaCode}
+                    onChange={setMfaCode}
+                    numInputs={6}
+                    renderSeparator={<span className="mx-1">-</span>}
+                    renderInput={(props) => (
+                      <input
+                        {...props}
+                        className="w-12 h-12 text-center text-lg border rounded-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-zinc-950 dark:border-zinc-800"
+                        style={{ width: "3rem" }}
+                      />
+                    )}
+                  />
+                </div>
+                <Button type="submit" className="w-full mt-6" disabled={mfaCode.length !== 6}>
+                  Verify & Enable
+                </Button>
+                <Button type="button" variant="ghost" className="w-full mt-2" onClick={() => { setMfaSetupRequired(false); setMfaCode(''); }}>
+                  Cancel
+                </Button>
+              </form>
+            ) : (
+              <form onSubmit={handleMfaSubmit} className="space-y-6 flex flex-col items-center">
+                <div className="text-center text-sm text-muted-foreground mb-4">
+                  Enter the 6-digit code from your authenticator app.
+                </div>
+                <div className="flex justify-center w-full">
+                  <OtpInput
+                    value={mfaCode}
+                    onChange={setMfaCode}
+                    numInputs={6}
+                    renderSeparator={<span className="mx-1">-</span>}
+                    renderInput={(props) => (
+                      <input
+                        {...props}
+                        className="w-12 h-12 text-center text-lg border rounded-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-zinc-950 dark:border-zinc-800"
+                        style={{ width: "3rem" }}
+                      />
+                    )}
+                  />
+                </div>
+                <Button type="submit" className="w-full mt-6" disabled={mfaCode.length !== 6}>
+                  Verify
+                </Button>
+                <Button type="button" variant="ghost" className="w-full mt-2" onClick={() => { setMfaRequired(false); setMfaCode(''); }}>
+                  Back to Login
+                </Button>
+              </form>
+            )}
           </CardContent>
           <VersionTag />
         </Card>
-
       </div>
   );
 };

@@ -58,8 +58,8 @@ const VideoPlayerCompressModal: React.FC<VideoPlayerCompressModalProps> = ({
 
     const timer = setTimeout(() => {
       try {
-        // Construct compress endpoint
-        const compressedUrl = `http://localhost:3333/api/video/play/compress/file${file.path}`;
+        // Construct compress endpoint by replacing /play/file with /play/compress/file in the file.url
+        const compressedUrl = file.url.replace('/api/video/play/file', '/api/video/play/compress/file');
         console.log("compressurl",compressedUrl);
         video.src = compressedUrl;
         // eslint-disable-next-line @typescript-eslint/use-unknown-in-catch-callback-variable

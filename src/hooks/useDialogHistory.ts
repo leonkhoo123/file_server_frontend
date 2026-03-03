@@ -20,24 +20,40 @@ export function useDialogHistory(isOpen: boolean, onClose: () => void) {
       return;
     }
 
+    const uniqueInstanceId = Math.random().toString(36).substring(2, 9);
+    const dialogStateKey = `dialog_${dialogId}`;
+
     // Push a new state when the dialog opens
     // We preserve the existing history state to avoid breaking routers
     const currentState = (window.history.state as Record<string, unknown> | null) ?? {};
-    window.history.pushState({ ...currentState, dialogId }, '');
+    const stateToPush = { ...currentState, [dialogStateKey]: uniqueInstanceId };
+    window.history.pushState(stateToPush, '');
+
+    let isMounted = true;
 
     const handlePopState = (e: PopStateEvent) => {
       // When the user presses the back button, the browser pops our pushed state.
-      // The new current state (e.state) will no longer have our dialogId.
+      // React Router might wrap state in e.state.usr
       const state = e.state as Record<string, unknown> | null;
-      if (state?.dialogId !== dialogId) {
+      const actualState = (state?.usr !== undefined ? state.usr : state) as Record<string, unknown> | null;
+
+      if (actualState?.[dialogStateKey] !== uniqueInstanceId) {
         isBackButtonClicked.current = true;
         onCloseRef.current();
       }
     };
 
-    window.addEventListener('popstate', handlePopState);
+    // Delay adding the listener to avoid catching immediate popstate events
+    // triggered by React 18 Strict Mode's unmount `history.back()`
+    const timerId = setTimeout(() => {
+      if (isMounted) {
+        window.addEventListener('popstate', handlePopState);
+      }
+    }, 100);
 
     return () => {
+      isMounted = false;
+      clearTimeout(timerId);
       window.removeEventListener('popstate', handlePopState);
 
       // If the dialog was closed by a UI action (e.g. clicking a "Close" button),
@@ -45,7 +61,9 @@ export function useDialogHistory(isOpen: boolean, onClose: () => void) {
       // We need to pop it programmatically.
       if (!isBackButtonClicked.current) {
         const hState = window.history.state as Record<string, unknown> | null;
-        if (hState?.dialogId === dialogId) {
+        const actualHState = (hState?.usr !== undefined ? hState.usr : hState) as Record<string, unknown> | null;
+        
+        if (actualHState?.[dialogStateKey] === uniqueInstanceId) {
           window.history.back();
         }
       }

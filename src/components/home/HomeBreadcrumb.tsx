@@ -2,13 +2,12 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Menu, LogOut, RefreshCcw, Settings, Sun, Moon, Monitor, Eye, EyeOff, ArrowLeft, MoreVertical, Info, Sliders, Trash2, Download } from "lucide-react";
 import { encodePathToUrl } from "@/utils/utils";
-import { logout } from "@/api/api-auth";
+import { logout, getMe } from "@/api/api-auth";
 import { useTheme } from "@/components/theme-provider";
 import { toast } from "sonner";
 import { registerSW } from "virtual:pwa-register";
 import { usePreferences } from "@/context/PreferencesContext";
-import { useState } from "react";
-import { HomeConfigModal } from "./HomeConfigModal";
+import { useState, useEffect } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,7 +39,13 @@ export default function HomeBreadcrumb({
   const updateSW = registerSW();
   const { theme, setTheme } = useTheme();
   const { showHidden, setShowHidden } = usePreferences();
-  const [showConfigModal, setShowConfigModal] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    getMe().then((res) => {
+      setIsAdmin(res.role === "admin" || res.role === "superadmin");
+    }).catch(console.error);
+  }, []);
 
   const handleReload = async () => {
     console.log("Force reloaded");
@@ -166,10 +171,12 @@ export default function HomeBreadcrumb({
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => { setShowConfigModal(true); }}>
-                <Sliders className="mr-2 h-4 w-4" />
-                <span>Configurations</span>
-              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => { void navigate("/admin"); }}>
+                  <Sliders className="mr-2 h-4 w-4" />
+                  <span>Manage Cloud</span>
+                </DropdownMenuItem>
+              )}
 
               <DropdownMenuItem onClick={handleReload}>
                 <RefreshCcw className="mr-2 h-4 w-4" />
@@ -219,8 +226,6 @@ export default function HomeBreadcrumb({
           </DropdownMenu>
         </div>
       </div>
-
-      <HomeConfigModal open={showConfigModal} onOpenChange={setShowConfigModal} />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import type { PropertiesResponse } from "@/api/api-file";
@@ -127,6 +128,9 @@ export default function HomePropertiesModal({ isOpen, onOpenChange, data }: Home
             {title}
             {!data && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Properties and details of the selected item(s)
+          </DialogDescription>
         </DialogHeader>
 
         {renderContent()}

@@ -5,6 +5,7 @@ import React from 'react'
 import { BrowserRouter } from 'react-router-dom'
 import { toast } from 'sonner'
 import { registerSW } from 'virtual:pwa-register'
+import { loadConfig } from './config.ts'
 
 const updateSW = registerSW({
   onNeedRefresh() {
@@ -33,12 +34,15 @@ if (import.meta.env.VITE_PROFILE !== "prod") {
 
 
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    {/* Wrap the App component with BrowserRouter */}
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>,
-)
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+loadConfig().then(() => {
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  createRoot(document.getElementById('root')!).render(
+    <React.StrictMode>
+      {/* Wrap the App component with BrowserRouter */}
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </React.StrictMode>,
+  )
+});

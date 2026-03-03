@@ -1,4 +1,5 @@
 // src/api/wsClient.ts
+import { getConfig } from '../config';
 
 export interface OperationMessage {
     opId: string;
@@ -16,24 +17,14 @@ type WsCallback = (data: OperationMessage) => void;
 
 class WebSocketClient {
     private socket: WebSocket | null = null;
-    private url: string;
     private reconnectTimeout = 5000;
     private listeners: WsCallback[] = [];
     private statusListeners: ((connected: boolean) => void)[] = [];
     private isReconnecting = false;
     private _isConnected = false;
 
-    constructor() {
-        const hostname = window.location.hostname;
-        const PORT = "30333";
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-
-        // Match the logic in axiosLayer.tsx
-        const isLocal = import.meta.env.VITE_BUILD_PROFILE === "local";
-        const wsPort = isLocal ? "3333" : PORT;
-        const wsHost = isLocal ? "localhost" : hostname;
-
-        this.url = `${protocol}//${wsHost}:${wsPort}/ws`;
+    private get url() {
+        return getConfig().wsUrl;
     }
 
     public subscribeStatus(callback: (connected: boolean) => void) {

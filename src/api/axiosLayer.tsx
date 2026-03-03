@@ -1,19 +1,17 @@
 // src/api/axiosInstance.ts
 import axios, { AxiosError } from 'axios';
 import type { AxiosRequestConfig } from 'axios';
-
-// window.location.hostname returns 'localhost' or '192.168.1.10', etc.
-const hostname = window.location.hostname;
-
-// Define your ports based on your setup
-const PORT = "30333"; 
-
-// Construct the baseURL dynamically
-const baseURL = import.meta.env.VITE_BUILD_PROFILE === "local"? "http://localhost:3333/api" : `http://${hostname}:${PORT}/api`
+import { getConfig } from '../config';
 
 const instance = axios.create({
-  baseURL: baseURL,
   withCredentials: true,
+});
+
+// Use interceptor to dynamically set baseURL in case it's not set immediately,
+// though in our setup loadConfig() runs before rendering, so it's guaranteed.
+instance.interceptors.request.use((config) => {
+  config.baseURL ??= getConfig().apiBaseUrl;
+  return config;
 });
 
 let isRefreshing = false;

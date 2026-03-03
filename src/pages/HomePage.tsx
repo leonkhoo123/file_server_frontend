@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import { X, Clipboard, Plus, FolderPlus, Upload, FolderUp } from "lucide-react";
 import DefaultLayout from "@/layouts/DefaultLayout";
 import VersionTag from "@/components/custom/versionTag";
-import VideoPlayerModalV2 from "@/components/custom/videoPlayerModalV2";
+// import VideoPlayerModalV2 from "@/components/custom/videoPlayerModalV2";
+import VideoPlayerModalGeneric from "@/components/custom/videoPlayerModalGeneric";
 import PhotoViewerModal from "@/components/custom/photoViewerModal";
+import { MusicPlayer } from "@/components/custom/musicPlayer";
 import { useFileManager } from "@/hooks/useFileManager";
 import HomeSidebar from "@/components/home/HomeSidebar";
 import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
@@ -38,6 +40,8 @@ export default function HomePage() {
     selectedVideo,
     selectedPhoto,
     setSelectedPhoto,
+    selectedMusic,
+    setSelectedMusic,
     currentPath,
     selectedItems,
     clipboardItems,
@@ -424,12 +428,20 @@ export default function HomePage() {
       </div>
 
       {selectedVideo && (
-        <VideoPlayerModalV2
-          file={selectedVideo}
-          isOpen={!!selectedVideo}
-          // eslint-disable-next-line @typescript-eslint/no-misused-promises
-          onClose={handlePlayerClose}
-        />
+        <>
+          {/* <VideoPlayerModalV2
+            file={selectedVideo}
+            isOpen={!!selectedVideo}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onClose={handlePlayerClose}
+          /> */}
+          <VideoPlayerModalGeneric
+            file={selectedVideo}
+            isOpen={!!selectedVideo}
+            // eslint-disable-next-line @typescript-eslint/no-misused-promises
+            onClose={handlePlayerClose}
+          />
+        </>
       )}
       
       {selectedPhoto && (
@@ -501,6 +513,14 @@ export default function HomePage() {
         isChecking={isUploadDuplicateChecking}
       />
 
+      {selectedMusic && (
+        <MusicPlayer 
+          file={selectedMusic} 
+          playlist={(items?.items ?? []).filter(item => item.type !== 'dir' && (item.name.toLowerCase().endsWith('.mp3') || item.name.toLowerCase().endsWith('.wav') || item.name.toLowerCase().endsWith('.flac') || item.name.toLowerCase().endsWith('.ogg') || item.name.toLowerCase().endsWith('.m4a') || item.name.toLowerCase().endsWith('.aac')))}
+          onSelectMusic={setSelectedMusic}
+          onClose={() => { setSelectedMusic(null); }} 
+        />
+      )}
     </DefaultLayout>
   );
 }

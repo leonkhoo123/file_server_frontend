@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { type ItemsResponse, type FileInterface } from "@/api/api-file";
-import { encodePathToUrl, isImageFile } from "@/utils/utils";
+import { encodePathToUrl} from "@/utils/utils";
 
 export function useFileSelection(
   items: ItemsResponse | undefined, 
   currentPath: string,
   setSelectedVideo: (video: FileInterface | null) => void,
-  setSelectedPhoto: (photo: FileInterface | null) => void
+  setSelectedPhoto: (photo: FileInterface | null) => void,
+  setSelectedMusic: (music: FileInterface | null) => void
 ) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -57,9 +58,11 @@ export function useFileSelection(
         return;
       }
 
-      if (fileInfo.media_type === "video" || fileInfo.isVideo) {
+      if (fileInfo.media_type === "video") {
         setSelectedVideo(fileInfo);
-      } else if (fileInfo.media_type === "photo" || isImageFile(fileInfo.name)) {
+      } else if (fileInfo.media_type === "music") {
+        setSelectedMusic(fileInfo);
+      } else if (fileInfo.media_type === "photo") {
         setSelectedPhoto(fileInfo);
       } else if (fileInfo.type === "dir") {
         const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
@@ -119,10 +122,12 @@ export function useFileSelection(
       return;
     }
 
-    if (fileInfo.media_type === "video" || fileInfo.isVideo) {
+    if (fileInfo.media_type === "video") {
       setSelectedVideo(fileInfo);
-    } else if (fileInfo.media_type === "photo" || isImageFile(fileInfo.name)) {
+    } else if (fileInfo.media_type === "photo") {
       setSelectedPhoto(fileInfo);
+    }else if (fileInfo.media_type === "music") {
+      setSelectedMusic(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
       void navigate("/home" + encodePathToUrl(newPath));

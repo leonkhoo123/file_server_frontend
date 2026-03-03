@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import type { FileInterface } from "@/api/api-file";
-import { isImageFile } from "@/utils/utils";
 import { useDialogHistory } from "@/hooks/useDialogHistory";
 
 interface PhotoViewerModalProps {
@@ -20,7 +19,7 @@ export const PhotoViewerModal: React.FC<PhotoViewerModalProps> = ({
   const [currentIndex, setCurrentIndex] = useState<number>(0);
 
   const images = useMemo(() => {
-    return allItems.filter(item => item.type === 'file' && (item.media_type === "photo" || isImageFile(item.name)));
+    return allItems.filter(item => item.type === 'file' && (item.media_type === "photo"));
   }, [allItems]);
 
   useEffect(() => {

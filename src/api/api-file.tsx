@@ -18,7 +18,6 @@ export interface FileInterface {
   size: number;
   type: 'file' | 'dir';
   url: string;
-  isVideo: boolean;
   media_type?: string;
   path: string;
 }

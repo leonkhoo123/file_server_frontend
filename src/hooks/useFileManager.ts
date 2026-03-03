@@ -34,6 +34,7 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
   } = useVideoOperations({ currentPath, setItems, setIsLoading, setError });
 
   const [selectedPhoto, setSelectedPhoto] = useState<FileInterface | null>(null);
+  const [selectedMusic, setSelectedMusic] = useState<FileInterface | null>(null);
 
   // 3. Selection state and click handlers
   const {
@@ -48,7 +49,7 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     handleFileClick,
     handleFileContextMenu,
     handleFileDoubleClick
-  } = useFileSelection(items, currentPath, setSelectedVideo, setSelectedPhoto);
+  } = useFileSelection(items, currentPath, setSelectedVideo, setSelectedPhoto, setSelectedMusic);
 
   // 4. File Actions (copy, cut, paste, delete, rename, properties, folder)
   const {
@@ -131,6 +132,8 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     setSelectedVideo,
     selectedPhoto,
     setSelectedPhoto,
+    selectedMusic,
+    setSelectedMusic,
     currentPath,
     selectedItems,
     clipboardItems,

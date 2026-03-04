@@ -13,13 +13,14 @@ interface MusicPlayerProps {
   playlist?: FileInterface[];
   onSelectMusic?: (file: FileInterface) => void;
   onClose: () => void;
+  forcePause?: boolean;
 }
 
 function formatTime(seconds: number) {
   if (isNaN(seconds)) return "0:00";
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return `${m.toString()}:${s.toString().padStart(2, "0")}`;
 }
 
 const MarqueeText = ({ text }: { text: string }) => {
@@ -57,7 +58,7 @@ const MarqueeText = ({ text }: { text: string }) => {
   );
 };
 
-export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose }: MusicPlayerProps) {
+export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, forcePause }: MusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -66,6 +67,13 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose }: Mus
   const [isMuted, setIsMuted] = useState(false);
   const [allowBackground, setAllowBackground] = useState(true);
   const [activePlaylist, setActivePlaylist] = useState<FileInterface[]>(playlist);
+
+  // Pause music if forcePause becomes true
+  useEffect(() => {
+    if (forcePause) {
+      setIsPlaying(false);
+    }
+  }, [forcePause]);
 
   // Update active playlist only when the currently playing file is in the viewed folder's playlist
   useEffect(() => {

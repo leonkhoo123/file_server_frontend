@@ -1,3 +1,4 @@
+import { useRef, useEffect } from "react";
 import { Folder, X, Trash2, Cloud } from "lucide-react";
 import { type StorageUsageResponse } from "@/api/api-file";
 import { formatBytes } from "@/utils/utils";
@@ -6,14 +7,36 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { decodeUrlToPath } from "@/utils/utils";
 
-
-
 function StorageIndicator({ usage }: { usage?: StorageUsageResponse }) {
-  if (!usage) return null;
+  const lastUsage = useRef<StorageUsageResponse | undefined>(usage);
 
-  const usedFormatted = formatBytes(usage.used);
+  useEffect(() => {
+    if (usage) {
+      lastUsage.current = usage;
+    }
+  }, [usage]);
+
+  const displayUsage = usage ?? lastUsage.current;
+
+  if (!displayUsage) {
+    return (
+      <div className="px-4 py-4 border-b">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2 opacity-50">
+          <Cloud className="h-4 w-4" />
+          <span>Storage</span>
+        </div>
+        <Progress value={0} className="h-2 mb-2 bg-muted/50" />
+        <div className="flex flex-col gap-1 text-xs text-muted-foreground opacity-50">
+          <div><span className="font-medium">...</span> of <span className="font-medium">...</span> used</div>
+          <div><span className="font-medium">...</span> left</div>
+        </div>
+      </div>
+    );
+  }
+
+  const usedFormatted = formatBytes(displayUsage.used);
   
-  if (usage.limit <= 0) {
+  if (displayUsage.limit <= 0) {
     return (
       <div className="px-4 py-4 border-b">
         <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
@@ -27,9 +50,9 @@ function StorageIndicator({ usage }: { usage?: StorageUsageResponse }) {
     );
   }
 
-  const limitFormatted = formatBytes(usage.limit);
-  const leftFormatted = formatBytes(usage.left || Math.max(0, usage.limit - usage.used));
-  const percentage = Math.min(100, Math.max(0, (usage.used / usage.limit) * 100));
+  const limitFormatted = formatBytes(displayUsage.limit);
+  const leftFormatted = formatBytes(displayUsage.left || Math.max(0, displayUsage.limit - displayUsage.used));
+  const percentage = Math.min(100, Math.max(0, (displayUsage.used / displayUsage.limit) * 100));
 
   return (
     <div className="px-4 py-4 border-b">

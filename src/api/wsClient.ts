@@ -22,6 +22,7 @@ class WebSocketClient {
     private statusListeners: ((connected: boolean) => void)[] = [];
     private isReconnecting = false;
     private _isConnected = false;
+    private pingInterval: ReturnType<typeof setInterval> | null = null;
 
     private get url() {
         return getConfig().wsUrl;
@@ -60,6 +61,14 @@ class WebSocketClient {
         this.socket.onopen = () => {
             console.log('[WebSocket] Connected');
             this.updateStatus(true);
+            
+            // Start a Heartbeat (Ping) to prevent idle timeouts
+            this.pingInterval = setInterval(() => {
+                if (this.socket?.readyState === WebSocket.OPEN) {
+                    this.socket.send(JSON.stringify({ type: 'ping', opId: 'ping' }));
+                }
+            }, 30000); // 30 seconds
+
             if (this.isReconnecting) {
                 // Trigger a custom event or let the status listener handle it.
                 // We'll dispatch a custom event on window for the successful reconnect.
@@ -82,6 +91,12 @@ class WebSocketClient {
             console.log(`[WebSocket] Disconnected. Reconnecting in ${this.reconnectTimeout / 1000}s...`);
             this.updateStatus(false);
             this.isReconnecting = true;
+            
+            if (this.pingInterval) {
+                clearInterval(this.pingInterval);
+                this.pingInterval = null;
+            }
+            
             setTimeout(() => { this.connect(); }, this.reconnectTimeout);
         };
 

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button'; // shadcn/ui Button
 import { Input } from '@/components/ui/input';   // shadcn/ui Input
 import { Label } from '@/components/ui/label';   // shadcn/ui Label
@@ -9,11 +9,12 @@ import {
   CardTitle,
 } from '@/components/ui/card'; // shadcn/ui Card components
 import { login, verifyMfa, setupMfa, enableMfa } from '@/api/api-auth';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import VersionTag from '@/components/custom/versionTag';
 import OtpInput from 'react-otp-input';
 import { QRCodeSVG } from 'qrcode.react';
+import axios from 'axios';
 
 const LoginPage: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -25,15 +26,29 @@ const LoginPage: React.FC = () => {
   const [setupSecret, setSetupSecret] = useState('');
   
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (params.get('mfa_setup_required') === 'true') {
+      setMfaSetupRequired(true);
+      setupMfa().then(setupRes => {
+        setQrUrl(setupRes.url);
+        setSetupSecret(setupRes.secret);
+      }).catch(() => {
+        toast.error("Failed to load MFA setup details");
+      });
+    }
+  }, [location.search]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const res = await login(username, password);
-      if (res?.mfa_required) {
+      if (res.mfa_required) {
         setMfaRequired(true);
         toast.info("MFA required. Please enter your code.");
-      } else if (res?.mfa_setup_required) {
+      } else if (res.mfa_setup_required) {
         setMfaSetupRequired(true);
         const setupRes = await setupMfa();
         setQrUrl(setupRes.url);
@@ -43,8 +58,12 @@ const LoginPage: React.FC = () => {
         toast.success("Welcome");
         void navigate("/home");
       }
-    } catch (err: any) {
-      toast.error(err.response?.data?.error ?? "Login Failed");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        toast.error((err.response?.data as { error?: string } | undefined)?.error ?? "Login Failed");
+      } else {
+        toast.error("Login Failed");
+      }
     }
   };
 
@@ -54,8 +73,12 @@ const LoginPage: React.FC = () => {
       await verifyMfa(mfaCode);
       toast.success("Welcome");
       void navigate("/home");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error ?? "Invalid MFA Code");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        toast.error((err.response?.data as { error?: string } | undefined)?.error ?? "Invalid MFA Code");
+      } else {
+        toast.error("Invalid MFA Code");
+      }
     }
   };
 
@@ -65,8 +88,12 @@ const LoginPage: React.FC = () => {
       await enableMfa(mfaCode);
       toast.success("MFA Setup Successful! Welcome");
       void navigate("/home");
-    } catch (err: any) {
-      toast.error(err.response?.data?.error ?? "Invalid MFA Code for setup");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        toast.error((err.response?.data as { error?: string } | undefined)?.error ?? "Invalid MFA Code for setup");
+      } else {
+        toast.error("Invalid MFA Code for setup");
+      }
     }
   };
 
@@ -138,7 +165,7 @@ const LoginPage: React.FC = () => {
                 <Button type="submit" className="w-full mt-6" disabled={mfaCode.length !== 6}>
                   Verify & Enable
                 </Button>
-                <Button type="button" variant="ghost" className="w-full mt-2" onClick={() => { setMfaSetupRequired(false); setMfaCode(''); }}>
+                <Button type="button" variant="ghost" className="w-full mt-2" onClick={() => { setMfaSetupRequired(false); setMfaCode(''); void navigate("/login"); }}>
                   Cancel
                 </Button>
               </form>
@@ -165,7 +192,7 @@ const LoginPage: React.FC = () => {
                 <Button type="submit" className="w-full mt-6" disabled={mfaCode.length !== 6}>
                   Verify
                 </Button>
-                <Button type="button" variant="ghost" className="w-full mt-2" onClick={() => { setMfaRequired(false); setMfaCode(''); }}>
+                <Button type="button" variant="ghost" className="w-full mt-2" onClick={() => { setMfaRequired(false); setMfaCode(''); void navigate("/login"); }}>
                   Back to Login
                 </Button>
               </form>

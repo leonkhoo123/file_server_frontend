@@ -37,6 +37,17 @@ instance.interceptors.response.use(
   async (error: AxiosError) => {
     const originalRequest = error.config as CustomAxiosRequestConfig | undefined;
 
+    if (error.response?.status === 403) {
+      const data = error.response.data as { error?: string } | undefined;
+      if (data?.error === 'mfa_setup_required') {
+        window.dispatchEvent(new Event('auth:mfa_setup_required'));
+        if (!window.location.pathname.includes('/login')) {
+           window.location.href = '/login?mfa_setup_required=true';
+        }
+        return Promise.reject(error);
+      }
+    }
+
     // If 401 and we haven't retried yet, and it's not the refresh endpoint itself
     if (error.response?.status === 401 && originalRequest && !originalRequest._retry && originalRequest.url && !originalRequest.url.includes('/refresh') && !originalRequest.url.includes('/login')) {
       if (isRefreshing) {
@@ -60,6 +71,9 @@ instance.interceptors.response.use(
         processQueue(err, null);
         // Dispatch custom event to trigger logout or redirect
         window.dispatchEvent(new Event('auth:unauthorized'));
+        if (!window.location.pathname.includes('/login')) {
+           window.location.href = '/login';
+        }
         return await Promise.reject(err instanceof Error ? err : new Error(String(err)));
       } finally {
         isRefreshing = false;

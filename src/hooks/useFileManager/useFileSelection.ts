@@ -8,7 +8,8 @@ export function useFileSelection(
   currentPath: string,
   setSelectedVideo: (video: FileInterface | null) => void,
   setSelectedPhoto: (photo: FileInterface | null) => void,
-  setSelectedMusic: (music: FileInterface | null) => void
+  setSelectedMusic: (music: FileInterface | null) => void,
+  setSelectedDocument: (document: FileInterface | null) => void
 ) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -64,6 +65,8 @@ export function useFileSelection(
         setSelectedMusic(fileInfo);
       } else if (fileInfo.media_type === "photo") {
         setSelectedPhoto(fileInfo);
+      } else if (fileInfo.media_type === "text_documents") {
+        setSelectedDocument(fileInfo);
       } else if (fileInfo.type === "dir") {
         const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
         void navigate("/home" + encodePathToUrl(newPath));
@@ -128,6 +131,8 @@ export function useFileSelection(
       setSelectedPhoto(fileInfo);
     }else if (fileInfo.media_type === "music") {
       setSelectedMusic(fileInfo);
+    } else if (fileInfo.media_type === "text_documents") {
+      setSelectedDocument(fileInfo);
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
       void navigate("/home" + encodePathToUrl(newPath));

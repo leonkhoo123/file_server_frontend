@@ -6,6 +6,7 @@ import VersionTag from "@/components/custom/versionTag";
 import VideoPlayerModalGeneric from "@/components/custom/videoPlayerModalGeneric";
 import PhotoViewerModal from "@/components/custom/photoViewerModal";
 import { MusicPlayer } from "@/components/custom/musicPlayer";
+import TextViewerModal from "@/components/custom/textViewerModal";
 import { useFileManager } from "@/hooks/useFileManager";
 import HomeSidebar from "@/components/home/HomeSidebar";
 import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
@@ -42,6 +43,8 @@ export default function HomePage() {
     setSelectedPhoto,
     selectedMusic,
     setSelectedMusic,
+    selectedDocument,
+    setSelectedDocument,
     currentPath,
     selectedItems,
     clipboardItems,
@@ -519,6 +522,14 @@ export default function HomePage() {
           playlist={(items?.items ?? []).filter(item => item.type !== 'dir' && (item.name.toLowerCase().endsWith('.mp3') || item.name.toLowerCase().endsWith('.wav') || item.name.toLowerCase().endsWith('.flac') || item.name.toLowerCase().endsWith('.ogg') || item.name.toLowerCase().endsWith('.m4a') || item.name.toLowerCase().endsWith('.aac')))}
           onSelectMusic={setSelectedMusic}
           onClose={() => { setSelectedMusic(null); }} 
+        />
+      )}
+
+      {selectedDocument && (
+        <TextViewerModal
+          file={selectedDocument}
+          isOpen={!!selectedDocument}
+          onClose={() => { setSelectedDocument(null); }}
         />
       )}
     </DefaultLayout>

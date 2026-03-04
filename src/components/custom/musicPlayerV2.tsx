@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Play, Pause, Volume2, VolumeX, Music, SkipBack, SkipForward, Headphones } from "lucide-react";
+import { X, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Headphones } from "lucide-react";
 import { type FileInterface } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";

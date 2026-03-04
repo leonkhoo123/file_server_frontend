@@ -5,7 +5,6 @@ import VersionTag from "@/components/custom/versionTag";
 // import VideoPlayerModalV2 from "@/components/custom/videoPlayerModalV2";
 import VideoPlayerModalGeneric from "@/components/custom/videoPlayerModalGeneric";
 import PhotoViewerModal from "@/components/custom/photoViewerModal";
-import { MusicPlayer } from "@/components/custom/musicPlayer";
 import TextViewerModal from "@/components/custom/textViewerModal";
 import { useFileManager } from "@/hooks/useFileManager";
 import HomeSidebar from "@/components/home/HomeSidebar";

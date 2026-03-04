@@ -237,7 +237,15 @@ export const downloadFiles = (sources: string[]) => {
   const a = document.createElement('a');
   a.style.display = 'none';
   a.href = url;
-  a.setAttribute('download', '');
+  
+  // Set explicit download filename if only one file is selected to prevent mobile browsers from appending .txt
+  if (sources.length === 1) {
+    const filename = sources[0].split('/').pop() ?? '';
+    a.setAttribute('download', filename);
+  } else {
+    a.setAttribute('download', '');
+  }
+  
   document.body.appendChild(a);
   a.click();
   

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Download, Copy, Check, ChevronDown } from "lucide-react";
-import { type FileInterface } from "@/api/api-file";
+import { type FileInterface, downloadFiles } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import axiosLayer from "@/api/axiosLayer";
@@ -174,12 +174,7 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
   };
 
   const handleDownload = () => {
-    const link = document.createElement('a');
-    link.href = file.url;
-    link.download = file.name;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    downloadFiles([file.path]);
   };
 
   return (

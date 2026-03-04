@@ -3,26 +3,7 @@ import './index.css'
 import App from './App.tsx'
 import React from 'react'
 import { BrowserRouter } from 'react-router-dom'
-import { toast } from 'sonner'
-import { registerSW } from 'virtual:pwa-register'
 import { loadConfig } from './config.ts'
-
-const updateSW = registerSW({
-  onNeedRefresh() {
-    console.log("New version avaliable")
-    toast.message('New version available', {
-      description: 'Click to reload the app.',
-      action: {
-        label: 'Reload',
-        // eslint-disable-next-line @typescript-eslint/no-misused-promises
-        onClick: () => updateSW(true),
-      },
-    })
-  },
-  onOfflineReady() {
-    toast.success('New App is ready!')
-  },
-})
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore

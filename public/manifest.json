@@ -1,7 +1,7 @@
 {
-  "name": "Watcher",
-  "short_name": "Watcher",
-  "description": "My Watcher",
+  "name": "Demo Cloud",
+  "short_name": "Demo Cloud",
+  "description": "My Demo Cloud",
   "start_url": "/",
   "display": "standalone",
   "theme_color": "#ffffff",

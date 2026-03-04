@@ -5,7 +5,7 @@ import { encodePathToUrl } from "@/utils/utils";
 import { logout, getMe } from "@/api/api-auth";
 import { useTheme } from "@/components/theme-provider";
 import { toast } from "sonner";
-import { registerSW } from "virtual:pwa-register";
+import { useRegisterSW } from "virtual:pwa-register/react";
 import { usePreferences } from "@/context/PreferencesContext";
 import { useState, useEffect } from "react";
 import {
@@ -38,7 +38,7 @@ export default function HomeBreadcrumb({
   onEmptyRecycleBin,
 }: HomeBreadcrumbProps) {
   const navigate = useNavigate();
-  const updateSW = registerSW();
+  const { updateServiceWorker } = useRegisterSW();
   const { theme, setTheme } = useTheme();
   const { showHidden, setShowHidden } = usePreferences();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -52,7 +52,7 @@ export default function HomeBreadcrumb({
 
   const handleReload = async () => {
     console.log("Force reloaded");
-    await updateSW(true); // force service worker update + reload
+    await updateServiceWorker(true); // force service worker update + reload
     toast.success("App Reloaded");
   };
 

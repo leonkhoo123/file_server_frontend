@@ -32,14 +32,14 @@ export default defineConfig({
     }),
     tailwindcss(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt',
       devOptions: {
         enabled: true,
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'robots.txt'],
       manifest: {
-        name: 'Watcher',
-        short_name: 'Watcher',
+        name: 'Demo Cloud',
+        short_name: 'Demo Cloud',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',

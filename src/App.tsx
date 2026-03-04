@@ -11,6 +11,7 @@ import { useEffect } from 'react';
 import { wsClient } from './api/wsClient';
 import { OperationProgressProvider } from './context/OperationProgressContext';
 import { PreferencesProvider } from './context/PreferencesContext';
+import { UpdateBanner } from './components/custom/UpdateBanner';
 
 function App() {
   useEffect(() => {
@@ -21,6 +22,7 @@ function App() {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <PreferencesProvider>
         <OperationProgressProvider>
+          <UpdateBanner />
           <Routes>
             <Route element={<IndexPage />} path="/" />
             <Route element={<HomePage />} path="/home" />

@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card'; // shadcn/ui Card components
-import { login, verifyMfa, setupMfa, enableMfa } from '@/api/api-auth';
+import { login, verifyMfa, setupMfa, enableMfa, checkAuthStatus } from '@/api/api-auth';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import VersionTag from '@/components/custom/versionTag';
@@ -38,8 +38,14 @@ const LoginPage: React.FC = () => {
       }).catch(() => {
         toast.error("Failed to load MFA setup details");
       });
+    } else {
+      checkAuthStatus().then(() => {
+        void navigate("/home");
+      }).catch(() => {
+        // Not logged in, stay on login page
+      });
     }
-  }, [location.search]);
+  }, [location.search, navigate]);
 
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

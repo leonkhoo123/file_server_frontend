@@ -64,6 +64,11 @@ export const getMe = async (): Promise<{ username: string; role: string; is_supe
   return res.data;
 };
 
+export const checkAuthStatus = async (): Promise<{ status: string; message: string }> => {
+  const res = await axiosLayer.get<{ status: string; message: string }>("/status");
+  return res.data;
+};
+
 export const logout = async (): Promise<void> => {
   await axiosLayer.post("/logout", null, {
     withCredentials: true,

@@ -291,7 +291,7 @@ export default function HomeFileList({
   const fileListContainer = (
     <div 
       ref={scrollContainerRef}
-      className="flex-1 min-h-0 relative overflow-y-scroll p-2 md:p-4 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent"
+      className="flex-1 min-h-0 relative overflow-y-scroll p-2 md:p-3 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent"
     >
       {/* Loading Overlay */}
       <div 
@@ -345,7 +345,7 @@ export default function HomeFileList({
                         e.preventDefault();
                       }
                     }}
-                    className={`flex items-center pl-4 pr-1 md:px-6 py-2 md:py-3 cursor-pointer rounded-md transition-all duration-75 ease-out select-none min-h-[64px] md:min-h-[44px] [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent] ${
+                    className={`flex items-center pl-4 pr-1 md:px-3 py-2 md:py-3 cursor-pointer rounded-md transition-all duration-75 ease-out select-none min-h-[64px] md:min-h-[44px] [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent] ${
                       transitioningFolder === file.name
                         ? 'bg-blue-300/80 dark:bg-blue-600/80 scale-[0.96]'
                         : isSelected
@@ -541,7 +541,7 @@ export default function HomeFileList({
       )}
 
       {/* Table Header */}
-      <div className="flex border-b font-semibold py-3 md:py-2 px-6 md:px-10 text-base md:text-sm bg-muted/30 shrink-0 overflow-y-scroll scrollbar scrollbar-thumb-transparent scrollbar-track-transparent">
+      <div className="flex border-b font-semibold py-3 md:py-2 px-6 md:pl-5 md:pr-8 text-base md:text-sm bg-muted/30 shrink-0 overflow-y-scroll scrollbar scrollbar-thumb-transparent scrollbar-track-transparent">
         <div className="flex-1 text-left text-muted-foreground">Name</div>
         <div className="w-24 md:w-32 hidden lg:block text-right text-muted-foreground">Size</div>
         <div className="w-32 md:w-48 hidden lg:block text-right text-muted-foreground">Last Modified</div>

@@ -27,11 +27,14 @@ const MarqueeText = ({ text }: { text: string }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
   const [isOverflowing, setIsOverflowing] = useState(false);
+  const [contentWidth, setContentWidth] = useState(0);
 
   useEffect(() => {
     const checkOverflow = () => {
       if (containerRef.current && textRef.current) {
-        setIsOverflowing(textRef.current.scrollWidth > containerRef.current.clientWidth);
+        const cw = textRef.current.scrollWidth;
+        setIsOverflowing(cw > containerRef.current.clientWidth);
+        setContentWidth(cw);
       }
     };
     checkOverflow();
@@ -39,11 +42,16 @@ const MarqueeText = ({ text }: { text: string }) => {
     return () => { window.removeEventListener('resize', checkOverflow); };
   }, [text]);
 
+  const duration = contentWidth > 0 ? contentWidth / 30 : 10;
+
   return (
     <div ref={containerRef} className="w-full overflow-hidden flex items-center justify-center relative">
       <div 
         className={`flex whitespace-nowrap ${isOverflowing ? 'animate-marquee' : 'justify-center w-full'}`}
-        style={{ width: isOverflowing ? 'fit-content' : '100%' }}
+        style={{ 
+          width: isOverflowing ? 'max-content' : '100%',
+          animationDuration: isOverflowing ? `${duration}s` : undefined
+        }}
       >
         <span ref={textRef} className={`text-sm font-medium ${isOverflowing ? 'pr-8' : 'truncate'}`} title={text}>
           {text}
@@ -264,7 +272,7 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
         </div>
 
         {/* Middle: Track Info */}
-        <div className="flex items-center justify-center gap-2 w-1/3 md:w-[40%] min-w-0">
+        <div className="flex items-center justify-center gap-2 w-auto md:w-[40%] min-w-0">
           <div className="bg-primary/10 p-1.5 md:p-2 rounded-md shrink-0">
             <Music className="w-4 h-4 md:w-5 md:h-5 text-primary" />
           </div>

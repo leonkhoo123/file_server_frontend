@@ -126,13 +126,13 @@ export function useFileSelection(
     }
 
     if (fileInfo.media_type === "video") {
-      setSelectedVideo(fileInfo);
+      setSelectedVideo({ ...fileInfo });
     } else if (fileInfo.media_type === "photo") {
-      setSelectedPhoto(fileInfo);
+      setSelectedPhoto({ ...fileInfo });
     }else if (fileInfo.media_type === "music") {
-      setSelectedMusic(fileInfo);
+      setSelectedMusic({ ...fileInfo });
     } else if (fileInfo.media_type === "text_documents") {
-      setSelectedDocument(fileInfo);
+      setSelectedDocument({ ...fileInfo });
     } else if (fileInfo.type === "dir") {
       const newPath = currentPath === "/" ? `/${fileInfo.name}` : `${currentPath}/${fileInfo.name}`;
       void navigate("/home" + encodePathToUrl(newPath));

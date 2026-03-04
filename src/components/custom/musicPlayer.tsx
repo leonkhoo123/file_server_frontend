@@ -9,7 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { toast } from "sonner";
 
 interface MusicPlayerProps {
-  file: FileInterface;
+  file: FileInterface | null;
   playlist?: FileInterface[];
   onSelectMusic?: (file: FileInterface) => void;
   onClose: () => void;
@@ -34,18 +34,18 @@ const MarqueeText = ({ text }: { text: string }) => {
         setIsOverflowing(textRef.current.scrollWidth > containerRef.current.clientWidth);
       }
     };
-    checkOverflow();
+    setTimeout(checkOverflow, 0);
     window.addEventListener('resize', checkOverflow);
     return () => { window.removeEventListener('resize', checkOverflow); };
   }, [text]);
 
   return (
-    <div ref={containerRef} className="w-full overflow-hidden flex items-center justify-center relative">
+    <div ref={containerRef} className="max-w-full overflow-hidden flex items-center relative w-full">
       <div 
-        className={`flex whitespace-nowrap ${isOverflowing ? 'animate-marquee' : 'justify-center w-full'}`}
-        style={{ width: isOverflowing ? 'fit-content' : '100%' }}
+        className={`flex whitespace-nowrap ${isOverflowing ? 'animate-marquee' : ''}`}
+        style={{ width: isOverflowing ? 'fit-content' : 'auto' }}
       >
-        <span ref={textRef} className={`text-sm font-medium ${isOverflowing ? 'pr-8' : 'truncate'}`} title={text}>
+        <span ref={textRef} className={`text-sm font-medium ${isOverflowing ? 'pr-8' : 'truncate block'}`} title={text}>
           {text}
         </span>
         {isOverflowing && (
@@ -60,6 +60,8 @@ const MarqueeText = ({ text }: { text: string }) => {
 
 export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, forcePause }: MusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [currentFile, setCurrentFile] = useState<FileInterface | null>(file);
+  const [isVisible, setIsVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -67,6 +69,38 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
   const [isMuted, setIsMuted] = useState(false);
   const [allowBackground, setAllowBackground] = useState(true);
   const [activePlaylist, setActivePlaylist] = useState<FileInterface[]>(playlist);
+  const [isVolumeOpen, setIsVolumeOpen] = useState(false);
+
+  useEffect(() => {
+    if (file) {
+      if (!currentFile) {
+        // First time opening: set file, then trigger animation after render
+        setCurrentFile(file);
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            setIsVisible(true);
+          });
+        });
+      } else {
+        // Just switching songs or restarting the same song
+        if (currentFile.url === file.url) {
+          setIsPlaying(true);
+          setCurrentTime(0);
+          if (audioRef.current) {
+            audioRef.current.currentTime = 0;
+          }
+        }
+        setCurrentFile(file);
+        setIsVisible(true);
+      }
+    } else {
+      setIsVisible(false);
+      setIsPlaying(false);
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    }
+  }, [file]);
 
   // Pause music if forcePause becomes true
   useEffect(() => {
@@ -77,11 +111,12 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
 
   // Update active playlist only when the currently playing file is in the viewed folder's playlist
   useEffect(() => {
-    const isFileInPlaylist = playlist.some((p) => p.url === file.url);
+    if (!currentFile) return;
+    const isFileInPlaylist = playlist.some((p) => p.url === currentFile.url);
     if (isFileInPlaylist) {
       setActivePlaylist(playlist);
     }
-  }, [file.url, playlist]);
+  }, [currentFile?.url, playlist]);
 
   // Play/pause logic
   useEffect(() => {
@@ -92,7 +127,7 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
         audioRef.current.pause();
       }
     }
-  }, [isPlaying, file]);
+  }, [isPlaying, currentFile]);
 
   // Handle visibility change to stop audio if background playing is disabled
   useEffect(() => {
@@ -110,30 +145,30 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
   }, [allowBackground]);
 
   const handleNext = useCallback(() => {
-    if (activePlaylist.length > 0 && onSelectMusic) {
-      const currentIndex = activePlaylist.findIndex((p) => p.name === file.name);
+    if (activePlaylist.length > 0 && onSelectMusic && currentFile) {
+      const currentIndex = activePlaylist.findIndex((p) => p.name === currentFile.name);
       if (currentIndex !== -1) {
         const nextIndex = (currentIndex + 1) % activePlaylist.length;
         onSelectMusic(activePlaylist[nextIndex]);
       }
     }
-  }, [file.name, onSelectMusic, activePlaylist]);
+  }, [currentFile?.name, onSelectMusic, activePlaylist]);
 
   const handlePrev = useCallback(() => {
-    if (activePlaylist.length > 0 && onSelectMusic) {
-      const currentIndex = activePlaylist.findIndex((p) => p.name === file.name);
+    if (activePlaylist.length > 0 && onSelectMusic && currentFile) {
+      const currentIndex = activePlaylist.findIndex((p) => p.name === currentFile.name);
       if (currentIndex !== -1) {
         const prevIndex = (currentIndex - 1 + activePlaylist.length) % activePlaylist.length;
         onSelectMusic(activePlaylist[prevIndex]);
       }
     }
-  }, [file.name, onSelectMusic, activePlaylist]);
+  }, [currentFile?.name, onSelectMusic, activePlaylist]);
 
   // Set media session metadata for lock screen integration
   useEffect(() => {
-    if ('mediaSession' in navigator) {
+    if ('mediaSession' in navigator && currentFile) {
       navigator.mediaSession.metadata = new MediaMetadata({
-        title: file.name,
+        title: currentFile.name,
         artist: 'Cloud Drive Music',
       });
       
@@ -147,13 +182,15 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
         navigator.mediaSession.setActionHandler('nexttrack', null);
       }
     }
-  }, [file.name, activePlaylist, onSelectMusic, handleNext, handlePrev]);
+  }, [currentFile?.name, activePlaylist, onSelectMusic, handleNext, handlePrev]);
 
   // Auto-play when file changes
   useEffect(() => {
-    setIsPlaying(true);
-    setCurrentTime(0);
-  }, [file.url]);
+    if (currentFile) {
+      setIsPlaying(true);
+      setCurrentTime(0);
+    }
+  }, [currentFile?.url]);
 
   const togglePlay = () => { setIsPlaying(!isPlaying); };
 
@@ -206,141 +243,168 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
     }
   };
 
+  if (!currentFile) return null;
+
   return (
-    <div className="w-full bg-background border-t border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] p-3 md:px-6 flex flex-col shrink-0 z-50 relative">
-      <div className="absolute top-0 left-0 right-0 -translate-y-1/2 px-0 z-10">
-        <Slider
-          value={[currentTime]}
-          max={duration || 100}
-          step={1}
-          onValueChange={handleSeek}
-          className="w-full h-1"
-        />
-      </div>
-
-      <audio
-        ref={audioRef}
-        src={file.url}
-        onTimeUpdate={handleTimeUpdate}
-        onLoadedMetadata={handleLoadedMetadata}
-        onEnded={handleEnded}
-        className="hidden"
-      />
-      
-      <div className="flex flex-row items-center justify-between gap-4 w-full">
-        {/* Left: Controls and Time */}
-        <div className="flex items-center gap-2 md:gap-4 w-1/3 md:w-[30%]">
-          <div className="flex items-center gap-1 md:gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8 rounded-full"
-              onClick={handlePrev}
-              disabled={activePlaylist.length <= 1}
-            >
-              <SkipBack className="w-4 h-4" />
-            </Button>
-            <Button
-              variant="secondary"
-              size="icon"
-              className="w-10 h-10 rounded-full shrink-0"
-              onClick={togglePlay}
-            >
-              {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-1" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="w-8 h-8 rounded-full"
-              onClick={handleNext}
-              disabled={activePlaylist.length <= 1}
-            >
-              <SkipForward className="w-4 h-4" />
-            </Button>
-          </div>
-          <span className="text-xs text-muted-foreground hidden md:block whitespace-nowrap">
-            {formatTime(currentTime)} / {formatTime(duration)}
-          </span>
-        </div>
-
-        {/* Middle: Track Info */}
-        <div className="flex items-center justify-center gap-2 w-1/3 md:w-[40%] min-w-0">
-          <div className="bg-primary/10 p-1.5 md:p-2 rounded-md shrink-0">
-            <Music className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-          </div>
-          <div className="flex flex-col min-w-0 overflow-hidden items-center text-center w-full">
-            <MarqueeText text={file.name} />
-            <span className="text-[10px] text-muted-foreground md:hidden truncate max-w-full mt-0.5">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
-        </div>
-
-        {/* Right: Extra Controls */}
-        <div className="flex items-center justify-end gap-2 md:gap-4 w-1/3 md:w-[30%]">
-          <div className="hidden md:flex items-center gap-2 bg-muted/50 p-1.5 rounded-md">
-            <Switch 
-              id="bg-play" 
-              checked={allowBackground}
-              onCheckedChange={(checked) => {
-                setAllowBackground(checked);
-                toast.success(`Background Play ${checked ? "Enabled" : "Disabled"}`);
-              }}
-              className="scale-75 data-[state=checked]:bg-primary"
-            />
-            <Label htmlFor="bg-play" className="text-[10px] font-medium leading-none cursor-pointer">
-              BG Play
-            </Label>
-          </div>
-          
-          <div className="hidden md:flex items-center gap-2 w-28">
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={toggleMute}>
-              {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-            </Button>
+    <div 
+      className={`w-full bg-background border-border shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] shrink-0 z-50 transition-all duration-500 ease-in-out relative grid ${
+        isVisible ? "grid-rows-[1fr] opacity-100 border-t" : "grid-rows-[0fr] opacity-0 border-t-0"
+      }`}
+    >
+      <div className="overflow-visible min-h-0 flex flex-col w-full relative">
+        <div className={`w-full p-3 md:px-6 flex flex-col transition-all duration-500 ${isVisible ? 'visible opacity-100' : 'invisible opacity-0'}`}>
+          <div className="absolute top-0 left-0 right-0 -translate-y-1/2 px-0 z-10">
             <Slider
-              value={[isMuted ? 0 : volume]}
-              max={1}
-              step={0.01}
-              onValueChange={handleVolumeChange}
-              className="w-full"
+              value={[currentTime]}
+              max={duration || 100}
+              step={1}
+              onValueChange={handleSeek}
+              className="w-full h-1"
             />
           </div>
 
-          <div className="flex md:hidden items-center gap-1">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 shrink-0"
-              onClick={() => {
-                const newState = !allowBackground;
-                setAllowBackground(newState);
-                toast.success(`Background Play ${newState ? "Enabled" : "Disabled"}`);
-              }}
-            >
-              <Headphones className={`w-4 h-4 ${allowBackground ? "text-primary" : "text-muted-foreground"}`} />
-            </Button>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+          <audio
+            ref={audioRef}
+            src={currentFile.url}
+            onTimeUpdate={handleTimeUpdate}
+            onLoadedMetadata={handleLoadedMetadata}
+            onEnded={handleEnded}
+            className="hidden"
+          />
+          
+          <div className="flex flex-row items-center justify-between gap-1 md:gap-4 w-full">
+            {/* Left: Controls and Time */}
+            <div className="flex items-center gap-2 md:gap-4 shrink-0 w-auto md:w-[30%]">
+              <div className="flex items-center gap-0.5 md:gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-full shrink-0"
+                  onClick={handlePrev}
+                  disabled={activePlaylist.length <= 1}
+                >
+                  <SkipBack className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  className="w-9 h-9 md:w-10 md:h-10 rounded-full shrink-0"
+                  onClick={togglePlay}
+                >
+                  {isPlaying ? <Pause className="w-4 h-4 md:w-5 md:h-5" /> : <Play className="w-4 h-4 md:w-5 md:h-5 ml-1" />}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 rounded-full shrink-0"
+                  onClick={handleNext}
+                  disabled={activePlaylist.length <= 1}
+                >
+                  <SkipForward className="w-4 h-4" />
+                </Button>
+              </div>
+              <span className="text-xs text-muted-foreground hidden md:block whitespace-nowrap">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+            </div>
+
+            {/* Middle: Track Info */}
+            <div className="flex items-center justify-center gap-2 flex-1 min-w-0 px-1 md:px-2 md:w-[40%]">
+              <div className="flex items-center justify-center gap-1.5 md:gap-2 max-w-full overflow-hidden">
+                <div className="bg-primary/10 p-1.5 md:p-2 rounded-md shrink-0">
+                  <Music className="w-4 h-4 md:w-5 md:h-5 text-primary" />
+                </div>
+                <div className="flex flex-col min-w-0 overflow-hidden items-start">
+                  <MarqueeText text={currentFile.name} />
+                  <span className="text-[10px] text-muted-foreground md:hidden truncate max-w-full mt-0.5">
+                    {formatTime(currentTime)} / {formatTime(duration)}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Extra Controls */}
+            <div className="flex items-center justify-end gap-1 md:gap-4 shrink-0 w-auto md:w-[30%]">
+              <div className="hidden md:flex items-center gap-2 bg-muted/50 p-1.5 rounded-md">
+                <Switch 
+                  id="bg-play" 
+                  checked={allowBackground}
+                  onCheckedChange={(checked) => {
+                    setAllowBackground(checked);
+                    toast.success(`Background Play ${checked ? "Enabled" : "Disabled"}`);
+                  }}
+                  className="scale-75 data-[state=checked]:bg-primary"
+                />
+                <Label htmlFor="bg-play" className="text-[10px] font-medium leading-none cursor-pointer">
+                  BG Play
+                </Label>
+              </div>
+              
+              <div className="hidden md:flex items-center gap-2 w-28">
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={toggleMute}>
                   {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-12 h-32 p-2 mb-2 bg-background flex justify-center" side="top" align="center">
                 <Slider
-                  orientation="vertical"
                   value={[isMuted ? 0 : volume]}
                   max={1}
                   step={0.01}
                   onValueChange={handleVolumeChange}
-                  className="h-full"
+                  className="w-full"
                 />
-              </PopoverContent>
-            </Popover>
-          </div>
+              </div>
 
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 md:ml-2 hover:bg-destructive/10 hover:text-destructive" onClick={onClose}>
-            <X className="w-5 h-5" />
-          </Button>
+              <div className="flex md:hidden items-center gap-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0"
+                  onClick={() => {
+                    const newState = !allowBackground;
+                    setAllowBackground(newState);
+                    toast.success(`Background Play ${newState ? "Enabled" : "Disabled"}`);
+                  }}
+                >
+                  <Headphones className={`w-4 h-4 ${allowBackground ? "text-primary" : "text-muted-foreground"}`} />
+                </Button>
+                <Popover open={isVolumeOpen} onOpenChange={setIsVolumeOpen}>
+                  <PopoverTrigger asChild>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      className="h-8 w-8 shrink-0"
+                      onClick={(e) => {
+                        if (isVolumeOpen) {
+                          e.preventDefault();
+                          toggleMute();
+                        }
+                      }}
+                      onPointerDown={(e) => {
+                        if (isVolumeOpen) {
+                          e.preventDefault();
+                        }
+                      }}
+                    >
+                      {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-12 h-32 p-2 mb-2 bg-background flex justify-center" side="top" align="center">
+                    <Slider
+                      orientation="vertical"
+                      value={[isMuted ? 0 : volume]}
+                      max={1}
+                      step={0.01}
+                      onValueChange={handleVolumeChange}
+                      className="h-full"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 md:ml-2 hover:bg-destructive/10 hover:text-destructive" onClick={onClose}>
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

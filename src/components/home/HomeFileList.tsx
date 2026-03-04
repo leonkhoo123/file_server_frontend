@@ -1,4 +1,4 @@
-import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2, Download } from "lucide-react";
+import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2, Download, FileImage, FileVideo, FileAudio, FileText, Terminal, FileCode } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBytes, formatLastModified } from "@/utils/utils";
 import type { ItemsResponse, FileInterface } from "@/api/api-file";
@@ -42,6 +42,29 @@ interface HomeFileListProps {
   currentPath: string;
   onUploadDrop: (files: File[], targetPath: string) => void;
 }
+
+const getFileIcon = (file: FileInterface) => {
+  if (file.media_type === "photo") {
+    return <FileImage className="h-5 w-5 shrink-0 text-blue-400" />;
+  }
+  if (file.media_type === "video") {
+    return <FileVideo className="h-5 w-5 shrink-0 text-purple-400" />;
+  }
+  if (file.media_type === "music") {
+    return <FileAudio className="h-5 w-5 shrink-0 text-pink-400" />;
+  }
+  if (file.media_type === "text_documents") {
+    const lowerName = file.name.toLowerCase();
+    if (lowerName.endsWith('.yaml') || lowerName.endsWith('.yml')) {
+      return <FileCode className="h-5 w-5 shrink-0 text-yellow-500" />;
+    }
+    if (lowerName.endsWith('.sh') || lowerName.endsWith('.bash')) {
+      return <Terminal className="h-5 w-5 shrink-0 text-green-500" />;
+    }
+    return <FileText className="h-5 w-5 shrink-0 text-gray-500" />;
+  }
+  return <File className="h-5 w-5 shrink-0 text-gray-400" />;
+};
 
 export default function HomeFileList({
   isLoading,
@@ -346,7 +369,7 @@ export default function HomeFileList({
                         </>
                       ) : (
                         <>
-                          <File className="h-5 w-5 shrink-0 text-gray-400" />
+                          {getFileIcon(file)}
                           <div className="flex flex-col min-w-0 w-full text-left">
                             <TruncatedText className="text-foreground" text={file.name} />
                             <TruncatedText className="text-xs mt-0.5 lg:hidden text-muted-foreground" text={`${formatBytes(file.size)} • ${formatLastModified(file.modified)}`} />

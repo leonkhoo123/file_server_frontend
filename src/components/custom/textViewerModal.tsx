@@ -110,6 +110,23 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
   const [error, setError] = useState<string | null>(null);
   const [language, setLanguage] = useState<string>("text");
   const [isCopied, setIsCopied] = useState(false);
+
+  // Handle escape key to close modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    if (isOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isOpen, onClose]);
   
   const { theme } = useTheme();
   // Using vs2015 for dark mode and vs for light mode

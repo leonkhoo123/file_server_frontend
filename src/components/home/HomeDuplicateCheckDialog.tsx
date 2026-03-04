@@ -72,6 +72,8 @@ export default function HomeDuplicateCheckDialog({
       >
         {isChecking ? (
           <div className="flex flex-col items-center justify-center p-8 space-y-4">
+            <DialogTitle className="sr-only">Checking duplicates</DialogTitle>
+            <DialogDescription className="sr-only">Please wait while checking for file duplicates</DialogDescription>
             <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
             <h3 className="text-lg font-medium text-foreground">Checking for duplicates...</h3>
           </div>

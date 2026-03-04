@@ -118,7 +118,10 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
       >
         <div className="w-72 flex flex-col h-full overflow-hidden">
           <div className="px-4 py-3 border-b flex items-center justify-between shrink-0 min-h-[3.5rem]">
-            <h1 className="text-xl font-bold text-foreground tracking-tight">{titleName ?? "Cloud Drive"}</h1>
+            <div className="flex items-center gap-2">
+              <img src="/images/logo-removebg-preview.png" alt="Logo" className="w-10 h-10 object-contain" />
+              <h1 className="text-xl font-bold text-foreground tracking-tight">{titleName ?? "Cloud Drive"}</h1>
+            </div>
             <div className="flex items-center gap-2">
               <div className="flex flex-col gap-1 items-end">
                 <div className="flex items-center gap-1.5" title={`API: ${isHealthConnected ? 'OK' : 'Error'}`}>

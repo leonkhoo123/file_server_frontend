@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { X, Play, Pause, Volume2, VolumeX, Music, SkipBack, SkipForward, Headphones } from "lucide-react";
+import { X, Play, Pause, Volume2, VolumeX, SkipBack, SkipForward, Headphones } from "lucide-react";
 import { type FileInterface } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -7,6 +7,8 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
+import { formatTime } from "@/lib/utils";
+import TrackInfo from "./trackInfo";
 
 interface MusicPlayerProps {
   file: FileInterface;
@@ -16,55 +18,7 @@ interface MusicPlayerProps {
   forcePause?: boolean;
 }
 
-function formatTime(seconds: number) {
-  if (isNaN(seconds)) return "0:00";
-  const m = Math.floor(seconds / 60);
-  const s = Math.floor(seconds % 60);
-  return `${m.toString()}:${s.toString().padStart(2, "0")}`;
-}
 
-const MarqueeText = ({ text }: { text: string }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLSpanElement>(null);
-  const [isOverflowing, setIsOverflowing] = useState(false);
-  const [contentWidth, setContentWidth] = useState(0);
-
-  useEffect(() => {
-    const checkOverflow = () => {
-      if (containerRef.current && textRef.current) {
-        const cw = textRef.current.scrollWidth;
-        setIsOverflowing(cw > containerRef.current.clientWidth);
-        setContentWidth(cw);
-      }
-    };
-    checkOverflow();
-    window.addEventListener('resize', checkOverflow);
-    return () => { window.removeEventListener('resize', checkOverflow); };
-  }, [text]);
-
-  const duration = contentWidth > 0 ? contentWidth / 30 : 10;
-
-  return (
-    <div ref={containerRef} className="w-full overflow-hidden flex items-center justify-center relative">
-      <div 
-        className={`flex whitespace-nowrap ${isOverflowing ? 'animate-marquee' : 'justify-center w-full'}`}
-        style={{ 
-          width: isOverflowing ? 'max-content' : '100%',
-          animationDuration: isOverflowing ? `${duration}s` : undefined
-        }}
-      >
-        <span ref={textRef} className={`text-sm font-medium ${isOverflowing ? 'pr-8' : 'truncate'}`} title={text}>
-          {text}
-        </span>
-        {isOverflowing && (
-          <span className="text-sm font-medium pr-8" aria-hidden="true">
-            {text}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, forcePause }: MusicPlayerProps) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -144,7 +98,7 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
         title: file.name,
         artist: 'Cloud Drive Music',
       });
-      
+
       navigator.mediaSession.setActionHandler('play', () => { setIsPlaying(true); });
       navigator.mediaSession.setActionHandler('pause', () => { setIsPlaying(false); });
       if (activePlaylist.length > 1 && onSelectMusic) {
@@ -234,10 +188,10 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
         onEnded={handleEnded}
         className="hidden"
       />
-      
-      <div className="flex flex-row items-center justify-between gap-4 w-full">
+
+      <div className="flex flex-row items-center justify-between gap-2 md:gap-4 w-full">
         {/* Left: Controls and Time */}
-        <div className="flex items-center gap-2 md:gap-4 w-1/3 md:w-[30%]">
+        <div className="flex items-center gap-1 md:gap-4 md:w-[30%] shrink-0">
           <div className="flex items-center gap-1 md:gap-2">
             <Button
               variant="ghost"
@@ -272,23 +226,13 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
         </div>
 
         {/* Middle: Track Info */}
-        <div className="flex items-center justify-center gap-2 w-auto md:w-[40%] min-w-0">
-          <div className="bg-primary/10 p-1.5 md:p-2 rounded-md shrink-0">
-            <Music className="w-4 h-4 md:w-5 md:h-5 text-primary" />
-          </div>
-          <div className="flex flex-col min-w-0 overflow-hidden items-center text-center w-full">
-            <MarqueeText text={file.name} />
-            <span className="text-[10px] text-muted-foreground md:hidden truncate max-w-full mt-0.5">
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
-        </div>
+        <TrackInfo text={file.name} currentTime={currentTime} duration={duration} />
 
         {/* Right: Extra Controls */}
-        <div className="flex items-center justify-end gap-2 md:gap-4 w-1/3 md:w-[30%]">
+        <div className="flex items-center justify-end gap-1 md:gap-4 md:w-[30%] shrink-0">
           <div className="hidden md:flex items-center gap-2 bg-muted/50 p-1.5 rounded-md">
-            <Switch 
-              id="bg-play" 
+            <Switch
+              id="bg-play"
               checked={allowBackground}
               onCheckedChange={(checked) => {
                 setAllowBackground(checked);
@@ -300,7 +244,7 @@ export function MusicPlayer({ file, playlist = [], onSelectMusic, onClose, force
               BG Play
             </Label>
           </div>
-          
+
           <div className="hidden md:flex items-center gap-2 w-28">
             <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={toggleMute}>
               {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}

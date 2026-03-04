@@ -30,6 +30,7 @@ import { Button } from "@/components/ui/button";
 
 import { wsClient } from "@/api/wsClient";
 import { checkHealth, type HealthResponse } from "@/api/api-file";
+import { MusicPlayerV2 } from "@/components/custom/musicPlayerV2";
 
 export default function HomePage() {
   const [healthData, setHealthData] = useState<HealthResponse | null>(null);
@@ -517,7 +518,7 @@ export default function HomePage() {
       />
 
       {selectedMusic && (
-        <MusicPlayer 
+        <MusicPlayerV2
           file={selectedMusic} 
           playlist={(items?.items ?? []).filter(item => item.type !== 'dir' && (item.name.toLowerCase().endsWith('.mp3') || item.name.toLowerCase().endsWith('.wav') || item.name.toLowerCase().endsWith('.flac') || item.name.toLowerCase().endsWith('.ogg') || item.name.toLowerCase().endsWith('.m4a') || item.name.toLowerCase().endsWith('.aac')))}
           onSelectMusic={setSelectedMusic}

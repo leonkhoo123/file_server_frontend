@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { X, Trash2, Cloud } from "lucide-react";
+import { Folder, X, Trash2, Cloud } from "lucide-react";
 import { type StorageUsageResponse } from "@/api/api-file";
 import { formatBytes } from "@/utils/utils";
 import { Progress } from "@/components/ui/progress";
@@ -7,15 +7,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate, useLocation } from "react-router-dom";
 import { decodeUrlToPath } from "@/utils/utils";
 
-function StorageIndicator({ 
-  usage, 
-  isWsConnected, 
-  isHealthConnected 
-}: { 
-  usage?: StorageUsageResponse;
-  isWsConnected: boolean;
-  isHealthConnected: boolean;
-}) {
+function StorageIndicator({ usage }: { usage?: StorageUsageResponse }) {
   const lastUsage = useRef<StorageUsageResponse | undefined>(usage);
 
   useEffect(() => {
@@ -26,19 +18,6 @@ function StorageIndicator({
 
   const displayUsage = usage ?? lastUsage.current;
 
-  const indicators = (
-    <div className="flex flex-col gap-1 items-end">
-      <div className="flex items-center gap-1.5" title={`API: ${isHealthConnected ? 'OK' : 'Error'}`}>
-        <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wider leading-none">/health</span>
-        <div className={`w-1.5 h-1.5 rounded-full ${isHealthConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
-      </div>
-      <div className="flex items-center gap-1.5" title={`WS: ${isWsConnected ? 'Connected' : 'Disconnected'}`}>
-        <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wider leading-none">WebSocket</span>
-        <div className={`w-1.5 h-1.5 rounded-full ${isWsConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
-      </div>
-    </div>
-  );
-
   if (!displayUsage) {
     return (
       <div className="px-4 py-4 border-b">
@@ -47,12 +26,9 @@ function StorageIndicator({
           <span>Storage</span>
         </div>
         <Progress value={0} className="h-2 mb-2 bg-muted/50" />
-        <div className="flex justify-between items-end">
-          <div className="flex flex-col gap-1 text-xs text-muted-foreground opacity-50">
-            <div><span className="font-medium">...</span> of <span className="font-medium">...</span> used</div>
-            <div><span className="font-medium">...</span> left</div>
-          </div>
-          {indicators}
+        <div className="flex flex-col gap-1 text-xs text-muted-foreground opacity-50">
+          <div><span className="font-medium">...</span> of <span className="font-medium">...</span> used</div>
+          <div><span className="font-medium">...</span> left</div>
         </div>
       </div>
     );
@@ -67,11 +43,8 @@ function StorageIndicator({
           <Cloud className="h-4 w-4" />
           <span>Storage</span>
         </div>
-        <div className="flex justify-between items-end">
-          <div className="text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{usedFormatted}</span> used
-          </div>
-          {indicators}
+        <div className="text-xs text-muted-foreground">
+          <span className="font-medium text-foreground">{usedFormatted}</span> used
         </div>
       </div>
     );
@@ -88,12 +61,9 @@ function StorageIndicator({
         <span>Storage</span>
       </div>
       <Progress value={percentage} className="h-2 mb-2 bg-muted/50" indicatorClassName={percentage > 90 ? "bg-red-500" : "bg-blue-500"} />
-      <div className="flex justify-between items-end">
-        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-          <div><span className="font-medium text-foreground">{usedFormatted}</span> of <span className="font-medium text-foreground">{limitFormatted}</span> used</div>
-          <div><span className="font-medium text-foreground">{leftFormatted}</span> left</div>
-        </div>
-        {indicators}
+      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+        <div><span className="font-medium text-foreground">{usedFormatted}</span> of <span className="font-medium text-foreground">{limitFormatted}</span> used</div>
+        <div><span className="font-medium text-foreground">{leftFormatted}</span> left</div>
       </div>
     </div>
   );
@@ -153,12 +123,22 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
               <h1 className="text-xl font-bold text-foreground tracking-tight">{titleName ?? "Cloud Drive"}</h1>
             </div>
             <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-1 items-end">
+                <div className="flex items-center gap-1.5" title={`API: ${isHealthConnected ? 'OK' : 'Error'}`}>
+                  <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wider leading-none">/health</span>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isHealthConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
+                </div>
+                <div className="flex items-center gap-1.5" title={`WS: ${isWsConnected ? 'Connected' : 'Disconnected'}`}>
+                  <span className="text-[10px] text-muted-foreground/80 font-mono tracking-wider leading-none">WebSocket</span>
+                  <div className={`w-1.5 h-1.5 rounded-full ${isWsConnected ? 'bg-green-500 shadow-[0_0_4px_#22c55e]' : 'bg-red-500 shadow-[0_0_4px_#ef4444]'}`} />
+                </div>
+              </div>
               <Button variant="ghost" size="icon" className="lg:hidden h-12 w-12 text-muted-foreground hover:text-foreground shrink-0" onClick={onClose}>
                 <X className="h-6 w-6" />
               </Button>
             </div>
           </div>
-          <StorageIndicator usage={storageUsage} isWsConnected={isWsConnected} isHealthConnected={isHealthConnected} />
+          <StorageIndicator usage={storageUsage} />
           <div className="p-3 flex-1 overflow-auto space-y-1 pb-16">
             <div 
               className={`flex items-center gap-3 text-base md:text-sm px-3 py-3 md:py-2 rounded-md transition-colors cursor-pointer
@@ -173,7 +153,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
             </div>
 
             {/* Placeholder Items */}
-            {/* <div className="flex items-center gap-3 text-base md:text-sm text-muted-foreground px-3 py-3 md:py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
+            <div className="flex items-center gap-3 text-base md:text-sm text-muted-foreground px-3 py-3 md:py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
               <Folder className="h-5 w-5 md:h-4 md:w-4 text-blue-400/50 shrink-0" />
               <span className="truncate">Projects</span>
             </div>
@@ -184,7 +164,7 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
             <div className="flex items-center gap-3 text-base md:text-sm text-muted-foreground px-3 py-3 md:py-2 rounded-md hover:bg-muted/50 cursor-not-allowed transition-colors" title="Feature coming soon">
               <Folder className="h-5 w-5 md:h-4 md:w-4 text-blue-400/50 shrink-0" />
               <span className="truncate">Downloads</span>
-            </div> */}
+            </div>
           </div>
         </div>
       </aside>

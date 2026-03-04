@@ -1,4 +1,12 @@
 import axiosLayer from "./axiosLayer";
+import fpPromise from '@fingerprintjs/fingerprintjs';
+
+// Initialize the agent at application startup.
+const getFingerprint = async (): Promise<string> => {
+  const fp = await fpPromise.load();
+  const result = await fp.get();
+  return result.visitorId;
+};
 
 export interface LoginResponse {
   message: string;
@@ -7,9 +15,10 @@ export interface LoginResponse {
 }
 
 export const login = async (username: string, password: string): Promise<LoginResponse> => {
+    const device_id = await getFingerprint();
     const res = await axiosLayer.post<LoginResponse>(
       "/login",
-      { username, password },
+      { username, password, device_id },
       { 
         headers: { "Content-Type": "application/json" },
       }
@@ -18,9 +27,10 @@ export const login = async (username: string, password: string): Promise<LoginRe
 };
 
 export const verifyMfa = async (code: string): Promise<LoginResponse> => {
+    const device_id = await getFingerprint();
     const res = await axiosLayer.post<LoginResponse>(
       "/mfa/verify",
-      { code },
+      { code, device_id },
       { 
         headers: { "Content-Type": "application/json" },
       }
@@ -58,4 +68,23 @@ export const logout = async (): Promise<void> => {
   await axiosLayer.post("/logout", null, {
     withCredentials: true,
   });
+};
+
+export interface SessionInfo {
+  family_id: string;
+  device_id: string;
+  device_info: string;
+  ip_address: string;
+  created_at: string;
+  expires_at: string;
+}
+
+export const getSessions = async (): Promise<SessionInfo[]> => {
+  const res = await axiosLayer.get<SessionInfo[]>("/me/sessions");
+  return res.data;
+};
+
+export const revokeSession = async (family_id: string): Promise<{ success: boolean }> => {
+  const res = await axiosLayer.delete<{ success: boolean }>(`/me/sessions/${family_id}`);
+  return res.data;
 };

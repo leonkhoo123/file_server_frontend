@@ -15,6 +15,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { DevicesModal } from "@/components/custom/DevicesModal";
+import { MonitorSmartphone } from "lucide-react";
 
 interface HomeBreadcrumbProps {
   currentPath: string;
@@ -40,6 +42,7 @@ export default function HomeBreadcrumb({
   const { theme, setTheme } = useTheme();
   const { showHidden, setShowHidden } = usePreferences();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [devicesModalOpen, setDevicesModalOpen] = useState(false);
 
   useEffect(() => {
     getMe().then((res) => {
@@ -171,6 +174,11 @@ export default function HomeBreadcrumb({
 
               <DropdownMenuSeparator />
 
+              <DropdownMenuItem onClick={() => { setDevicesModalOpen(true); }}>
+                <MonitorSmartphone className="mr-2 h-4 w-4" />
+                <span>Devices</span>
+              </DropdownMenuItem>
+
               {isAdmin && (
                 <DropdownMenuItem onClick={() => { void navigate("/admin"); }}>
                   <Sliders className="mr-2 h-4 w-4" />
@@ -226,6 +234,11 @@ export default function HomeBreadcrumb({
           </DropdownMenu>
         </div>
       </div>
+
+      <DevicesModal 
+        open={devicesModalOpen} 
+        onOpenChange={setDevicesModalOpen} 
+      />
     </div>
   );
 }

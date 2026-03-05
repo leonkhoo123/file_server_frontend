@@ -165,6 +165,8 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
 
   if (!isOpen || !file) return null;
 
+  const isTooLarge = file.size > 2 * 1024 * 1024;
+
   const handleCopy = () => {
     navigator.clipboard.writeText(content)
       .then(() => {
@@ -194,59 +196,65 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
               {file.name}
             </h2>
             
-            <div className="relative hidden sm:flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-2 border-input bg-background/50">
-                    {SUPPORTED_LANGUAGES.find((l) => l.id === language)?.name ?? "Language"}
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[180px] max-h-[300px] overflow-y-auto z-[150]">
-                  {SUPPORTED_LANGUAGES.map((lang) => (
-                    <DropdownMenuItem 
-                      key={lang.id} 
-                      onSelect={() => { setLanguage(lang.id); }}
-                      className={language === lang.id ? "bg-muted" : ""}
-                    >
-                      {lang.name}
-                      {language === lang.id && <Check className="ml-auto h-4 w-4" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {!isTooLarge && (
+              <div className="relative hidden sm:flex items-center">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 gap-2 border-input bg-background/50">
+                      {SUPPORTED_LANGUAGES.find((l) => l.id === language)?.name ?? "Language"}
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[180px] max-h-[300px] overflow-y-auto z-[150]">
+                    {SUPPORTED_LANGUAGES.map((lang) => (
+                      <DropdownMenuItem 
+                        key={lang.id} 
+                        onSelect={() => { setLanguage(lang.id); }}
+                        className={language === lang.id ? "bg-muted" : ""}
+                      >
+                        {lang.name}
+                        {language === lang.id && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center space-x-1 shrink-0 ml-2">
-            <div className="sm:hidden relative mr-1">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 px-2 gap-1 border-input bg-background/50 text-xs">
-                    <span className="truncate max-w-[70px]">
-                      {SUPPORTED_LANGUAGES.find((l) => l.id === language)?.name ?? "Lang"}
-                    </span>
-                    <ChevronDown className="h-3 w-3 text-muted-foreground" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[180px] max-h-[300px] overflow-y-auto z-[150]">
-                  {SUPPORTED_LANGUAGES.map((lang) => (
-                    <DropdownMenuItem 
-                      key={lang.id} 
-                      onSelect={() => { setLanguage(lang.id); }}
-                      className={language === lang.id ? "bg-muted" : ""}
-                    >
-                      {lang.name}
-                      {language === lang.id && <Check className="ml-auto h-4 w-4" />}
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            {!isTooLarge && (
+              <div className="sm:hidden relative mr-1">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8 px-2 gap-1 border-input bg-background/50 text-xs">
+                      <span className="truncate max-w-[70px]">
+                        {SUPPORTED_LANGUAGES.find((l) => l.id === language)?.name ?? "Lang"}
+                      </span>
+                      <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-[180px] max-h-[300px] overflow-y-auto z-[150]">
+                    {SUPPORTED_LANGUAGES.map((lang) => (
+                      <DropdownMenuItem 
+                        key={lang.id} 
+                        onSelect={() => { setLanguage(lang.id); }}
+                        className={language === lang.id ? "bg-muted" : ""}
+                      >
+                        {lang.name}
+                        {language === lang.id && <Check className="ml-auto h-4 w-4" />}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
 
-            <Button variant="ghost" size="icon" onClick={handleCopy} disabled={isLoading || !!error} title="Copy content">
-              {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-            </Button>
+            {!isTooLarge && (
+              <Button variant="ghost" size="icon" onClick={handleCopy} disabled={isLoading || !!error} title="Copy content">
+                {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+              </Button>
+            )}
             <Button variant="ghost" size="icon" onClick={handleDownload} title="Download file">
               <Download className="h-4 w-4" />
             </Button>

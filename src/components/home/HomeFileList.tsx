@@ -493,10 +493,12 @@ export default function HomeFileList({
                       Paste
                     </ContextMenuItem>
                     <ContextMenuSeparator />
-                    <ContextMenuItem onClick={(e) => { e.stopPropagation(); onRename(); }} disabled={selectedItems.size !== 1 || isRecycleBin || selectedItems.has('.cloud_delete')}>
-                      <Pencil className="mr-2 h-4 w-4" />
-                      Rename
-                    </ContextMenuItem>
+                    {selectedItems.size <= 1 && (
+                      <ContextMenuItem onClick={(e) => { e.stopPropagation(); onRename(); }} disabled={selectedItems.size !== 1 || isRecycleBin || selectedItems.has('.cloud_delete')}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Rename
+                      </ContextMenuItem>
+                    )}
                     <ContextMenuItem onClick={(e) => { e.stopPropagation(); onDelete(); }} disabled={selectedItems.size === 0 || selectedItems.has('.cloud_delete')} className="text-red-600 focus:bg-red-50 focus:text-red-600 dark:focus:bg-red-950/30">
                       <TrashIcon className="mr-2 h-4 w-4" />
                       Delete

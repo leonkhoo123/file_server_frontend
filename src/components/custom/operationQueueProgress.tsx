@@ -12,7 +12,14 @@ export function OperationQueueProgress() {
     const [isExpanded, setIsExpanded] = useState(false);
     const panelRef = useRef<HTMLDivElement>(null);
     const prevOpIdsRef = useRef<Set<string>>(new Set(Object.keys(operations)));
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
     const [listRef] = useAutoAnimate<HTMLDivElement>();
+
+    useEffect(() => {
+        if (isExpanded && scrollContainerRef.current) {
+            scrollContainerRef.current.scrollTop = 0;
+        }
+    }, [operations, isExpanded]);
 
     useEffect(() => {
         const currentIds = Object.keys(operations);
@@ -258,7 +265,7 @@ export function OperationQueueProgress() {
                         </Button>
                     </div>
                 </div>
-                <div className="max-h-[30vh] overflow-y-auto p-2 bg-card">
+                <div ref={scrollContainerRef} className="max-h-[30vh] overflow-y-auto p-2 bg-card">
                     {renderOpsListContent()}
                 </div>
             </div>

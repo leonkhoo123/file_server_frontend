@@ -16,11 +16,17 @@ export const PhotoViewerModal: React.FC<PhotoViewerModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState<number>(0);
-
   const images = useMemo(() => {
     return allItems.filter(item => item.type === 'file' && (item.media_type === "photo"));
   }, [allItems]);
+
+  const [currentIndex, setCurrentIndex] = useState<number>(() => {
+    if (initialFile) {
+      const idx = allItems.filter(item => item.type === 'file' && item.media_type === "photo").findIndex(img => img.name === initialFile.name);
+      return idx !== -1 ? idx : 0;
+    }
+    return 0;
+  });
 
   useEffect(() => {
     if (initialFile && isOpen) {

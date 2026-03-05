@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Download, Copy, Check, ChevronDown } from "lucide-react";
+import { X, Download, Copy, Check, ChevronDown, FileText } from "lucide-react";
 import { type FileInterface, downloadFiles } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -135,6 +135,10 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
   useEffect(() => {
     if (!isOpen || !file) return;
 
+    if (file.size > 2 * 1024 * 1024) {
+      return; // Skip fetching if file is too large
+    }
+
     const fetchContent = async () => {
       setIsLoading(true);
       setError(null);
@@ -255,7 +259,21 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
 
         {/* Content */}
         <div className="flex-1 overflow-hidden relative bg-background">
-          {isLoading ? (
+          {file.size > 2 * 1024 * 1024 ? (
+            <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
+              <div className="h-16 w-16 bg-muted rounded-full flex items-center justify-center mb-4">
+                <FileText className="h-8 w-8" />
+              </div>
+              <p className="font-semibold text-lg mb-2 text-foreground">File is too large</p>
+              <p className="mb-6 max-w-sm">
+                This file is larger than 2MB and cannot be previewed in the browser. Please download it to view its contents.
+              </p>
+              <Button onClick={handleDownload} className="gap-2">
+                <Download className="h-4 w-4" />
+                Download File
+              </Button>
+            </div>
+          ) : isLoading ? (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
               <div className="h-8 w-8 rounded-full border-4 border-primary border-t-transparent animate-spin mb-4" />
               <p>Loading document...</p>

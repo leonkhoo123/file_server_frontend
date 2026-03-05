@@ -162,7 +162,10 @@ const LoginPage: React.FC = () => {
                     renderInput={(props) => (
                       <input
                         {...props}
-                        className="w-12 h-12 text-center text-lg border rounded-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-zinc-950 dark:border-zinc-800"
+                        type="number"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className="w-12 h-12 text-center text-lg border rounded-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-zinc-950 dark:border-zinc-800 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                         style={{ width: "3rem" }}
                       />
                     )}
@@ -189,7 +192,10 @@ const LoginPage: React.FC = () => {
                     renderInput={(props) => (
                       <input
                         {...props}
-                        className="w-12 h-12 text-center text-lg border rounded-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-zinc-950 dark:border-zinc-800"
+                        type="number"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className="w-12 h-12 text-center text-lg border rounded-md focus:ring-2 focus:ring-primary focus:outline-none dark:bg-zinc-950 dark:border-zinc-800 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [-moz-appearance:textfield]"
                         style={{ width: "3rem" }}
                       />
                     )}

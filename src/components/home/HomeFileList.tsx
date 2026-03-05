@@ -56,6 +56,9 @@ const getFileIcon = (file: FileInterface) => {
   if (file.media_type === "music") {
     return <FileAudio className="h-5 w-5 shrink-0 text-pink-400" />;
   }
+  if (file.media_type === "pdf") {
+    return <FileText className="h-5 w-5 shrink-0 text-red-500" />;
+  }
   if (file.media_type === "text_documents") {
     const lowerName = file.name.toLowerCase();
     if (lowerName.endsWith('.yaml') || lowerName.endsWith('.yml')) {

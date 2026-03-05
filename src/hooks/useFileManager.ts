@@ -38,6 +38,7 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
   const [selectedPhoto, setSelectedPhoto] = useState<FileInterface | null>(null);
   const [selectedMusic, setSelectedMusic] = useState<FileInterface | null>(null);
   const [selectedDocument, setSelectedDocument] = useState<FileInterface | null>(null);
+  const [selectedPdf, setSelectedPdf] = useState<FileInterface | null>(null);
 
   // 3. Selection state and click handlers
   const {
@@ -52,7 +53,7 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     handleFileClick,
     handleFileContextMenu,
     handleFileDoubleClick
-  } = useFileSelection(items, currentPath, setSelectedVideo, setSelectedPhoto, setSelectedMusic, setSelectedDocument);
+  } = useFileSelection(items, currentPath, setSelectedVideo, setSelectedPhoto, setSelectedMusic, setSelectedDocument, setSelectedPdf);
 
   // 4. File Actions (copy, cut, paste, delete, rename, properties, folder)
   const {
@@ -139,6 +140,8 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     setSelectedMusic,
     selectedDocument,
     setSelectedDocument,
+    selectedPdf,
+    setSelectedPdf,
     currentPath,
     selectedItems,
     clipboardItems,

@@ -6,6 +6,7 @@ import VersionTag from "@/components/custom/versionTag";
 import VideoPlayerModalGeneric from "@/components/custom/videoPlayerModalGeneric";
 import PhotoViewerModal from "@/components/custom/photoViewerModal";
 import TextViewerModal from "@/components/custom/textViewerModal";
+import PdfViewerModal from "@/components/custom/pdfViewerModal";
 import { useFileManager } from "@/hooks/useFileManager";
 import HomeSidebar from "@/components/home/HomeSidebar";
 import HomeBreadcrumb from "@/components/home/HomeBreadcrumb";
@@ -45,6 +46,8 @@ export default function HomePage() {
     setSelectedMusic,
     selectedDocument,
     setSelectedDocument,
+    selectedPdf,
+    setSelectedPdf,
     currentPath,
     selectedItems,
     clipboardItems,
@@ -537,6 +540,14 @@ export default function HomePage() {
           file={selectedDocument}
           isOpen={!!selectedDocument}
           onClose={() => { setSelectedDocument(null); }}
+        />
+      )}
+
+      {selectedPdf && (
+        <PdfViewerModal
+          file={selectedPdf}
+          isOpen={!!selectedPdf}
+          onClose={() => { setSelectedPdf(null); }}
         />
       )}
     </DefaultLayout>

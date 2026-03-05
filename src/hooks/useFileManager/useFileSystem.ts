@@ -1,9 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation, useNavigate } from "react-router-dom";
 import { fetchDirList, type ItemsResponse } from "@/api/api-file";
 import { wsClient, type OperationMessage } from "@/api/wsClient";
 import { usePreferences } from "@/context/PreferencesContext";
 import { decodeUrlToPath } from "@/utils/utils";
+
+export type SortField = 'name' | 'size' | 'modified';
+export type SortOrder = 'asc' | 'desc';
 
 export function useFileSystem() {
   const location = useLocation();
@@ -15,12 +18,31 @@ export function useFileSystem() {
   const [error, setError] = useState<boolean>(false);
   const [currentPath, setCurrentPath] = useState<string>("/");
 
+  const [sortField, setSortField] = useState<SortField | null>(null);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+
+  const prevPathRef = useRef<string>("/");
+
+  const handleSortChange = useCallback((field: SortField) => {
+    if (sortField === field) {
+      if (sortOrder === 'asc') {
+        setSortOrder('desc');
+      } else {
+        setSortField(null);
+        setSortOrder('asc');
+      }
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  }, [sortField, sortOrder]);
+
   const handleRefresh = useCallback(async () => {
     setIsLoading(true);
     setError(false);
     try {
       const [itemsrs] = await Promise.all([
-        fetchDirList(currentPath, showHidden),
+        fetchDirList(currentPath, showHidden, sortField ?? undefined, sortField ? sortOrder : undefined),
         new Promise(resolve => setTimeout(resolve, 200))
       ]);
       setItems(itemsrs);
@@ -38,7 +60,7 @@ export function useFileSystem() {
     } finally {
       setIsLoading(false);
     }
-  }, [currentPath, showHidden, navigate]);
+  }, [currentPath, showHidden, sortField, sortOrder, navigate]);
 
   useEffect(() => {
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -47,13 +69,19 @@ export function useFileSystem() {
     const loadFiles = async () => {
       setIsLoading(true);
       setError(false);
-      setItems(undefined); // Clear items to show skeleton on directory change
+      
+      const rawPath = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
+      const path = decodeUrlToPath(rawPath);
+      
+      // Clear items to show skeleton ONLY on directory change
+      if (path !== prevPathRef.current) {
+        setItems(undefined);
+        prevPathRef.current = path;
+      }
 
       try {
-        const rawPath = decodeURIComponent(location.pathname.replace("/home", "")) || "/";
-        const path = decodeUrlToPath(rawPath);
         const [itemsrs] = await Promise.all([
-          fetchDirList(path, showHidden),
+          fetchDirList(path, showHidden, sortField ?? undefined, sortField ? sortOrder : undefined),
           new Promise(resolve => setTimeout(resolve, 200))
         ]);
         setItems(itemsrs);
@@ -75,7 +103,7 @@ export function useFileSystem() {
     };
 
     void loadFiles();
-  }, [location, showHidden, navigate]);
+  }, [location, showHidden, sortField, sortOrder, navigate]);
 
   useEffect(() => {
     const unsubscribe = wsClient.subscribe((msg: OperationMessage) => {
@@ -103,6 +131,9 @@ export function useFileSystem() {
     error,
     setError,
     currentPath,
-    handleRefresh
+    handleRefresh,
+    sortField,
+    sortOrder,
+    handleSortChange
   };
 }

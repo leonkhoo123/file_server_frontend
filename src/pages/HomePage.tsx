@@ -96,6 +96,9 @@ export default function HomePage() {
     isDuplicateChecking,
     duplicateItems,
     executePaste,
+    sortField,
+    sortOrder,
+    handleSortChange,
   } = useFileManager({ uploadChunkSize: healthData?.upload_chunk_size });
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth >= 1024);
@@ -342,6 +345,9 @@ export default function HomePage() {
             clipboardSourceDir={clipboardItems.sourceDir}
             currentPath={currentPath}
             onUploadDrop={(files, path) => { void handleUploadFiles(files, path); }}
+            sortField={sortField}
+            sortOrder={sortOrder}
+            onSortChange={handleSortChange}
           />
         </div>
 

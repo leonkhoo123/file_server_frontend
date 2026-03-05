@@ -1,4 +1,4 @@
-import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2, Download, FileImage, FileVideo, FileAudio, FileText, Terminal, FileCode } from "lucide-react";
+import { File, Folder, Trash2, Scissors, Copy, Clipboard, Pencil, Trash2 as TrashIcon, Info, UploadCloud, MoreVertical, Loader2, Download, FileImage, FileVideo, FileAudio, FileText, Terminal, FileCode, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatBytes, formatLastModified } from "@/utils/utils";
 import type { ItemsResponse, FileInterface } from "@/api/api-file";
@@ -41,6 +41,9 @@ interface HomeFileListProps {
   clipboardSourceDir?: string;
   currentPath: string;
   onUploadDrop: (files: File[], targetPath: string) => void;
+  sortField?: 'name' | 'size' | 'modified' | null;
+  sortOrder?: 'asc' | 'desc';
+  onSortChange?: (field: 'name' | 'size' | 'modified') => void;
 }
 
 const getFileIcon = (file: FileInterface) => {
@@ -89,6 +92,9 @@ export default function HomeFileList({
   clipboardSourceDir,
   currentPath,
   onUploadDrop,
+  sortField,
+  sortOrder,
+  onSortChange,
 }: HomeFileListProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [displayItems, setDisplayItems] = useState<ItemsResponse | undefined>(items);
@@ -542,9 +548,33 @@ export default function HomeFileList({
 
       {/* Table Header */}
       <div className="flex border-b font-semibold py-3 md:py-2 px-6 md:pl-5 md:pr-8 text-base md:text-sm bg-muted/30 shrink-0 overflow-y-scroll scrollbar scrollbar-thumb-transparent scrollbar-track-transparent">
-        <div className="flex-1 text-left text-muted-foreground">Name</div>
-        <div className="w-24 md:w-32 hidden lg:block text-right text-muted-foreground">Size</div>
-        <div className="w-32 md:w-48 hidden lg:block text-right text-muted-foreground">Last Modified</div>
+        <div 
+          className="flex-1 text-left text-muted-foreground flex items-center cursor-pointer hover:text-foreground transition-colors group"
+          onClick={() => onSortChange?.('name')}
+        >
+          Name
+          {sortField === 'name' && (
+            sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+          )}
+        </div>
+        <div 
+          className="w-24 md:w-32 hidden lg:flex justify-end text-muted-foreground items-center cursor-pointer hover:text-foreground transition-colors group"
+          onClick={() => onSortChange?.('size')}
+        >
+          Size
+          {sortField === 'size' && (
+            sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+          )}
+        </div>
+        <div 
+          className="w-32 md:w-48 hidden lg:flex justify-end text-muted-foreground items-center cursor-pointer hover:text-foreground transition-colors group"
+          onClick={() => onSortChange?.('modified')}
+        >
+          Last Modified
+          {sortField === 'modified' && (
+            sortOrder === 'asc' ? <ArrowUp className="ml-1 h-3 w-3" /> : <ArrowDown className="ml-1 h-3 w-3" />
+          )}
+        </div>
       </div>
 
       {isTouchDevice ? (

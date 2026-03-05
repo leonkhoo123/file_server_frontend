@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { toast } from "sonner";
 import { postDisqualified, renameFileMoveToDone } from "@/api/api-video";
-import { deleteTempRotate, fetchDirList, type ItemsResponse, type FileInterface } from "@/api/api-file";
+import { deleteTempRotate, type FileInterface } from "@/api/api-file";
 
 export function useVideoOperations({
   currentPath,
-  setItems,
+  handleRefresh,
   setIsLoading,
   setError
 }: {
   currentPath: string;
-  setItems: (items: ItemsResponse | undefined) => void;
+  handleRefresh: () => Promise<void>;
   setIsLoading: (loading: boolean) => void;
   setError: (error: boolean) => void;
 }) {
@@ -21,14 +21,12 @@ export function useVideoOperations({
     try {
       if (isDisqualified) {
         await postDisqualified(oriPath);
-        const itemsrs = await fetchDirList(currentPath);
-        setItems(itemsrs);
+        await handleRefresh();
       } else if (isNewName) {
         setIsLoading(true);
         await renameFileMoveToDone(oriPath, newName, rotation);
         setIsLoading(false);
-        const itemsrs = await fetchDirList(currentPath);
-        setItems(itemsrs);
+        await handleRefresh();
       }
     } catch (error) {
       console.error("Failed to move or rename file:", error);
@@ -40,8 +38,7 @@ export function useVideoOperations({
     try {
       setIsLoading(true);
       await deleteTempRotate(currentPath);
-      const itemsrs = await fetchDirList(currentPath);
-      setItems(itemsrs);
+      await handleRefresh();
     } catch (error: any) {
       setError(true);
       toast.error("Failed to Clean Up");

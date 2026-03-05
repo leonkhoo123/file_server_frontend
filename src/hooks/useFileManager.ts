@@ -16,13 +16,15 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
   // 1. Core File System (fetching, path, loading, errors)
   const {
     items,
-    setItems,
     isLoading,
     setIsLoading,
     error,
     setError,
     currentPath,
-    handleRefresh
+    handleRefresh,
+    sortField,
+    sortOrder,
+    handleSortChange
   } = useFileSystem();
 
   // 2. Video Operations (setSelectedVideo, player close, clean up)
@@ -31,7 +33,7 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     setSelectedVideo,
     handlePlayerClose,
     removeRotateTemp
-  } = useVideoOperations({ currentPath, setItems, setIsLoading, setError });
+  } = useVideoOperations({ currentPath, handleRefresh, setIsLoading, setError });
 
   const [selectedPhoto, setSelectedPhoto] = useState<FileInterface | null>(null);
   const [selectedMusic, setSelectedMusic] = useState<FileInterface | null>(null);
@@ -189,5 +191,8 @@ export function useFileManager({ uploadChunkSize }: { uploadChunkSize?: number }
     isDuplicateChecking,
     duplicateItems,
     executePaste,
+    sortField,
+    sortOrder,
+    handleSortChange,
   };
 }

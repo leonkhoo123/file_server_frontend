@@ -41,12 +41,16 @@ export const checkHealth = async (): Promise<HealthResponse | null> => {
   }
 };
 
-export const fetchDirList = async (path = "/", showHidden = false): Promise<ItemsResponse> => {
+export const fetchDirList = async (path = "/", showHidden = false, sort?: string, order?: string): Promise<ItemsResponse> => {
   // Clean up path formatting (avoid duplicate slashes)
   const cleanPath = path.trim() === "" ? "/" : path;
 
+  const params: Record<string, any> = { path: cleanPath, showHidden };
+  if (sort) params.sort = sort;
+  if (order) params.order = order;
+
   const rs = await axiosLayer.get("/files/file-list", {
-    params: { path: cleanPath, showHidden },
+    params,
     headers: { "Accept": "application/json" },
   });
 

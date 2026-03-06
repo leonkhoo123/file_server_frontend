@@ -255,9 +255,11 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
                 {isCopied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             )}
-            <Button variant="ghost" size="icon" onClick={handleDownload} title="Download file">
-              <Download className="h-4 w-4" />
-            </Button>
+            {!isTooLarge && (
+              <Button variant="ghost" size="icon" onClick={handleDownload} title="Download file">
+                <Download className="h-4 w-4" />
+              </Button>
+            )}
             <div className="w-px h-6 bg-border mx-1" />
             <Button variant="ghost" size="icon" onClick={onClose} title="Close">
               <X className="h-5 w-5" />

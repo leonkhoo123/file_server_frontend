@@ -123,6 +123,26 @@ export function useFileSystem() {
     };
   }, [currentPath, handleRefresh]);
 
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void handleRefresh();
+      }
+    };
+
+    const handleFocus = () => {
+      void handleRefresh();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [handleRefresh]);
+
   return {
     items,
     setItems,

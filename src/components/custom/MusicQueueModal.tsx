@@ -1,4 +1,3 @@
-import React from "react";
 import { X, GripVertical, Shuffle, ListMusic, Play } from "lucide-react";
 import { type FileInterface } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
@@ -88,8 +87,6 @@ const SortableItem = ({
 };
 
 export function MusicQueueModal({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  isOpen,
   onClose,
   playlist,
   currentFile,

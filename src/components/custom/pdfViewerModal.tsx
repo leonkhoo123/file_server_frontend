@@ -200,12 +200,12 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
         className="flex-1 w-full h-full overflow-hidden flex flex-col items-center relative"
       >
         {isLoadingFile ? (
-          <div className="flex flex-col items-center justify-center h-full w-full gap-4 pt-16">
+          <div className="flex flex-col items-center justify-center h-full w-full gap-4">
              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
              <span className="text-muted-foreground animate-pulse">Downloading PDF...</span>
           </div>
         ) : fetchError ? (
-          <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4 pt-16">
+          <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4">
             <span>{fetchError}</span>
             <Button variant="outline" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" /> Download Instead
@@ -216,13 +216,14 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
             initialScale={1}
             minScale={0.5}
             maxScale={5}
+            centerOnInit={true}
             centerZoomedOut={true}
             wheel={{ step: 0.1 }}
             pinch={{ step: 5 }}
             doubleClick={{ disabled: true }}
             panning={{ velocityDisabled: true }}
           >
-            {({ zoomIn, zoomOut, resetTransform }) => (
+            {({ zoomIn, zoomOut, resetTransform, centerView }) => (
               <>
                 {/* Controls Bar - Floating at bottom */}
                 <div 
@@ -312,6 +313,11 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
                             renderTextLayer={true}
                             renderAnnotationLayer={true}
                             className="shadow-xl bg-white max-w-full"
+                            onLoadSuccess={() => {
+                              setTimeout(() => {
+                                centerView();
+                              }, 10);
+                            }}
                             loading={
                               <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
                                  <span className="text-muted-foreground animate-pulse">Loading page...</span>

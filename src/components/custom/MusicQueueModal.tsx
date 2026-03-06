@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { X, GripVertical, Shuffle, ListMusic, Play } from "lucide-react";
 import { type FileInterface } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
@@ -32,10 +33,12 @@ const SortableItem = ({
   item,
   isActive,
   onSelect,
+  activeRef,
 }: {
   item: FileInterface;
   isActive: boolean;
   onSelect: (file: FileInterface) => void;
+  activeRef?: React.Ref<HTMLDivElement>;
 }) => {
   const {
     attributes,
@@ -52,9 +55,22 @@ const SortableItem = ({
     zIndex: isDragging ? 10 : 1,
   };
 
+  // Combine refs so both dnd-kit and our scroll logic can access the DOM node
+  const setCombinedRef = (node: HTMLDivElement | null) => {
+    setNodeRef(node);
+    if (activeRef) {
+      if (typeof activeRef === 'function') {
+        activeRef(node);
+      } else {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-member-access
+        (activeRef as any).current = node;
+      }
+    }
+  };
+
   return (
     <div
-      ref={setNodeRef}
+      ref={setCombinedRef}
       style={style}
       className={`flex items-center justify-between p-2 mb-1 rounded-md transition-colors ${
         isActive ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
@@ -92,7 +108,27 @@ export function MusicQueueModal({
   currentFile,
   onSelectMusic,
   onReorderPlaylist,
+  isOpen,
 }: MusicQueueModalProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const activeItemRef = useRef<HTMLDivElement>(null);
+  const hasScrolledRef = useRef(false);
+
+  // Scroll to active item when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      hasScrolledRef.current = false;
+      // Use a slight delay to allow rendering before scroll
+      const timer = setTimeout(() => {
+        if (activeItemRef.current && containerRef.current && !hasScrolledRef.current) {
+          activeItemRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          hasScrolledRef.current = true;
+        }
+      }, 100);
+      return () => { clearTimeout(timer); };
+    }
+  }, [isOpen]);
+
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -121,15 +157,20 @@ export function MusicQueueModal({
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    // Optionally move the current file to the top
+    // Automatically move the current file to the top on shuffle
     if (currentFile) {
       const currentIndex = shuffled.findIndex(f => f.url === currentFile.url);
       if (currentIndex > 0) {
-        shuffled.splice(currentIndex, 1);
-        shuffled.unshift(currentFile);
+        const [curr] = shuffled.splice(currentIndex, 1);
+        shuffled.unshift(curr);
       }
     }
     onReorderPlaylist(shuffled);
+    
+    // Scroll back to top (where the active item now is)
+    if (containerRef.current) {
+      containerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    }
   };
 
   return (
@@ -152,7 +193,10 @@ export function MusicQueueModal({
       </div>
 
       {/* Playlist */}
-      <div className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+      <div 
+        ref={containerRef}
+        className="flex-1 overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
+      >
         <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={playlist.map(item => item.url)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col pb-safe">
@@ -162,6 +206,7 @@ export function MusicQueueModal({
                   item={item}
                   isActive={currentFile?.url === item.url}
                   onSelect={onSelectMusic}
+                  activeRef={currentFile?.url === item.url ? activeItemRef : undefined}
                 />
               ))}
             </div>

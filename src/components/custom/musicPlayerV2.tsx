@@ -105,14 +105,9 @@ export function MusicPlayerV2({ file, playlist = [], onSelectMusic, onClose, for
     if (isFileInPlaylist) {
       if (!isInternalChange.current && (currentFile.url !== lastFileUrl || newPlaylistKey !== lastPlaylistKey)) {
         // User clicked from outside the player (e.g., file list) or folder changed
-        // Reorder the playlist so the clicked song is at the top, then the rest (which are already sorted by name)
-        const reorderedPlaylist = [...playlist];
-        const index = reorderedPlaylist.findIndex(p => p.url === currentFile.url);
-        if (index > -1) {
-          const [clickedSong] = reorderedPlaylist.splice(index, 1);
-          reorderedPlaylist.unshift(clickedSong);
-        }
-        setActivePlaylist(reorderedPlaylist);
+        // Keep the playlist as is so the queue order remains exactly the same as the folder.
+        // We will just scroll to the active item in the queue.
+        setActivePlaylist([...playlist]);
         setLastPlaylistKey(newPlaylistKey);
         setLastFileUrl(currentFile.url);
       } else if (isInternalChange.current) {
@@ -343,7 +338,12 @@ export function MusicPlayerV2({ file, playlist = [], onSelectMusic, onClose, for
           {/* Middle: Track Info */}
           <div 
             className="flex-1 min-w-0 flex justify-center cursor-pointer md:cursor-default" 
-            onClick={() => { setIsQueueOpen(!isQueueOpen); }}
+            onClick={() => { 
+              // Only open the full-screen mobile modal if on a small screen
+              if (window.innerWidth < 768) {
+                setIsQueueOpen(!isQueueOpen); 
+              }
+            }}
           >
             <TrackInfo text={currentFile.name} currentTime={currentTime} duration={duration} />
           </div>

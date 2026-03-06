@@ -300,7 +300,7 @@ export default function HomeFileList({
   const fileListContainer = (
     <div 
       ref={scrollContainerRef}
-      className="flex-1 min-h-0 relative overflow-y-scroll p-2 md:p-3 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent"
+      className="flex-1 min-h-0 relative overflow-y-scroll overscroll-y-none p-2 md:p-3 scrollbar-thumb-rounded-full scrollbar-track-rounded-full scrollbar scrollbar-thumb-black/20 dark:scrollbar-thumb-white/20 scrollbar-track-transparent"
     >
       {/* Loading Overlay */}
       <div 
@@ -521,7 +521,7 @@ export default function HomeFileList({
             })}
             
             {/* Counts acting as spacer */}
-            <div className="flex items-center justify-center text-sm text-muted-foreground h-20 md:h-12 border-t mt-2 border-border/50">
+            <div className="flex items-center justify-center text-sm text-muted-foreground min-h-[64px] md:min-h-[44px] border-t mt-2 border-border/50 [-webkit-touch-callout:none] [-webkit-tap-highlight-color:transparent]">
               {displayItems.folder_count !== undefined ? (
                 <span>{displayItems.folder_count} folder(s), {displayItems.file_count} file(s), total {displayItems.count} item(s)</span>
               ) : (

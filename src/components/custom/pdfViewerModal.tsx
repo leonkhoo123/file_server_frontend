@@ -314,7 +314,7 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
                       className="flex flex-col items-center w-fit"
                     >
                       {numPages ? (
-                        Array.from(new Array(numPages), (el, index) => (
+                        Array.from(new Array(numPages), (_, index) => (
                           <div key={`page_${index + 1}`} id={`pdf-page-${index + 1}`} className="mb-2">
                             <Page 
                               pageNumber={index + 1} 

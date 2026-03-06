@@ -29,6 +29,7 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
   const [pdfData, setPdfData] = useState<string | null>(null);
   const [isLoadingFile, setIsLoadingFile] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [showControls, setShowControls] = useState(true);
 
   const isTooLarge = file && file.size > 20 * 1024 * 1024; // 20MB limit
 
@@ -84,6 +85,7 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
       setPageNumber(1);
       setScale(1.0);
       setNumPages(undefined);
+      setShowControls(true);
     }
   }, [file]);
 
@@ -111,17 +113,9 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
       if (e.key === 'Escape') {
         onClose();
       } else if (e.key === 'ArrowRight' && numPages && pageNumber < numPages) {
-        setPageNumber(prev => {
-          const next = prev + 1;
-          document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
-          return next;
-        });
+        setPageNumber(prev => Math.min(numPages, prev + 1));
       } else if (e.key === 'ArrowLeft' && pageNumber > 1) {
-        setPageNumber(prev => {
-          const next = prev - 1;
-          document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
-          return next;
-        });
+        setPageNumber(prev => Math.max(1, prev - 1));
       }
     };
 
@@ -154,10 +148,25 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
     return undefined;
   };
 
+  const toggleControls = (e: React.MouseEvent) => {
+    // Prevent toggling if the click originated from a control button
+    if ((e.target as HTMLElement).closest('button')) {
+      return;
+    }
+    
+    // Check if user is selecting text - don't toggle if they are
+    const selection = window.getSelection();
+    if (selection && selection.toString().length > 0) {
+      return;
+    }
+    
+    setShowControls(prev => !prev);
+  };
+
   return (
-    <div className="fixed inset-0 z-[100] flex flex-col w-screen h-screen bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[100] flex flex-col w-screen h-screen bg-background/95 backdrop-blur-sm animate-in fade-in duration-200 text-foreground">
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-background/50 shrink-0">
+      <div className={`absolute top-0 left-0 w-full z-50 flex items-center justify-between px-4 py-3 border-b bg-background/80 backdrop-blur-sm transition-all duration-300 ease-in-out ${showControls ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'}`}>
         <div className="flex items-center space-x-4 overflow-hidden flex-1">
           <h2 className="text-lg font-semibold whitespace-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] min-w-0" title={file.name}>
             {file.name}
@@ -188,15 +197,15 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
       {/* Content - PDF Document */}
       <div 
         ref={containerRef}
-        className="flex-1 w-full overflow-hidden bg-muted/10 flex flex-col items-center relative"
+        className="flex-1 w-full h-full overflow-hidden flex flex-col items-center relative"
       >
         {isLoadingFile ? (
-          <div className="flex flex-col items-center justify-center h-full w-full gap-4">
+          <div className="flex flex-col items-center justify-center h-full w-full gap-4 pt-16">
              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
              <span className="text-muted-foreground animate-pulse">Downloading PDF...</span>
           </div>
         ) : fetchError ? (
-          <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4">
+          <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4 pt-16">
             <span>{fetchError}</span>
             <Button variant="outline" onClick={handleDownload}>
               <Download className="h-4 w-4 mr-2" /> Download Instead
@@ -215,39 +224,37 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
           >
             {({ zoomIn, zoomOut, resetTransform }) => (
               <>
-                <div className="flex items-center justify-between px-4 py-2 bg-background/80 border-b shrink-0 z-10 sticky top-0 backdrop-blur-sm w-full absolute left-0">
+                {/* Controls Bar - Floating at bottom */}
+                <div 
+                  className={`fixed bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 sm:gap-4 px-2 sm:px-4 py-2 bg-background/80 border rounded-full shadow-lg z-50 backdrop-blur-sm transition-all duration-300 ${showControls ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'}`}
+                  onClick={(e) => { e.stopPropagation(); }}
+                >
                   {/* Pagination (Left) */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1 sm:gap-2">
                     {numPages ? (
                       <>
                         <Button 
-                          variant="outline" 
+                          variant="ghost" 
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setPageNumber(p => {
-                              const next = Math.max(1, p - 1);
-                              document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
-                              return next;
-                            });
+                          className="h-8 w-8 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPageNumber(p => Math.max(1, p - 1));
                           }}
                           disabled={pageNumber <= 1}
                         >
                           <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-sm font-medium whitespace-nowrap">
+                        <span className="text-sm font-medium whitespace-nowrap min-w-[3rem] text-center">
                           {pageNumber} / {numPages}
                         </span>
                         <Button 
-                          variant="outline" 
+                          variant="ghost" 
                           size="icon"
-                          className="h-8 w-8"
-                          onClick={() => {
-                            setPageNumber(p => {
-                              const next = Math.min(numPages, p + 1);
-                              document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
-                              return next;
-                            });
+                          className="h-8 w-8 rounded-full"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setPageNumber(p => Math.min(numPages, p + 1));
                           }}
                           disabled={pageNumber >= numPages}
                         >
@@ -257,56 +264,39 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
                     ) : <div className="w-24" />}
                   </div>
 
+                  <div className="w-px h-6 bg-border mx-1 hidden sm:block"></div>
+
                   {/* Zoom Controls (Right) */}
-                  <div className="flex items-center gap-1 bg-muted/50 rounded-md p-1">
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { zoomOut(); }}>
+                  <div className="flex items-center gap-1">
+                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={(e) => { e.stopPropagation(); zoomOut(); }}>
                        <ZoomOut className="h-4 w-4" />
                      </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { resetTransform(); }}>
+                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hidden sm:flex" onClick={(e) => { e.stopPropagation(); resetTransform(); }}>
                        <span className="text-xs font-medium">100%</span>
                      </Button>
-                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { zoomIn(); }}>
+                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={(e) => { e.stopPropagation(); zoomIn(); }}>
                        <ZoomIn className="h-4 w-4" />
                      </Button>
                   </div>
                 </div>
 
-                <TransformComponent wrapperClass="!w-full !h-full" contentClass="min-h-full w-fit flex justify-center">
+                <TransformComponent wrapperClass="!w-full !h-full" contentClass="flex justify-center items-center">
                   <div 
-                    className="flex flex-col items-center gap-4 pb-8 p-4 h-full overflow-y-auto"
-                    onScroll={(e) => {
-                      if (!numPages) return;
-                      const container = e.currentTarget;
-                      const scrollPosition = container.scrollTop + container.clientHeight / 2;
-                      
-                      let currentPage = 1;
-                      for (let i = 1; i <= numPages; i++) {
-                        const pageElement = document.getElementById(`pdf-page-${i}`);
-                        if (pageElement) {
-                          const { offsetTop, offsetHeight } = pageElement;
-                          if (scrollPosition >= offsetTop && scrollPosition <= offsetTop + offsetHeight) {
-                            currentPage = i;
-                            break;
-                          }
-                        }
-                      }
-                      if (currentPage !== pageNumber) {
-                        setPageNumber(currentPage);
-                      }
-                    }}
+                    className="flex flex-col items-center justify-center cursor-default pb-16 pt-16 sm:py-16 px-2 sm:px-4"
+                    onClick={toggleControls}
                   >
                     <Document
                       file={pdfData}
                       onLoadSuccess={onDocumentLoadSuccess}
                       loading={
-                        <div className="flex items-center justify-center h-full w-full">
+                        <div className="flex items-center justify-center h-[50vh] w-full max-w-2xl bg-white/50 rounded-lg">
                           <span className="text-muted-foreground animate-pulse">Rendering PDF...</span>
                         </div>
                       }
                       error={
-                        <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4">
+                        <div className="flex flex-col items-center justify-center h-[50vh] w-full max-w-2xl bg-white/50 rounded-lg text-destructive gap-4">
                           <span>Failed to render PDF file.</span>
-                          <Button variant="outline" onClick={handleDownload}>
+                          <Button variant="outline" onClick={(e) => { e.stopPropagation(); handleDownload(); }}>
                             <Download className="h-4 w-4 mr-2" /> Download Instead
                           </Button>
                         </div>
@@ -314,25 +304,23 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
                       className="flex flex-col items-center w-fit"
                     >
                       {numPages ? (
-                        Array.from(new Array(numPages), (_, index) => (
-                          <div key={`page_${index + 1}`} id={`pdf-page-${index + 1}`} className="mb-2">
-                            <Page 
-                              pageNumber={index + 1} 
-                              scale={1.0} 
-                              width={getPageWidth()}
-                              renderTextLayer={true}
-                              renderAnnotationLayer={true}
-                              className="shadow-xl bg-white max-w-full"
-                              loading={
-                                <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
-                                   <span className="text-muted-foreground animate-pulse">Loading page...</span>
-                                </div>
-                              }
-                            />
-                          </div>
-                        ))
+                        <div className="mb-2 transition-opacity duration-300">
+                          <Page 
+                            pageNumber={pageNumber} 
+                            scale={1.0} 
+                            width={getPageWidth()}
+                            renderTextLayer={true}
+                            renderAnnotationLayer={true}
+                            className="shadow-xl bg-white max-w-full"
+                            loading={
+                              <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
+                                 <span className="text-muted-foreground animate-pulse">Loading page...</span>
+                              </div>
+                            }
+                          />
+                        </div>
                       ) : (
-                        <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
+                        <div className="flex items-center justify-center w-full min-h-[50vh] max-w-2xl bg-white shadow-xl">
                            <span className="text-muted-foreground animate-pulse">Loading pages...</span>
                         </div>
                       )}

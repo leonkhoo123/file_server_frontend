@@ -3,6 +3,7 @@ import { X, Download, ChevronLeft, ChevronRight, ZoomIn, ZoomOut, Loader2 } from
 import { type FileInterface, downloadFiles } from "@/api/api-file";
 import { Button } from "@/components/ui/button";
 import { Document, Page, pdfjs } from 'react-pdf';
+import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import axiosLayer from "@/api/axiosLayer";
@@ -110,9 +111,17 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
       if (e.key === 'Escape') {
         onClose();
       } else if (e.key === 'ArrowRight' && numPages && pageNumber < numPages) {
-        setPageNumber(prev => prev + 1);
+        setPageNumber(prev => {
+          const next = prev + 1;
+          document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
+          return next;
+        });
       } else if (e.key === 'ArrowLeft' && pageNumber > 1) {
-        setPageNumber(prev => prev - 1);
+        setPageNumber(prev => {
+          const next = prev - 1;
+          document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
+          return next;
+        });
       }
     };
 
@@ -149,33 +158,21 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
     <div className="fixed inset-0 z-[100] flex flex-col w-screen h-screen bg-background/95 backdrop-blur-sm animate-in fade-in duration-200">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b bg-background/50 shrink-0">
-        <div className="flex items-center space-x-4 overflow-hidden">
-          <h2 className="text-lg font-semibold truncate" title={file.name}>
+        <div className="flex items-center space-x-4 overflow-hidden flex-1">
+          <h2 className="text-lg font-semibold whitespace-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] min-w-0" title={file.name}>
             {file.name}
           </h2>
         </div>
         
         <div className="flex items-center gap-2 shrink-0 ml-4">
-          {pdfData && (
-            <div className="hidden sm:flex items-center gap-1 mr-2 bg-muted/50 rounded-md p-1">
-               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setScale(s => Math.max(0.5, s - 0.25)); }}>
-                 <ZoomOut className="h-4 w-4" />
-               </Button>
-               <span className="text-xs font-medium w-12 text-center">{Math.round(scale * 100)}%</span>
-               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setScale(s => Math.min(3, s + 0.25)); }}>
-                 <ZoomIn className="h-4 w-4" />
-               </Button>
-            </div>
-          )}
-          
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={handleDownload}
-            className="hidden sm:flex items-center gap-2"
+            className="h-8 w-8 rounded-full"
+            title="Download"
           >
-            <Download className="h-4 w-4" />
-            <span>Download</span>
+            <Download className="h-5 w-5" />
           </Button>
           <Button
             variant="ghost"
@@ -191,7 +188,7 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
       {/* Content - PDF Document */}
       <div 
         ref={containerRef}
-        className="flex-1 w-full overflow-auto bg-muted/10 flex flex-col items-center p-4 relative"
+        className="flex-1 w-full overflow-hidden bg-muted/10 flex flex-col items-center relative"
       >
         {isLoadingFile ? (
           <div className="flex flex-col items-center justify-center h-full w-full gap-4">
@@ -206,92 +203,147 @@ export default function PdfViewerModal({ file, isOpen, onClose }: PdfViewerModal
             </Button>
           </div>
         ) : pdfData ? (
-          <Document
-            file={pdfData}
-            onLoadSuccess={onDocumentLoadSuccess}
-            loading={
-              <div className="flex items-center justify-center h-full w-full">
-                <span className="text-muted-foreground animate-pulse">Rendering PDF...</span>
-              </div>
-            }
-            error={
-              <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4">
-                <span>Failed to render PDF file.</span>
-                <Button variant="outline" onClick={handleDownload}>
-                  <Download className="h-4 w-4 mr-2" /> Download Instead
-                </Button>
-              </div>
-            }
-            className="flex flex-col items-center max-w-full"
+          <TransformWrapper
+            initialScale={1}
+            minScale={0.5}
+            maxScale={5}
+            centerZoomedOut={true}
+            wheel={{ step: 0.1 }}
+            pinch={{ step: 5 }}
+            doubleClick={{ disabled: true }}
+            panning={{ velocityDisabled: true }}
           >
-            <Page 
-              pageNumber={pageNumber} 
-              scale={scale} 
-              width={getPageWidth()}
-              renderTextLayer={true}
-              renderAnnotationLayer={true}
-              className="shadow-xl bg-white max-w-full"
-              loading={
-                <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
-                   <span className="text-muted-foreground animate-pulse">Loading page...</span>
+            {({ zoomIn, zoomOut, resetTransform }) => (
+              <>
+                <div className="flex items-center justify-between px-4 py-2 bg-background/80 border-b shrink-0 z-10 sticky top-0 backdrop-blur-sm w-full absolute left-0">
+                  {/* Pagination (Left) */}
+                  <div className="flex items-center gap-2">
+                    {numPages ? (
+                      <>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setPageNumber(p => {
+                              const next = Math.max(1, p - 1);
+                              document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
+                              return next;
+                            });
+                          }}
+                          disabled={pageNumber <= 1}
+                        >
+                          <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-sm font-medium whitespace-nowrap">
+                          {pageNumber} / {numPages}
+                        </span>
+                        <Button 
+                          variant="outline" 
+                          size="icon"
+                          className="h-8 w-8"
+                          onClick={() => {
+                            setPageNumber(p => {
+                              const next = Math.min(numPages, p + 1);
+                              document.getElementById(`pdf-page-${next}`)?.scrollIntoView({ behavior: 'smooth' });
+                              return next;
+                            });
+                          }}
+                          disabled={pageNumber >= numPages}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </>
+                    ) : <div className="w-24" />}
+                  </div>
+
+                  {/* Zoom Controls (Right) */}
+                  <div className="flex items-center gap-1 bg-muted/50 rounded-md p-1">
+                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { zoomOut(); }}>
+                       <ZoomOut className="h-4 w-4" />
+                     </Button>
+                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { resetTransform(); }}>
+                       <span className="text-xs font-medium">100%</span>
+                     </Button>
+                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { zoomIn(); }}>
+                       <ZoomIn className="h-4 w-4" />
+                     </Button>
+                  </div>
                 </div>
-              }
-            />
-          </Document>
+
+                <TransformComponent wrapperClass="!w-full !h-full" contentClass="min-h-full w-fit flex justify-center">
+                  <div 
+                    className="flex flex-col items-center gap-4 pb-8 p-4 h-full overflow-y-auto"
+                    onScroll={(e) => {
+                      if (!numPages) return;
+                      const container = e.currentTarget;
+                      const scrollPosition = container.scrollTop + container.clientHeight / 2;
+                      
+                      let currentPage = 1;
+                      for (let i = 1; i <= numPages; i++) {
+                        const pageElement = document.getElementById(`pdf-page-${i}`);
+                        if (pageElement) {
+                          const { offsetTop, offsetHeight } = pageElement;
+                          if (scrollPosition >= offsetTop && scrollPosition <= offsetTop + offsetHeight) {
+                            currentPage = i;
+                            break;
+                          }
+                        }
+                      }
+                      if (currentPage !== pageNumber) {
+                        setPageNumber(currentPage);
+                      }
+                    }}
+                  >
+                    <Document
+                      file={pdfData}
+                      onLoadSuccess={onDocumentLoadSuccess}
+                      loading={
+                        <div className="flex items-center justify-center h-full w-full">
+                          <span className="text-muted-foreground animate-pulse">Rendering PDF...</span>
+                        </div>
+                      }
+                      error={
+                        <div className="flex flex-col items-center justify-center h-full w-full text-destructive gap-4">
+                          <span>Failed to render PDF file.</span>
+                          <Button variant="outline" onClick={handleDownload}>
+                            <Download className="h-4 w-4 mr-2" /> Download Instead
+                          </Button>
+                        </div>
+                      }
+                      className="flex flex-col items-center w-fit"
+                    >
+                      {numPages ? (
+                        Array.from(new Array(numPages), (el, index) => (
+                          <div key={`page_${index + 1}`} id={`pdf-page-${index + 1}`} className="mb-2">
+                            <Page 
+                              pageNumber={index + 1} 
+                              scale={1.0} 
+                              width={getPageWidth()}
+                              renderTextLayer={true}
+                              renderAnnotationLayer={true}
+                              className="shadow-xl bg-white max-w-full"
+                              loading={
+                                <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
+                                   <span className="text-muted-foreground animate-pulse">Loading page...</span>
+                                </div>
+                              }
+                            />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="flex items-center justify-center w-full min-h-[50vh] bg-white shadow-xl">
+                           <span className="text-muted-foreground animate-pulse">Loading pages...</span>
+                        </div>
+                      )}
+                    </Document>
+                  </div>
+                </TransformComponent>
+              </>
+            )}
+          </TransformWrapper>
         ) : null}
       </div>
-
-      {/* Footer / Pagination */}
-      {pdfData && (
-        <div className="flex flex-col sm:flex-row items-center justify-between p-3 border-t bg-background/50 shrink-0 gap-2">
-          {/* Mobile Zoom Controls */}
-          <div className="flex sm:hidden items-center gap-1 bg-muted/50 rounded-md p-1">
-             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setScale(s => Math.max(0.5, s - 0.25)); }}>
-               <ZoomOut className="h-4 w-4" />
-             </Button>
-             <span className="text-xs font-medium w-12 text-center">{Math.round(scale * 100)}%</span>
-             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setScale(s => Math.min(3, s + 0.25)); }}>
-               <ZoomIn className="h-4 w-4" />
-             </Button>
-          </div>
-
-          {/* Pagination */}
-          {numPages ? (
-            <div className="flex items-center justify-center gap-4 mx-auto">
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={() => { setPageNumber(p => Math.max(1, p - 1)); }}
-                disabled={pageNumber <= 1}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm font-medium whitespace-nowrap">
-                Page {pageNumber} of {numPages}
-              </span>
-              <Button 
-                variant="outline" 
-                size="icon" 
-                onClick={() => { setPageNumber(p => Math.min(numPages, p + 1)); }}
-                disabled={pageNumber >= numPages}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : <div className="mx-auto" />}
-
-          {/* Mobile Download */}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleDownload}
-            className="flex sm:hidden items-center gap-2"
-          >
-            <Download className="h-4 w-4" />
-            <span>Download</span>
-          </Button>
-        </div>
-      )}
     </div>
   );
 }

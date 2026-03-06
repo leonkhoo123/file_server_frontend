@@ -191,13 +191,13 @@ export default function TextViewerModal({ file, isOpen, onClose }: TextViewerMod
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30 shrink-0">
-          <div className="flex items-center space-x-4 overflow-hidden">
-            <h2 className="text-lg font-semibold truncate" title={file.name}>
+          <div className="flex items-center space-x-4 overflow-hidden flex-1">
+            <h2 className="text-lg font-semibold whitespace-nowrap overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] min-w-0" title={file.name}>
               {file.name}
             </h2>
             
             {!isTooLarge && (
-              <div className="relative hidden sm:flex items-center">
+              <div className="relative hidden sm:flex items-center shrink-0">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="h-8 gap-2 border-input bg-background/50">

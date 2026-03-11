@@ -6,6 +6,7 @@ import IndexPage from './pages/IndexPage';
 import NotFoundPage from './pages/PageNotFound';
 import LoginPage from './pages/LoginPage';
 import AdminPage from './pages/AdminPage';
+import AudioBookPage from './pages/AudioBookPage';
 import { SonnerToastCustom } from './components/custom/soonerToast';
 import { useEffect } from 'react';
 import { wsClient } from './api/wsClient';
@@ -29,6 +30,7 @@ function App() {
             <Route element={<HomePage />} path="/home/*" />
             <Route element={<LoginPage />} path="/login" />
             <Route element={<AdminPage />} path="/admin" />
+            <Route element={<AudioBookPage />} path="/audio-book" />
 
 
 

@@ -1,5 +1,5 @@
 import { useRef, useEffect } from "react";
-import { X, Trash2, Cloud } from "lucide-react";
+import { X, Trash2, Cloud, BookAudio } from "lucide-react";
 import { type StorageUsageResponse } from "@/api/api-file";
 import { formatBytes } from "@/utils/utils";
 import { Progress } from "@/components/ui/progress";
@@ -173,6 +173,18 @@ export default function HomeSidebar({ isOpen, onClose, isWsConnected, isHealthCo
             >
               <Trash2 className={`h-5 w-5 md:h-4 md:w-4 shrink-0 ${isActive("/.cloud_delete") ? "text-blue-500" : "text-gray-500"}`} />
               <span className="truncate">Recycle Bin</span>
+            </div>
+
+            <div 
+              className={`flex items-center gap-3 text-base md:text-sm px-3 py-3 md:py-2 rounded-md transition-colors cursor-pointer
+                ${isActive("/audio-book") 
+                  ? "bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400" 
+                  : "text-foreground hover:bg-muted/50"
+                }`}
+              onClick={() => { handleNavigate("/audio-book"); }}
+            >
+              <BookAudio className={`h-5 w-5 md:h-4 md:w-4 shrink-0 ${isActive("/audio-book") ? "text-purple-500" : "text-gray-500"}`} />
+              <span className="truncate">Audio Books</span>
             </div>
 
             {/* Placeholder Items */}
